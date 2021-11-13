@@ -1,4 +1,4 @@
-name: deploy-gcloud
+name: api-deploy-gcloud
 
 on:
   push:
