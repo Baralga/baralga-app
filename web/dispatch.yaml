@@ -1,0 +1,8 @@
+dispatch:
+  # Default module serves simple hostname request.
+  - url: "*/api/*"
+    service: backend
+
+  # Default module serves simple hostname request.
+  - url: "*/*"
+    service: default

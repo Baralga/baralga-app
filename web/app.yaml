@@ -1,0 +1,12 @@
+runtime: nodejs14
+service: default
+
+handlers:
+  - url: /(.*\..+)$ 
+    static_files: dist/\1
+    upload: dist/(.*\..+)$  
+    
+  # catch all handler to index.html
+  - url: /.*
+    static_files: dist/index.html
+    upload: dist/index.html

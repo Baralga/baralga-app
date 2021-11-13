@@ -1,0 +1,11 @@
+runtime: go116
+service: backend
+
+handlers:
+- url: /api/*
+  script: auto
+
+env_variables:
+  BARALGA_ENV: "production"
+  BARALGA_DB: "${BARALGA_DB}"
+  BARALGA_JWTSECRET: "${BARALGA_JWTSECRET}"
