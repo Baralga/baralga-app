@@ -32,7 +32,8 @@ jobs:
           go-version: 1.16
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
-        working-directory: api
+        with:
+          working-directory: api
       - name: Set up Go cover
         working-directory: api
         run: go get golang.org/x/tools/cmd/cover
