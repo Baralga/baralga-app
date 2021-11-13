@@ -2,9 +2,8 @@ name: api-deploy-gcloud
 
 on:
   push:
-    tags:
-      - '*'
     branches:
+      - main
       - feature/mvp
       
 permissions:
@@ -18,9 +17,22 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Generate app.yaml
+        working-directory: api
+        run: make app.yaml
+        env:
+          BARALGA_DB: ${{ secrets.BARALGA_DB }}
+          BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
+      - name: Generate app.yaml
+        working-directory: api
+        run: ls -l
       - uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy api/app.yaml
+          args: app deploy apiXX/app.yaml

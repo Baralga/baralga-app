@@ -2,9 +2,8 @@ name: web-deploy-gcloud
 
 on:
   push:
-    tags:
-      - '*'
     branches:
+      - main
       - feature/mvp
       
 permissions:

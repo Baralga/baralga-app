@@ -7,5 +7,5 @@ handlers:
 
 env_variables:
   BARALGA_ENV: "production"
-  BARALGA_DB: "${BARALGA_DB}"
-  BARALGA_JWTSECRET: "${BARALGA_JWTSECRET}"
+  BARALGA_DB: "{{ .BARALGA_DB }}"
+  BARALGA_JWTSECRET: "{{ .BARALGA_JWTSECRET }}"
