@@ -3,3 +3,4 @@
 build
 app.yaml
 tmp
+dist

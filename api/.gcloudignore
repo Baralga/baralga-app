@@ -29,3 +29,4 @@ docker-compose.yml
 README.md
 .vscode
 build
+dist
