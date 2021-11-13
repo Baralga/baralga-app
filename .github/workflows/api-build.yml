@@ -33,7 +33,7 @@ jobs:
       - name: Set up Go cover
         working-directory: api
         run: go get golang.org/x/tools/cmd/cover
-      - name: golangci-lint
+      - name: Run Go linter
         uses: golangci/golangci-lint-action@v2
         with:
           working-directory: api
