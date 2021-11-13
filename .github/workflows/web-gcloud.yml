@@ -23,7 +23,7 @@ jobs:
           node-version: '16'
       - run: npm install
         working-directory: web
-      - run: run build
+      - run: npm run build
         working-directory: web
       - uses: actions-hub/gcloud@master
         env:
