@@ -1,4 +1,4 @@
-name: goreleaser
+name: build-docker
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  build-docker:
     runs-on: ubuntu-latest
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
@@ -34,9 +34,6 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           working-directory: api
-      - name: Set up Go cover
-        working-directory: api
-        run: go get golang.org/x/tools/cmd/cover
       - name: Test
         working-directory: api
         run: make test

@@ -13,6 +13,8 @@ linter:
 
 test:
 	go test -v -timeout 30s -coverprofile=cover.out -cover ./...
+
+test.cover: test
 	go tool cover -func=cover.out
 
 build: clean test
