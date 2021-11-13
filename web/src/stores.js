@@ -91,7 +91,7 @@ export const addActivity = (activity) => {
     description: activity.description,
     _links: {
       project: {
-        href: "/" + activity.project.id,
+        href: "/" + activity.projectId,
       }
     }
   }
@@ -109,7 +109,7 @@ export const updateActivity = (activity) => {
     description: activity.description,
     _links: {
       project: {
-        href: "/" + activity.project.id,
+        href: "/" + activity.projectId,
       }
     }
   }

@@ -8,10 +8,11 @@
   import Activities from "./Activities.svelte";
   import ExportActivitiesAsCsv from "./ExportActivitiesAsCsv.svelte";
   import Home from "./Home.svelte";
+  import { onMount } from "svelte";
 
   let runningActivity = false;
   let startTime;
-  let activeProject;
+  let activeProjectId;
   let selectedProject;
   let description;
   let durationFormatted;
@@ -30,7 +31,7 @@
     let activity = {
       startTime: startTime,
       endTime: moment().startOf("minute"),
-      project: activeProject,
+      projectId: activeProjectId,
       description: description
     };
 
@@ -46,11 +47,13 @@
   function startActivity() {
     runningActivity = true;
     startTime = moment().startOf("minute");
-    activeProject = selectedProject;
+    activeProjectId = selectedProject;
     updateTimer();
   }
 
-  reloadProjects();
+  onMount(function() {
+    reloadProjects();
+  });
 </script>
 
 <div class="columns is-multiline">
@@ -127,7 +130,7 @@
           <fieldset disabled={runningActivity}>
             <select bind:value={selectedProject}>
               {#each $projectStore as project}
-                <option value={project}>{project.title}</option>
+                <option value={project.id}>{project.title}</option>
               {/each}
             </select>
           </fieldset>

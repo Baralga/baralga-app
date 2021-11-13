@@ -1,7 +1,8 @@
 <script>
   import { navigate, Router, Link, Route } from "svelte-routing";
-  import { projectStore, addProject } from "./stores.js";
+  import { projectStore, addProject, reloadProjects } from "./stores.js";
   import DeleteProject from "./DeleteProject.svelte";
+  import { onMount } from "svelte";
 
   let title = "";
 
@@ -25,6 +26,10 @@
 
     title = "";
   }
+
+  onMount(function() {
+    reloadProjects();
+  });
 </script>
 
 <style>

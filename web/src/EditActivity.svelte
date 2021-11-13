@@ -2,16 +2,16 @@
   import moment from "moment/src/moment";
   import {
     projectStore,
-    getProject,
     addActivity,
     updateActivity,
     getActivity,
     reloadProjects
   } from "./stores.js";
   import { navigate } from "svelte-routing";
+  import { onMount } from "svelte";
 
   export let id = undefined;
-  let selectedProject;
+  let projectId;
   let dateValue;
   let timeFromValue;
   let timeToValue;
@@ -63,7 +63,7 @@
     let activity = {
       startTime: startTime,
       endTime: endTime,
-      project: selectedProject,
+      projectId: projectId,
       description: description
     };
 
@@ -76,8 +76,13 @@
     back();
   }
 
+  onMount(function() {
+    reloadProjects();
+    init();
+  });
+
   function init() {
-    selectedProject = $projectStore[0];
+    projectId = $projectStore[0].id;
     description = null;
     dateValue = moment()
       .startOf("minute")
@@ -86,15 +91,15 @@
     timeToValue = moment().format("HH:mm");
 
     if (id !== undefined) {
-      let activity = getActivity(id)
+      getActivity(id)
         .then(activity => {
           let startTime = moment(activity.start);
           let endTime = moment(activity.end);
 
-          let projectId = activity._links.project.href.substring(
+          let activityProjectId = activity._links.project.href.substring(
             activity._links.project.href.lastIndexOf("/") + 1
           );
-          selectedProject = getProject(projectId);
+          projectId = activityProjectId;
           description = activity.description;
           dateValue = startTime.startOf("minute").format("DD.MM.YYYY");
           timeFromValue = startTime.format("HH:mm");
@@ -107,12 +112,66 @@
     }
   }
 
+  function completeTimeFromValue(event) {
+    timeFromValue = completeTimeValue(timeFromValue)
+  }
+
+  function completeTimeToValue(event) {
+    timeToValue = completeTimeValue(timeToValue)
+  }
+
+  function completeTimeValue(time) {
+    let completedTime = time;
+
+    completedTime = completedTime.replace(",,", ":");
+    completedTime = completedTime.replace('/', ':');
+    completedTime = completedTime.replace(';', ',');
+    completedTime = completedTime.replace('.', ':');
+
+    // Treat 11,25 as 11:15
+    // Treat 11,75 as 11:45
+    // Treat 11,5 and 11,50 as 11:30
+    let splittedTime = completedTime.split(",");
+    if (completedTime.includes(",") && splittedTime.length >= 2) {
+    	let hh = splittedTime[0];
+    	let mm = splittedTime[1];
+		if (mm.length < 2) {
+			mm = mm + "0"; 
+		}
+
+  	try {
+    		// Convert to integer value
+    		let m = parseInt(mm);
+    		// Convert to float for calculation
+    		let fm = m;          
+    		// Convert from base100 to base60
+    		fm *= 0.6;                     
+    		// Round to int
+    		m = Math.round(fm);  
+    		mm = "" + m;
+    		if (mm.length < 2) {
+    			mm = "0" + mm; 
+    		}
+    		if (hh.length < 2) {
+    			hh = "0" + hh; 
+    		}
+    		completedTime = hh + ":" + mm;
+    	} catch (e) {
+    		// Conversion to int failed so smart format does not apply.
+    	}
+    }
+
+    if (!completedTime.includes(":")) {
+      completedTime += ":00"
+    }
+
+    return completedTime;
+  }
+
   function cancel() {
     back();
   }
 
-  reloadProjects();
-  init();
 </script>
 
 <style>
@@ -127,9 +186,9 @@
 <div class="field">
   <label class="label">Project</label>
   <div class="control select">
-    <select bind:value={selectedProject}>
+    <select bind:value={projectId}>
       {#each $projectStore as project}
-        <option value={project}>{project.title}</option>
+        <option value={project.id}>{project.title}</option>
       {/each}
     </select>
   </div>
@@ -157,6 +216,7 @@
       class="input"
       pattern="[0-9]{2}:[0-5][0-9]"
       bind:value={timeFromValue}
+      on:change="{completeTimeFromValue}"
       class:is-danger={!isValidTimeFrom}
       minlength="5"
       maxlength="5"
@@ -172,6 +232,7 @@
       class="input"
       pattern="[0-9]{2}:[0-5][0-9]"
       bind:value={timeToValue}
+      on:change="{completeTimeToValue}"
       class:is-danger={!isValidTimeTo}
       minlength="5"
       maxlength="5"

@@ -11,6 +11,7 @@
     asFormattedDuration,
     asFilterLabel
   } from "./formatter.js";
+  import { onMount } from "svelte";
 
   let selectedTimespan = "year";
   let filterLabel = "";
@@ -93,7 +94,9 @@
     updateFilter();
   }
 
-  initFilter();
+  onMount(function() {
+    initFilter();
+  });
 </script>
 
 <style>
