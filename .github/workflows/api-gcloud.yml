@@ -27,17 +27,10 @@ jobs:
         env:
           BARALGA_DB: ${{ secrets.BARALGA_DB }}
           BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
-      - name: Install gcloud app-engine-go
-        uses: actions-hub/gcloud@master
-        env:
-          PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
-          APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
-        with:
-          args: components install app-engine-go
       - name: Deploy api
         uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy api/app.yaml
+          args: app deploy api/app.yaml --quiet
