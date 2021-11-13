@@ -25,11 +25,11 @@ jobs:
         working-directory: api
         run: make app.yaml
         env:
-          BARALGA_DB: ${{ secrets.BARALGA_DB }}
-          BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
-      - name: Generate app.yaml
+          BARALGA_DB: test1
+          BARALGA_JWTSECRET: test2
+      - name: Cat app.yaml
         working-directory: api
-        run: ls -l
+        run: cat app.yaml
       - uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
