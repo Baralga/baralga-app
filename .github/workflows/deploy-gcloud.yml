@@ -1,4 +1,4 @@
-name: api-deploy-gcloud
+name: deploy-gcloud
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy
+    name: Deploy to GCP
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
