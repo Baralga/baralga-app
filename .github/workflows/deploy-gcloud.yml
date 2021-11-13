@@ -27,10 +27,17 @@ jobs:
         env:
           BARALGA_DB: ${{ secrets.BARALGA_DB }}
           BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
-      - name: Deploy api
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: npm install
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - name: Deploy api + web
         uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy api/app.yaml --quiet
+          args: app deploy api/app.yaml web/app.yaml --quiet
