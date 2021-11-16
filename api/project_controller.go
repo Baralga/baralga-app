@@ -9,6 +9,7 @@ import (
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"schneider.vip/problem"
@@ -16,8 +17,8 @@ import (
 
 type projectModel struct {
 	ID          string     `json:"id"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
+	Title       string     `json:"title" validate:"required,min=3,max=100"`
+	Description string     `json:"description" validate:"max=500"`
 	Active      bool       `json:"active"`
 	Links       *hal.Links `json:"_links"`
 }
@@ -106,13 +107,14 @@ func (a *app) HandleGetProject() http.HandlerFunc {
 // HandleCreateProject creates a project
 func (a *app) HandleCreateProject() http.HandlerFunc {
 	isProduction := a.isProduction()
+	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
 
 		var projectModel projectModel
 		err := json.NewDecoder(r.Body).Decode(&projectModel)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 
@@ -121,9 +123,15 @@ func (a *app) HandleCreateProject() http.HandlerFunc {
 			return
 		}
 
+		err = validator.Struct(projectModel)
+		if err != nil {
+			http.Error(w, problem.New(problem.Title("project not valid")).JSONString(), http.StatusBadRequest)
+			return
+		}
+
 		projectToCreate, err := mapToProject(&projectModel)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 
@@ -143,6 +151,7 @@ func (a *app) HandleCreateProject() http.HandlerFunc {
 // HandleUpdateProject updates a project
 func (a *app) HandleUpdateProject() http.HandlerFunc {
 	isProduction := a.isProduction()
+	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
@@ -162,6 +171,12 @@ func (a *app) HandleUpdateProject() http.HandlerFunc {
 
 		if !principal.HasRole("ROLE_ADMIN") {
 			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		err = validator.Struct(projectModel)
+		if err != nil {
+			http.Error(w, problem.New(problem.Title("project not valid")).JSONString(), http.StatusBadRequest)
 			return
 		}
 

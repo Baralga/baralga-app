@@ -11,6 +11,7 @@ import (
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"schneider.vip/problem"
@@ -29,9 +30,9 @@ type EmbeddedActivities struct {
 
 type activityModel struct {
 	ID          string         `json:"id"`
-	Start       string         `json:"start"`
-	End         string         `json:"end"`
-	Description string         `json:"description"`
+	Start       string         `json:"start" validate:"required"`
+	End         string         `json:"end" validate:"required"`
+	Description string         `json:"description" validate:"max=500"`
 	Duration    *durationModel `json:"duration"`
 	Links       *hal.Links     `json:"_links"`
 }
@@ -100,17 +101,24 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 // HandleGetActivities creates an activity
 func (a *app) HandleCreateActivity() http.HandlerFunc {
 	isProduction := a.isProduction()
+	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
 		var activityModel activityModel
 		err := json.NewDecoder(r.Body).Decode(&activityModel)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
+			return
+		}
+
+		err = validator.Struct(activityModel)
+		if err != nil {
+			http.Error(w, problem.New(problem.Title("activity not valid")).JSONString(), http.StatusBadRequest)
 			return
 		}
 
 		activityToCreate, err := mapToActivity(&activityModel)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 
@@ -138,7 +146,7 @@ func (a *app) HandleGetActivity() http.HandlerFunc {
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 
@@ -166,7 +174,7 @@ func (a *app) HandleDeleteActivity() http.HandlerFunc {
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 
@@ -185,6 +193,7 @@ func (a *app) HandleDeleteActivity() http.HandlerFunc {
 // HandleUpdateActivity updates an activity
 func (a *app) HandleUpdateActivity() http.HandlerFunc {
 	isProduction := a.isProduction()
+	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
@@ -192,19 +201,25 @@ func (a *app) HandleUpdateActivity() http.HandlerFunc {
 		var activityModel activityModel
 		err := json.NewDecoder(r.Body).Decode(&activityModel)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
+			return
+		}
+
+		err = validator.Struct(activityModel)
+		if err != nil {
+			http.Error(w, problem.New(problem.Title("activity not valid")).JSONString(), http.StatusBadRequest)
 			return
 		}
 
 		activity, err := mapToActivity(&activityModel)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
-			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
 			return
 		}
 		activity.ID = activityID

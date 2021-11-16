@@ -131,7 +131,7 @@ func TestHandleGetActivityIdNotValid(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleGetActivity()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleGetActivitiesWithUrlParams(t *testing.T) {
@@ -187,6 +187,37 @@ func TestHandleCreateActivity(t *testing.T) {
 	a.HandleCreateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusCreated)
 	is.Equal(countBefore+1, len(repo.activities))
+}
+
+func TestHandleCreateInvalidActivity(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	a := &app{
+		Config:             &config{},
+		ActivityRepository: repo,
+	}
+
+	body := `
+	{
+		"id":null,
+		"start":"2021-11-06T21:37:00",
+		"end":"2021-11-06T21:37:00",
+		"description":"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus. Vestibulum volutpat pretium libero. Cras id dui. Aenean ut eros et nisl sagittis vestibulum. Nullam nulla eros, ultricies sit amet, nonummy id, imperdiet feugiat, pede. Sed lectus. Donec mollis hendrerit risus. Phasellus nec sem in justo pellentesque facilisis. Etiam imperdiet imperdiet orci. Nunc nec neque. Phasellus leo dolor, tempus non, auctor et, hendrerit quis, nisi. Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo. Maecenas malesuada. Praesent congue erat at massa. Sed cursus turpis vitae tortor. Donec posuere vulputate arcu. Phasellus accumsan cursus velit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed aliquam, nisi quis porttitor congue, elit erat euismod orci, ac placerat dolor lectus quis orci. Phasellus consectetuer vestibulum elit. Aenean tellus metus, bibendum sed, posuere ac, mattis non, nunc. Vestibulum fringilla pede sit amet augue. In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis. Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus. Ut varius tincidunt libero. Phasellus dolor. Maecenas vestibulum mollis diam. ",
+		"_links":{
+		   "project":{
+			  "href":"http://localhost:8080/api/projects/f4b1087c-8fbb-4c8d-bbb7-ab4d46da16ea"
+		   }
+		}
+	 }
+	`
+
+	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleCreateActivity()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleDeleteActivityAsAdmin(t *testing.T) {
@@ -255,7 +286,7 @@ func TestHandleDeleteActivityIdNotValid(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleDeleteActivity()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleCreateActivityWithInvalidBody(t *testing.T) {
@@ -277,7 +308,7 @@ func TestHandleCreateActivityWithInvalidBody(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
 
 	a.HandleCreateActivity()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
@@ -343,6 +374,43 @@ func TestHandleUpdateActivity(t *testing.T) {
 	activityUpdate, err := repo.FindActivityByID(context.Background(), uuid.MustParse("00000000-0000-0000-2222-000000000001"), organizationIDSample)
 	is.NoErr(err)
 	is.Equal("My updated Description", activityUpdate.Description)
+}
+
+func TestHandleUpdateInvalidActivity(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	a := &app{
+		Config:             &config{},
+		ActivityRepository: repo,
+	}
+
+	body := `
+	{
+		"id":null,
+		"start":"2021-11-06T21:37:00",
+		"end":"2021-11-06T21:37:00",
+		"description": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus. Vestibulum volutpat pretium libero. Cras id dui. Aenean ut eros et nisl sagittis vestibulum. Nullam nulla eros, ultricies sit amet, nonummy id, imperdiet feugiat, pede. Sed lectus. Donec mollis hendrerit risus. Phasellus nec sem in justo pellentesque facilisis. Etiam imperdiet imperdiet orci. Nunc nec neque. Phasellus leo dolor, tempus non, auctor et, hendrerit quis, nisi. Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo. Maecenas malesuada. Praesent congue erat at massa. Sed cursus turpis vitae tortor. Donec posuere vulputate arcu. Phasellus accumsan cursus velit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed aliquam, nisi quis porttitor congue, elit erat euismod orci, ac placerat dolor lectus quis orci. Phasellus consectetuer vestibulum elit. Aenean tellus metus, bibendum sed, posuere ac, mattis non, nunc. Vestibulum fringilla pede sit amet augue. In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis. Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus. Ut varius tincidunt libero. Phasellus dolor. Maecenas vestibulum mollis diam. ",
+		"_links":{
+		   "project":{
+			  "href":"http://localhost:8080/api/projects/f4b1087c-8fbb-4c8d-bbb7-ab4d46da16ea"
+		   }
+		}
+	 }
+	`
+
+	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleUpdateActivity()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleUpdateActivityAsUser(t *testing.T) {
@@ -448,7 +516,7 @@ func TestHandleUpdateActivityWithInvalidBody(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleUpdateActivity()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleUpdateActivityIdNotValid(t *testing.T) {
@@ -482,5 +550,5 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleUpdateActivity()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }

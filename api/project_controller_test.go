@@ -207,6 +207,36 @@ func TestHandleUpdateProject(t *testing.T) {
 	is.NoErr(err)
 }
 
+func TestHandleUpdateInvalidProject(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config:            &config{},
+		ProjectRepository: NewInMemProjectRepository(),
+	}
+
+	body := `
+	{
+		"id":null,
+		"title": "",
+		"description": "My updated Description"
+	 }
+	`
+
+	r, _ := http.NewRequest("PATCH", "/api/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleUpdateProject()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
+}
+
 func TestHandleUpdateProjectAsUser(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
@@ -348,6 +378,32 @@ func TestHandleCreateProject(t *testing.T) {
 	is.Equal(countBefore+1, len(repo.projects))
 }
 
+func TestHandleInvalidCreateProject(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemProjectRepository()
+	a := &app{
+		Config:            &config{},
+		ProjectRepository: repo,
+	}
+
+	body := `
+	{
+		"title": "",
+		"description": "My new Description"
+	}
+	`
+
+	r, _ := http.NewRequest("POST", "/api/projects", strings.NewReader(body))
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	a.HandleCreateProject()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
+}
+
 func TestHandleCreateProjectAsUser(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
@@ -390,7 +446,7 @@ func TestHandleCreateProjectWithInvalidBody(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
 
 	a.HandleCreateProject()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
 func TestHandleDeleteProjectAsAdmin(t *testing.T) {
