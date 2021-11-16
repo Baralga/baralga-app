@@ -96,9 +96,7 @@ export const addActivity = (activity) => {
     }
   }
 
-  Api.post("/api/activities", activityJson).then((data) => {
-    applyFilter(get(filterStore));
-  });
+  return Api.post("/api/activities", activityJson);
 };
 
 export const updateActivity = (activity) => {
@@ -114,9 +112,7 @@ export const updateActivity = (activity) => {
     }
   }
 
-  Api.patch("/api/activities/" + activity.id, activityJson).then((data) => {
-    applyFilter(get(filterStore));
-  });
+  return Api.patch("/api/activities/" + activity.id, activityJson);
 };
 
 export const getActivity = (id) => {

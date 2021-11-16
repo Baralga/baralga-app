@@ -69,11 +69,14 @@
 
     if (isEditMode()) {
       activity.id = id;
-      updateActivity(activity);
+      updateActivity(activity).then(() => {
+        back();
+      });
     } else {
-      addActivity(activity);
+      addActivity(activity).then(() => {
+        back();
+      });
     }
-    back();
   }
 
   onMount(function() {
