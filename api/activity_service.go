@@ -2,25 +2,24 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/baralga/paged"
 	"github.com/google/uuid"
 )
 
 // ReadActivitiesWithProjects reads activities with their associated projects
-func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Principal, start, end time.Time, pageParams *paged.PageParams) ([]*Activity, []*Project, error) {
-	filter := &ActivitiesFilter{
-		Start:          start,
-		End:            end,
+func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Principal, filter *ActivityFilter, pageParams *paged.PageParams) ([]*Activity, []*Project, error) {
+	activitiesFilter := &ActivitiesFilter{
+		Start:          filter.Start(),
+		End:            filter.End(),
 		OrganizationID: principal.OrganizationID,
 	}
 
 	if !principal.HasRole("ROLE_ADMIN") {
-		filter.Username = principal.Username
+		activitiesFilter.Username = principal.Username
 	}
 
-	activitiesPage, err := a.ActivityRepository.FindActivities(ctx, filter, pageParams)
+	activitiesPage, err := a.ActivityRepository.FindActivities(ctx, activitiesFilter, pageParams)
 	if err != nil {
 		return nil, nil, err
 	}

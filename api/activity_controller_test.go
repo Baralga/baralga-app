@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -145,6 +146,28 @@ func TestHandleGetActivitiesWithUrlParams(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?start=2021-10-01&end=2022-10-01", nil)
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleGetActivities()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	activitiesModel := &activitiesModel{}
+	err := json.NewDecoder(httpRec.Body).Decode(activitiesModel)
+	is.NoErr(err)
+	is.Equal(1, len(activitiesModel.ActivityModels))
+}
+
+func TestHandleGetActivitiesWithTimespanUrlParams(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config:             &config{},
+		ActivityRepository: NewInMemActivityRepository(),
+		ProjectRepository:  NewInMemProjectRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
 	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
 
 	a.HandleGetActivities()(httpRec, r)
@@ -551,4 +574,151 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 
 	a.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
+}
+
+func TestFilterFromQueryParams(t *testing.T) {
+	is := is.New(t)
+
+	t.Run("year filter without value", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "year")
+
+		_, err := filterFromQueryParams(params)
+
+		is.True(err != nil)
+	})
+
+	t.Run("year filter from query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "year")
+		params.Add("v", "2021")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2021, filter.Start().Year())
+		is.Equal(time.January, filter.Start().Month())
+		is.Equal(1, filter.Start().Day())
+		is.Equal(0, filter.Start().Hour())
+	})
+
+	t.Run("year filter from invalid query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "year")
+		params.Add("v", "XXXX")
+
+		_, err := filterFromQueryParams(params)
+
+		is.True(err != nil)
+	})
+
+	t.Run("quarter filter from query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "quarter")
+		params.Add("v", "2021-2")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2021, filter.Start().Year())
+		is.Equal(time.April, filter.Start().Month())
+		is.Equal(0, filter.Start().Hour())
+	})
+
+	t.Run("quarter filter from invalid query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "quarter")
+		params.Add("v", "XXXX-9")
+
+		_, err := filterFromQueryParams(params)
+
+		is.True(err != nil)
+	})
+
+	t.Run("month filter from query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "month")
+		params.Add("v", "2021-11")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2021, filter.Start().Year())
+		is.Equal(time.November, filter.Start().Month())
+		is.Equal(1, filter.Start().Day())
+		is.Equal(0, filter.Start().Hour())
+	})
+
+	t.Run("month filter from invalid query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "month")
+		params.Add("v", "2020-99")
+
+		_, err := filterFromQueryParams(params)
+
+		is.True(err != nil)
+	})
+
+	t.Run("week filter from query params 2022", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "week")
+		params.Add("v", "2021-1")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2021, filter.Start().Year())
+		is.Equal(time.January, filter.Start().Month())
+		is.Equal(4, filter.Start().Day())
+		is.Equal(0, filter.Start().Hour())
+	})
+
+	t.Run("week filter from query params 2023", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "week")
+		params.Add("v", "2023-10")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2023, filter.Start().Year())
+		is.Equal(time.March, filter.Start().Month())
+		is.Equal(6, filter.Start().Day())
+		is.Equal(0, filter.Start().Hour())
+	})
+
+	t.Run("week filter from invalid query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "week")
+		params.Add("v", "2020-ccc")
+
+		_, err := filterFromQueryParams(params)
+
+		is.True(err != nil)
+	})
+
+	t.Run("month filter from query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "month")
+		params.Add("v", "2021-03")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2021, filter.Start().Year())
+		is.Equal(time.March, filter.Start().Month())
+	})
+
+	t.Run("day filter from query params", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "day")
+		params.Add("v", "2021-11-10")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(2021, filter.Start().Year())
+		is.Equal(time.November, filter.Start().Month())
+	})
+
 }

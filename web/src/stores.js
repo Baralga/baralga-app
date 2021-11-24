@@ -152,10 +152,36 @@ export const reloadProjects = () => {
   });
 };
 
+const searchParamsForFilter = (filter) => {
+  let searchParams = new URLSearchParams();
+  let timespanValue = filter.from.format("YYYY-MM-DD");
+
+  switch (filter.timespan) {
+    case "year":
+      timespanValue = filter.from.format("YYYY");
+      break;
+    case "quarter":
+      timespanValue = filter.from.format('YYYY-Q');
+      break;
+    case "month":
+      timespanValue = filter.from.format("YYYY-MM");
+      break;
+    case "week":
+      timespanValue = filter.from.format("YYYY-ww");
+      break;
+    case "day":
+      timespanValue = filter.from.format("YYYY-MM-DD");
+      break;
+  }
+
+  searchParams.set("t", filter.timespan);
+  searchParams.set("v", timespanValue);
+
+  return searchParams;
+}
+
 export const applyFilter = (filter) => {
-  var searchParams = new URLSearchParams();
-  searchParams.set("start", filter.from.format("YYYY-MM-DD"))
-  searchParams.set("end", filter.to.format("YYYY-MM-DD"))
+  let searchParams = searchParamsForFilter(filter);
 
   Api.get("/api/activities?" + searchParams.toString()).then((data) => {
     let embeddedActivities = data._embedded ? data._embedded.activities : [];
@@ -182,6 +208,7 @@ export const applyFilter = (filter) => {
         startTime: moment(a.start),
         endTime: moment(a.end),
         project: project,
+        duration: a.duration,
       };
     });
 
@@ -200,25 +227,3 @@ export const addProject = (project) => {
 export const getProject = (id) => {
   return Api.get("/api/projects/" +  id);
 };
-
-export const totalDuration = () => {
-  if (get(filteredActivitiesStore).length == 0) {
-    return moment.duration(0);
-  }
-
-  let totalDuration = get(filteredActivitiesStore)
-    .map((activity) =>
-      moment.duration(activity.endTime.diff(activity.startTime))
-    )
-    .reduce((total, currentValue) => {
-      return total.add(currentValue);
-    });
-
-  return totalDuration;
-};
-
-export const totalDurationStore = writable(totalDuration());
-
-filteredActivitiesStore.subscribe(() => {
-  totalDurationStore.set(totalDuration());
-});

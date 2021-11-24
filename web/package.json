@@ -33,6 +33,8 @@
   },
   "dependencies": {
     "axios": "^0.24.0",
+    "bulma-list": "^1.1.4",
+    "bulma-prefers-dark": "^0.1.0-beta.1",
     "file-saver": "^2.0.2",
     "moment": "^2.29.1"
   }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/snabb/isoweek"
 	"schneider.vip/problem"
 )
 
@@ -53,28 +56,13 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
 		pageParams := paged.PageParamsOf(r)
 
-		start := time.Now()
-		end := start.Add(10 * 24 * time.Hour)
-
-		startParamValue := r.URL.Query().Get("start")
-		if startParamValue != "" {
-			startParam, err := util.ParseDate(startParamValue)
-			if err != nil {
-				util.RenderProblemJSON(w, isProduction, err)
-			}
-			start = *startParam
+		filter, err := filterFromQueryParams(r.URL.Query())
+		if err != nil {
+			util.RenderProblemJSON(w, isProduction, err)
+			return
 		}
 
-		endParamValue := r.URL.Query().Get("end")
-		if endParamValue != "" {
-			endParam, err := util.ParseDate(endParamValue)
-			if err != nil {
-				util.RenderProblemJSON(w, isProduction, err)
-			}
-			end = *endParam
-		}
-
-		activities, projects, err := a.ReadActivitiesWithProjects(r.Context(), principal, start, end, pageParams)
+		activities, projects, err := a.ReadActivitiesWithProjects(r.Context(), principal, filter, pageParams)
 		if err != nil {
 			util.RenderProblemJSON(w, isProduction, err)
 			return
@@ -318,4 +306,100 @@ func mapToProjectModels(principal *Principal, projects []*Project) []*projectMod
 	}
 
 	return activityModels
+}
+
+func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
+	timespan := TimespanWeek
+	value := ""
+	if !params.Has("t") {
+		timespan = TimespanCustom
+	} else {
+		timespan = params.Get("t")
+	}
+
+	filter := &ActivityFilter{
+		Timespan: timespan,
+	}
+
+	if timespan != TimespanCustom && !params.Has("v") {
+		return nil, errors.New("missing timespan value")
+	}
+	value = params.Get("v")
+
+	switch timespan {
+	case TimespanYear:
+		start, err := time.Parse("2006", value)
+		if err != nil {
+			return nil, err
+		}
+		filter.start = start
+	case TimespanQuarter:
+		if !strings.Contains(value, "-") {
+			return nil, errors.New("invalid quarter")
+		}
+		valueParts := strings.Split(value, "-")
+		start, err := time.Parse("2006", valueParts[0])
+		if err != nil {
+			return nil, err
+		}
+
+		d := 24 * time.Hour
+		start.Truncate(d)
+
+		startQuarterOfYear, err := strconv.Atoi(valueParts[1])
+		if err != nil {
+			return nil, errors.New("invalid quarter")
+		}
+		filter.start = start.AddDate(0, 3*(startQuarterOfYear-1), 0)
+	case TimespanMonth:
+		start, err := time.Parse("2006-01", value)
+		if err != nil {
+			return nil, err
+		}
+		filter.start = start
+	case TimespanWeek:
+		if !strings.Contains(value, "-") {
+			return nil, errors.New("invalid week")
+		}
+		valueParts := strings.Split(value, "-")
+
+		startYear, err := strconv.Atoi(valueParts[0])
+		if err != nil {
+			return nil, err
+		}
+		startWeekOfYear, err := strconv.Atoi(valueParts[1])
+		if err != nil {
+			return nil, err
+		}
+
+		filter.start = isoweek.StartTime(startYear, startWeekOfYear, time.UTC)
+	case TimespanDay:
+		start, err := time.Parse("2006-01-02", value)
+		if err != nil {
+			return nil, err
+		}
+		filter.start = start
+	case TimespanCustom:
+		startParamValue := params.Get("start")
+		if startParamValue != "" {
+			startParam, err := util.ParseDate(startParamValue)
+			if err != nil {
+				return nil, err
+			}
+			filter.start = *startParam
+		}
+
+		endParamValue := params.Get("end")
+		if endParamValue != "" {
+			endParam, err := util.ParseDate(endParamValue)
+			if err != nil {
+				return nil, err
+			}
+			filter.end = *endParam
+		}
+	default:
+		return nil, errors.New("invalid activity filter")
+	}
+
+	return filter, nil
 }

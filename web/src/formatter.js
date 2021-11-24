@@ -22,6 +22,8 @@ export const asFilterLabel = (filter) => {
       return (
         filter.from.format("wo") + " Week " + filter.from.format("MMMM YYYY")
       );
+    case "day":
+      return filter.from.format("DD.MM.YYYY");
     default:
       return "?";
   }

@@ -56,7 +56,13 @@
   });
 </script>
 
-<div class="columns is-multiline">
+<style>
+#x {
+  padding: 0 1em 0 1em;
+}
+</style>
+
+<div id="x" class="columns is-multiline">
 
   <div class="column is-12">
     <div class="buttons">
@@ -113,7 +119,7 @@
     <div class="columns is-multiline">
       <div class="column is-4">
         {#if runningActivity}
-          <div on:click={stopActivity} class="button is-large">
+          <div on:click={stopActivity} class="button is-medium">
             <span class="icon is-medium">
               <i class="fa fa-stop" />
             </span>
@@ -152,7 +158,7 @@
       </div>
     </div>
   </div>
-  <div class="column is-12">
-    <Report />
-  </div>
 </div>
+
+
+<Report/>
