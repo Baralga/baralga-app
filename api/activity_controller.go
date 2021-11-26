@@ -320,7 +320,7 @@ func mapToProjectModels(principal *Principal, projects []*Project) []*projectMod
 }
 
 func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
-	timespan := TimespanWeek
+	var timespan string
 	value := ""
 	if !params.Has("t") {
 		timespan = TimespanCustom
