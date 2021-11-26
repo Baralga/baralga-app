@@ -322,7 +322,8 @@ func mapToProjectModels(principal *Principal, projects []*Project) []*projectMod
 func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 	var timespan string
 	value := ""
-	if !params.Has("t") {
+	fmt.Println(params["t"])
+	if len(params["t"]) == 0 {
 		timespan = TimespanCustom
 	} else {
 		timespan = params.Get("t")
@@ -332,7 +333,7 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		Timespan: timespan,
 	}
 
-	if timespan != TimespanCustom && !params.Has("v") {
+	if timespan != TimespanCustom && len(params["v"]) != 0 {
 		return nil, errors.New("missing timespan value")
 	}
 	value = params.Get("v")
