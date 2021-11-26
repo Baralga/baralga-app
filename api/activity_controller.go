@@ -333,7 +333,7 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		Timespan: timespan,
 	}
 
-	if timespan != TimespanCustom && len(params["v"]) != 0 {
+	if timespan != TimespanCustom && len(params["v"]) == 0 {
 		return nil, errors.New("missing timespan value")
 	}
 	value = params.Get("v")
