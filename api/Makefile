@@ -12,7 +12,7 @@ linter:
 	golangci-lint run
 
 test:
-	go test -v -timeout 30s -coverprofile=cover.out -cover ./...
+	go test -v -timeout 60s -coverprofile=cover.out -cover ./...
 	go tool cover -func=cover.out
 
 build: clean test
