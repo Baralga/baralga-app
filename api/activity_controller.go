@@ -71,7 +71,11 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 		if r.URL.Query().Get("contentType") == "text/csv" || r.Header.Get("Content-Type") == "text/csv" {
 			w.Header().Set("Content-Type", "text/csv")
 			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Activities_%v.csv\"", filter.String()))
-			a.WriteAsCSV(activities, projects, w)
+			err := a.WriteAsCSV(activities, projects, w)
+			if err != nil {
+				util.RenderProblemJSON(w, isProduction, err)
+				return
+			}
 			return
 		}
 
