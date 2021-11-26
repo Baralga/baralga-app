@@ -179,6 +179,27 @@ func TestHandleGetActivitiesWithTimespanUrlParams(t *testing.T) {
 	is.Equal(1, len(activitiesModel.ActivityModels))
 }
 
+func TestHandleGetActivitiesWithTimespanUrlParamsAsCSV(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config:             &config{},
+		ActivityRepository: NewInMemActivityRepository(),
+		ProjectRepository:  NewInMemProjectRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
+	r.Header.Set("Content-Type", "text/csv")
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleGetActivities()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	csv := httpRec.Body.String()
+	is.True(strings.Contains(csv, "Date"))
+}
+
 func TestHandleCreateActivity(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()

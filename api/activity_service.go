@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
+	"io"
 
 	"github.com/baralga/paged"
 	"github.com/google/uuid"
@@ -55,6 +57,43 @@ func (a *app) UpdateActivity(ctx context.Context, principal *Principal, activity
 		return a.ActivityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
 	}
 	return a.ActivityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+}
+
+func (a *app) WriteAsCSV(activities []*Activity, projects []*Project, w io.Writer) error {
+	csvWriter := csv.NewWriter(w)
+	csvWriter.Comma = ';'
+
+	defer csvWriter.Flush()
+
+	headers := []string{"Date", "Start", "End", "Project", "Description"}
+
+	err := csvWriter.Write(headers)
+	if err != nil {
+		return err
+	}
+
+	// prepare projects
+	projectsById := make(map[uuid.UUID]*Project)
+	for _, project := range projects {
+		projectsById[project.ID] = project
+	}
+
+	// write records for activities
+	for _, activity := range activities {
+		record := []string{
+			activity.Start.Format("2006-01-02"),
+			activity.Start.Format("15:04"),
+			activity.End.Format("15:04"),
+			projectsById[activity.ProjectID].Title,
+			activity.Description,
+		}
+		err := csvWriter.Write(record)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func distinctProjectIds(activitiesPage *ActivitiesPaged) []uuid.UUID {

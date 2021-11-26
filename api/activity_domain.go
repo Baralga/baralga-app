@@ -35,16 +35,20 @@ const (
 	TimespanCustom  string = "custom"
 )
 
+// Start returns the filter's start date
 func (f *ActivityFilter) Start() time.Time {
 	return f.start
 }
 
+// End returns the filter's end date
 func (f *ActivityFilter) End() time.Time {
 	switch f.Timespan {
 	case TimespanCustom:
 		return f.end
 	case TimespanDay:
 		return f.start.AddDate(0, 0, 1)
+	case TimespanWeek:
+		return f.start.AddDate(0, 0, 7)
 	case TimespanMonth:
 		return f.start.AddDate(0, 1, 0)
 	case TimespanQuarter:
@@ -53,6 +57,28 @@ func (f *ActivityFilter) End() time.Time {
 		return f.start.AddDate(1, 0, 0)
 	default:
 		return f.end
+	}
+}
+
+// End returns the filter's display name
+func (f *ActivityFilter) String() string {
+	switch f.Timespan {
+	case TimespanCustom:
+		return f.Start().Format("2006-01-02") + "_" + f.End().Format("2006-01-02")
+	case TimespanDay:
+		return f.Start().Format("2006-01-02")
+	case TimespanWeek:
+		y, w := f.Start().ISOWeek()
+		return fmt.Sprintf("%v-%v", y, w)
+	case TimespanMonth:
+		return f.Start().Format("2006-01")
+	case TimespanQuarter:
+		q := int(f.Start().Month()) / 3
+		return fmt.Sprintf("%v-%v", f.Start().Format("2006"), q)
+	case TimespanYear:
+		return f.Start().Format("2006")
+	default:
+		return "Custom"
 	}
 }
 

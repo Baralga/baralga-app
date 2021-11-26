@@ -68,6 +68,13 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 			return
 		}
 
+		if r.URL.Query().Get("contentType") == "text/csv" || r.Header.Get("Content-Type") == "text/csv" {
+			w.Header().Set("Content-Type", "text/csv")
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Activities_%v.csv\"", filter.String()))
+			a.WriteAsCSV(activities, projects, w)
+			return
+		}
+
 		activityModels := mapToActivityModels(activities)
 		projectModels := mapToProjectModels(principal, projects)
 

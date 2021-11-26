@@ -82,6 +82,15 @@ func TestActivityFilterEnd(t *testing.T) {
 		is.Equal(f.End(), expectedEnd)
 	})
 
+	t.Run("End with week filter", func(t *testing.T) {
+		expectedEnd := start.AddDate(0, 0, 7)
+		f = &ActivityFilter{
+			start:    start,
+			Timespan: TimespanWeek,
+		}
+		is.Equal(f.End(), expectedEnd)
+	})
+
 	t.Run("End with quarter filter", func(t *testing.T) {
 		expectedEnd := start.AddDate(0, 3, 0)
 		f = &ActivityFilter{
@@ -107,5 +116,63 @@ func TestActivityFilterEnd(t *testing.T) {
 			Timespan: TimespanDay,
 		}
 		is.Equal(f.End(), expectedEnd)
+	})
+}
+
+func TestActivityFilterSting(t *testing.T) {
+	is := is.New(t)
+
+	var f *ActivityFilter
+
+	start, _ := time.Parse(time.RFC3339, "2021-11-12T11:00:00.000Z")
+	end, _ := time.Parse(time.RFC3339, "2021-11-12T11:30:00.000Z")
+
+	t.Run("String with custom filter", func(t *testing.T) {
+		f = &ActivityFilter{
+			start:    start,
+			end:      end,
+			Timespan: TimespanCustom,
+		}
+		is.Equal(f.String(), "2021-11-12_2021-11-12")
+	})
+
+	t.Run("String with year filter", func(t *testing.T) {
+		f = &ActivityFilter{
+			start:    start,
+			Timespan: TimespanYear,
+		}
+		is.Equal(f.String(), "2021")
+	})
+
+	t.Run("String with week filter", func(t *testing.T) {
+		f = &ActivityFilter{
+			start:    start,
+			Timespan: TimespanWeek,
+		}
+		is.Equal(f.String(), "2021-45")
+	})
+
+	t.Run("String with quarter filter", func(t *testing.T) {
+		f = &ActivityFilter{
+			start:    start,
+			Timespan: TimespanQuarter,
+		}
+		is.Equal(f.String(), "2021-3")
+	})
+
+	t.Run("String with month filter", func(t *testing.T) {
+		f = &ActivityFilter{
+			start:    start,
+			Timespan: TimespanMonth,
+		}
+		is.Equal(f.String(), "2021-11")
+	})
+
+	t.Run("String with day filter", func(t *testing.T) {
+		f = &ActivityFilter{
+			start:    start,
+			Timespan: TimespanDay,
+		}
+		is.Equal(f.String(), "2021-11-12")
 	})
 }

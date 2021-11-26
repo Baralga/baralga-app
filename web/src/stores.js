@@ -152,7 +152,7 @@ export const reloadProjects = () => {
   });
 };
 
-const searchParamsForFilter = (filter) => {
+export const searchParamsForFilter = (filter) => {
   let searchParams = new URLSearchParams();
   let timespanValue = filter.from.format("YYYY-MM-DD");
 
