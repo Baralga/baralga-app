@@ -106,7 +106,7 @@ func (a *app) healthcheck() {
 			}),
 		},
 	))
-	a.Router.Handle("/healthcheck", h.Handler())
+	a.Router.Handle("/health", h.Handler())
 }
 
 func (a *app) routes() {
