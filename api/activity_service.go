@@ -65,7 +65,7 @@ func (a *app) WriteAsCSV(activities []*Activity, projects []*Project, w io.Write
 
 	defer csvWriter.Flush()
 
-	headers := []string{"Date", "Start", "End", "Project", "Description"}
+	headers := []string{"Date", "Start", "End", "Duration", "Project", "Description"}
 
 	err := csvWriter.Write(headers)
 	if err != nil {
@@ -84,6 +84,7 @@ func (a *app) WriteAsCSV(activities []*Activity, projects []*Project, w io.Write
 			activity.Start.Format("2006-01-02"),
 			activity.Start.Format("15:04"),
 			activity.End.Format("15:04"),
+			activity.DurationFormatted(),
 			projectsById[activity.ProjectID].Title,
 			activity.Description,
 		}
