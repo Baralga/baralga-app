@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/hellofresh/health-go/v4"
@@ -142,7 +143,7 @@ func (a *app) isProduction() bool {
 	return strings.ToLower(a.Config.Env) == "production"
 }
 
-func migrate(dbURL string) error {
+func migrateDb(dbURL string) error {
 	source, err := iofs.New(migrations, "migrations")
 	if err != nil {
 		return err
@@ -169,7 +170,7 @@ func migrate(dbURL string) error {
 }
 
 func connect(dbURL string) (*pgxpool.Pool, error) {
-	err := migrate(dbURL)
+	err := migrateDb(dbURL)
 	if err != nil {
 		return nil, err
 	}
