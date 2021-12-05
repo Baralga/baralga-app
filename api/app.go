@@ -14,7 +14,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/hellofresh/health-go/v4"
@@ -143,28 +142,37 @@ func (a *app) isProduction() bool {
 	return strings.ToLower(a.Config.Env) == "production"
 }
 
-func connect(dbURL string) (*pgxpool.Pool, error) {
+func migrate(dbURL string) error {
 	source, err := iofs.New(migrations, "migrations")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	m, err := migrate.NewWithSourceInstance("iofs", source, strings.Replace(dbURL, "postgres://", "pgx://", 1))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer m.Close()
 
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return nil, err
+		return err
 	}
 
 	version, dirty, err := m.Version()
 	if err != nil {
+		return err
+	}
+
+	log.Printf("running database version %v (dirty: %v)", version, dirty)
+	return nil
+}
+
+func connect(dbURL string) (*pgxpool.Pool, error) {
+	err := migrate(dbURL)
+	if err != nil {
 		return nil, err
 	}
-	log.Printf("running database version %v (dirty: %v)", version, dirty)
 
 	conn, err := pgxpool.Connect(context.Background(), dbURL)
 	if err != nil {
