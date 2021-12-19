@@ -2,7 +2,11 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"time"
 
+	"github.com/go-chi/jwtauth/v5"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,4 +37,20 @@ func (a *app) Authenticate(ctx context.Context, username, password string) (*Pri
 	}
 
 	return principal, nil
+}
+
+func (a *app) CreateCookie(tokenAuth *jwtauth.JWTAuth, expiryDuration time.Duration, principal *Principal) http.Cookie {
+	claims := mapPrincipalToClaims(principal)
+	claims[jwt.ExpirationKey] = expiryDuration
+
+	_, tokenString, _ := tokenAuth.Encode(claims)
+
+	return http.Cookie{
+		Name:     "jwt",
+		Value:    tokenString,
+		Expires:  time.Now().Add(expiryDuration),
+		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
+		Path:     "/",
+	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -60,6 +61,62 @@ func (f *ActivityFilter) End() time.Time {
 	}
 }
 
+func (f *ActivityFilter) Next() *ActivityFilter {
+	nextFilter := &ActivityFilter{
+		Timespan: f.Timespan,
+		start:    f.start,
+		end:      f.end,
+	}
+
+	switch nextFilter.Timespan {
+	case TimespanDay:
+		nextFilter.start = f.start.AddDate(0, 0, 1)
+		nextFilter.end = f.end.AddDate(0, 0, 1)
+	case TimespanWeek:
+		nextFilter.start = f.start.AddDate(0, 0, 7)
+		nextFilter.end = f.end.AddDate(0, 0, 7)
+	case TimespanMonth:
+		nextFilter.start = f.start.AddDate(0, 1, 0)
+		nextFilter.end = f.end.AddDate(0, 1, 0)
+	case TimespanQuarter:
+		nextFilter.start = f.start.AddDate(0, 3, 0)
+		nextFilter.end = f.end.AddDate(0, 3, 0)
+	case TimespanYear:
+		nextFilter.start = f.start.AddDate(1, 0, 0)
+		nextFilter.end = f.end.AddDate(1, 0, 0)
+	}
+
+	return nextFilter
+}
+
+func (f *ActivityFilter) Previous() *ActivityFilter {
+	previousFilter := &ActivityFilter{
+		Timespan: f.Timespan,
+		start:    f.start,
+		end:      f.end,
+	}
+
+	switch previousFilter.Timespan {
+	case TimespanDay:
+		previousFilter.start = f.start.AddDate(0, 0, -1)
+		previousFilter.end = f.end.AddDate(0, 0, -1)
+	case TimespanWeek:
+		previousFilter.start = f.start.AddDate(0, 0, -7)
+		previousFilter.end = f.end.AddDate(0, 0, -7)
+	case TimespanMonth:
+		previousFilter.start = f.start.AddDate(0, -1, 0)
+		previousFilter.end = f.end.AddDate(0, -1, 0)
+	case TimespanQuarter:
+		previousFilter.start = f.start.AddDate(0, -3, 0)
+		previousFilter.end = f.end.AddDate(0, -3, 0)
+	case TimespanYear:
+		previousFilter.start = f.start.AddDate(-1, 0, 0)
+		previousFilter.end = f.end.AddDate(-1, 0, 0)
+	}
+
+	return previousFilter
+}
+
 // End returns the filter's display name
 func (f *ActivityFilter) String() string {
 	switch f.Timespan {
@@ -73,10 +130,30 @@ func (f *ActivityFilter) String() string {
 	case TimespanMonth:
 		return f.Start().Format("2006-01")
 	case TimespanQuarter:
-		q := int(f.Start().Month()) / 3
+		q := int(math.Ceil(float64(f.Start().Month()) / 3))
 		return fmt.Sprintf("%v-%v", f.Start().Format("2006"), q)
 	case TimespanYear:
 		return f.Start().Format("2006")
+	default:
+		return "Custom"
+	}
+}
+
+func (f *ActivityFilter) NewValue() string {
+	now := time.Now()
+	switch f.Timespan {
+	case TimespanDay:
+		return now.Format("2006-01-02")
+	case TimespanWeek:
+		y, w := now.ISOWeek()
+		return fmt.Sprintf("%v-%v", y, w)
+	case TimespanMonth:
+		return now.Format("2006-01")
+	case TimespanQuarter:
+		q := int(now.Month()) / 3
+		return fmt.Sprintf("%v-%v", now.Format("2006"), q)
+	case TimespanYear:
+		return now.Format("2006")
 	default:
 		return "Custom"
 	}

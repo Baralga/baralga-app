@@ -62,7 +62,7 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 			return
 		}
 
-		activities, projects, err := a.ReadActivitiesWithProjects(r.Context(), principal, filter, pageParams)
+		activitiesPage, projects, err := a.ReadActivitiesWithProjects(r.Context(), principal, filter, pageParams)
 		if err != nil {
 			util.RenderProblemJSON(w, isProduction, err)
 			return
@@ -71,7 +71,7 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 		if r.URL.Query().Get("contentType") == "text/csv" || r.Header.Get("Content-Type") == "text/csv" {
 			w.Header().Set("Content-Type", "text/csv")
 			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Activities_%v.csv\"", filter.String()))
-			err := a.WriteAsCSV(activities, projects, w)
+			err := a.WriteAsCSV(activitiesPage.Activities, projects, w)
 			if err != nil {
 				util.RenderProblemJSON(w, isProduction, err)
 				return
@@ -79,7 +79,7 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 			return
 		}
 
-		activityModels := mapToActivityModels(activities)
+		activityModels := mapToActivityModels(activitiesPage.Activities)
 		projectModels := mapToProjectModels(principal, projects)
 
 		activitiesModel := &activitiesModel{
@@ -280,8 +280,8 @@ func mapToActivityModel(activity *Activity) *activityModel {
 	return &activityModel{
 		ID:          activity.ID.String(),
 		Description: activity.Description,
-		Start:       util.FormatDateTime(&activity.Start),
-		End:         util.FormatDateTime(&activity.End),
+		Start:       util.FormatDateTime(activity.Start),
+		End:         util.FormatDateTime(activity.End),
 		Links: hal.NewLinks(
 			hal.NewSelfLink(fmt.Sprintf("/api/activities/%s", activity.ID)),
 			hal.NewLink("delete", fmt.Sprintf("/api/activities/%s", activity.ID)),
@@ -322,21 +322,25 @@ func mapToProjectModels(principal *Principal, projects []*Project) []*projectMod
 func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 	var timespan string
 	value := ""
-	fmt.Println(params["t"])
 	if len(params["t"]) == 0 {
 		timespan = TimespanCustom
 	} else {
-		timespan = params.Get("t")
+		timespan = params["t"][0]
 	}
 
 	filter := &ActivityFilter{
 		Timespan: timespan,
 	}
 
-	if timespan != TimespanCustom && len(params["v"]) == 0 {
+	if timespan == TimespanCustom && len(params["start"]) == 0 && len(params["end"]) == 0 {
 		return nil, errors.New("missing timespan value")
 	}
-	value = params.Get("v")
+
+	if len(params["v"]) != 0 {
+		value = params["v"][0]
+	} else {
+		value = filter.NewValue()
+	}
 
 	switch timespan {
 	case TimespanYear:

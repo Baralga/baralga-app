@@ -604,9 +604,10 @@ func TestFilterFromQueryParams(t *testing.T) {
 		params := make(url.Values)
 		params.Add("t", "year")
 
-		_, err := filterFromQueryParams(params)
+		filter, err := filterFromQueryParams(params)
 
-		is.True(err != nil)
+		is.NoErr(err)
+		is.Equal(time.Now().Year(), filter.Start().Year())
 	})
 
 	t.Run("year filter from query params", func(t *testing.T) {

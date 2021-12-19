@@ -53,6 +53,6 @@ func TestFormatDateTime(t *testing.T) {
 
 	time, _ := ParseDateTime("2020-11-21T16:46:28.2328113")
 
-	formattedTime := FormatDateTime(time)
+	formattedTime := FormatDateTime(*time)
 	is.Equal(formattedTime, "2020-11-21T16:46:28.2328113")
 }

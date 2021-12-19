@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - '*'
-    branches:
-      - feature/mvp
       
 permissions:
   contents: write

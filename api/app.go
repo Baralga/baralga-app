@@ -33,6 +33,15 @@ type config struct {
 	JWTExpiry string `default:"1d"`
 }
 
+func (c *config) ExpiryDuration() time.Duration {
+	expiryDuration, err := time.ParseDuration("1d")
+	if err != nil {
+		log.Printf("could not parse jwt expiry %v", c.JWTExpiry)
+		expiryDuration = time.Duration(24 * time.Hour)
+	}
+	return expiryDuration
+}
+
 type app struct {
 	Router *chi.Mux
 	Conn   *pgx.Conn
@@ -110,13 +119,15 @@ func (a *app) healthcheck() {
 }
 
 func (a *app) routes() {
-	a.Router.Mount("/api", a.apiRouter())
+	tokenAuth := jwtauth.New("HS256", []byte(a.Config.JWTSecret), nil)
+
+	a.Router.Mount("/api", a.apiRouter(tokenAuth))
+	a.webRouter(tokenAuth)
 }
 
-func (a *app) apiRouter() http.Handler {
+func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	r := chi.NewRouter()
 
-	tokenAuth := jwtauth.New("HS256", []byte(a.Config.JWTSecret), nil)
 	r.Post("/auth/login", a.HandleLogin(tokenAuth))
 
 	r.Group(func(r chi.Router) {
@@ -137,6 +148,27 @@ func (a *app) apiRouter() http.Handler {
 	})
 
 	return r
+}
+
+func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
+	a.Router.Group(func(r chi.Router) {
+		r.Use(WebVerifier(tokenAuth))
+		r.Use(a.JWTPrincipalHandler())
+
+		r.Get("/", a.HandleIndexPage())
+		r.Get("/reports", a.HandleReportPage())
+		r.Get("/projects", a.HandleProjectsPage())
+		r.Post("/projects/new", a.HandleProjectForm())
+		r.Get("/activities/new", a.HandleActivityAddPage())
+		r.Get("/activities/{activity-id}/edit", a.HandleActivityEditPage())
+		r.Post("/activities/new", a.HandleActivityForm())
+		r.Post("/activities/{activity-id}", a.HandleActivityForm())
+		r.Post("/activities/track", a.HandleActivityTrackForm())
+	})
+
+	a.Router.Get("/login", a.HandleLoginPage())
+	a.Router.Post("/login", a.HandleLoginForm(tokenAuth))
+	//	a.Router.Get("/", a.HandleIndexPage())
 }
 
 func (a *app) isProduction() bool {

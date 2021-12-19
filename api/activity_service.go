@@ -10,7 +10,7 @@ import (
 )
 
 // ReadActivitiesWithProjects reads activities with their associated projects
-func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Principal, filter *ActivityFilter, pageParams *paged.PageParams) ([]*Activity, []*Project, error) {
+func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Principal, filter *ActivityFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	activitiesFilter := &ActivitiesFilter{
 		Start:          filter.Start(),
 		End:            filter.End(),
@@ -32,7 +32,7 @@ func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Princip
 		return nil, nil, err
 	}
 
-	return activitiesPage.Activities, projects, err
+	return activitiesPage, projects, err
 }
 
 // CreateActivity creates a new activity

@@ -1,5 +1,5 @@
 runtime: go116
-service: backend
+service: default
 
 handlers:
 - url: /api/*
