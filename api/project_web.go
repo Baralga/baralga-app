@@ -169,15 +169,12 @@ func ProjectsView(projects *ProjectsPaged) g.Node {
 func ProjectForm(projectFormModel projectFormModel, errorMessage string) g.Node {
 	return FormEl(
 		ID("project_form"),
-		Class("mb-5"),
+		Class("mb-4 mt-2"),
 		hx.Post("/projects/new"),
 		hx.Target("#baralga__main_content_modal_content"),
 		hx.Swap("outerHTML"),
 
 		hx.Swap("innerHTML"),
-		H6(
-			g.Text("Add Project"),
-		),
 		Div(
 			Class("input-group mb-3"),
 			Input(
@@ -194,6 +191,7 @@ func ProjectForm(projectFormModel projectFormModel, errorMessage string) g.Node 
 			Button(
 				Class("btn btn-outline-primary"),
 				g.Attr("for", "ProjectTitle"),
+				TitleAttr("Add Project"),
 				I(Class("bi-plus")),
 			),
 		),
