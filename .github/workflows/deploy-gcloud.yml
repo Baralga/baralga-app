@@ -32,4 +32,4 @@ jobs:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy api/app.yaml --quiet
+          args: app deploy api/app.yaml api/dispatch.yaml --quiet
