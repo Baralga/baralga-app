@@ -3,15 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/baralga/util"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/jwt"
 	"schneider.vip/problem"
 )
 
@@ -26,12 +23,7 @@ type loginResponseModel struct {
 
 // HandleLogin handles the authentication request of a user
 func (a *app) HandleLogin(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
-	expiryDuration, err := time.ParseDuration("1d")
-	if err != nil {
-		log.Printf("could not parse jwt expiry %v", a.Config.JWTExpiry)
-		expiryDuration = time.Duration(24 * time.Hour)
-	}
-
+	expiryDuration := a.Config.ExpiryDuration()
 	return func(w http.ResponseWriter, r *http.Request) {
 		var loginModel loginModel
 		err := json.NewDecoder(r.Body).Decode(&loginModel)
@@ -46,22 +38,10 @@ func (a *app) HandleLogin(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 			return
 		}
 
-		claims := mapPrincipalToClaims(principal)
-		claims[jwt.ExpirationKey] = expiryDuration
-
-		_, tokenString, _ := tokenAuth.Encode(claims)
-		loginResponseModel := &loginResponseModel{AccessToken: tokenString}
-
-		cookie := http.Cookie{
-			Name:     "jwt",
-			Value:    tokenString,
-			Expires:  time.Now().Add(expiryDuration),
-			SameSite: http.SameSiteLaxMode,
-			Secure:   true,
-			Path:     "/",
-		}
+		cookie := a.CreateCookie(tokenAuth, expiryDuration, principal)
 		http.SetCookie(w, &cookie)
 
+		loginResponseModel := &loginResponseModel{AccessToken: cookie.Value}
 		util.RenderJSON(w, loginResponseModel)
 	}
 }

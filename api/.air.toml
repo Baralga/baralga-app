@@ -1,0 +1,2 @@
+[build]
+exclude_dir = ["dist", "tmp", "build", "ci-util"]

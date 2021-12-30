@@ -230,6 +230,8 @@ func (a *app) HandleDeleteProject() http.HandlerFunc {
 			util.RenderProblemJSON(w, isProduction, err)
 			return
 		}
+
+		w.Header().Set("HX-Trigger", "{ \"baralga__activities-changed\": true, \"baralga__projects-changed\": true } ")
 	}
 }
 

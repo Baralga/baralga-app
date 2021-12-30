@@ -157,7 +157,7 @@ func TestActivityFilterSting(t *testing.T) {
 			start:    start,
 			Timespan: TimespanQuarter,
 		}
-		is.Equal(f.String(), "2021-3")
+		is.Equal(f.String(), "2021-4")
 	})
 
 	t.Run("String with month filter", func(t *testing.T) {
