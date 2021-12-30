@@ -93,7 +93,7 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		}
 
 		if hx.IsHXTargetRequest(r, "baralga__main_content") {
-			util.RenderHTML(w, Div(ActivitiesInWeekView(filter.String(), activitiesPage, projects)))
+			util.RenderHTML(w, Div(ActivitiesInWeekView(filter, activitiesPage, projects)))
 			return
 		}
 
@@ -102,7 +102,7 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 			currentPath: r.URL.Path,
 			title:       "Track Activities",
 		}
-		util.RenderHTML(w, IndexPage(pageContext, filter.String(), activitiesPage, projects))
+		util.RenderHTML(w, IndexPage(pageContext, filter, activitiesPage, projects))
 	}
 }
 
@@ -203,7 +203,15 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 				H5(
 					StyleAttr("min-width: 10rem"),
 					Class("text-muted"),
-					g.Text(filter.String()),
+					Span(
+						g.Text(filter.String()),
+					),
+					g.If(filter.Timespan != TimespanDay,
+						Span(
+							Class("ms-4 d-none d-lg-inline"),
+							g.Text(filter.StringFormatted()),
+						),
+					),
 				),
 			),
 			Div(
@@ -352,7 +360,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 	)
 }
 
-func IndexPage(pageContext *pageContext, filterTitle string, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
+func IndexPage(pageContext *pageContext, filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
 	return Page(
 		pageContext.title,
 		pageContext.currentPath,
@@ -372,7 +380,7 @@ func IndexPage(pageContext *pageContext, filterTitle string, activitiesPage *Act
 						hx.Trigger("baralga__activities-changed from:body"),
 						hx.Get("/"),
 
-						ActivitiesInWeekView(filterTitle, activitiesPage, projects),
+						ActivitiesInWeekView(filter, activitiesPage, projects),
 					),
 					Div(Class("col-lg-4 col-sm-12"),
 						TrackPanel(projects.Projects, activityTrackFormModel{Action: "start"}),
@@ -412,7 +420,7 @@ func ModalView() g.Node {
 	})
 }
 
-func ActivitiesInWeekView(filterTitle string, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
+func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
 	// prepare projects
 	projectsById := make(map[uuid.UUID]*Project)
 	for _, project := range projects.Projects {
@@ -420,11 +428,15 @@ func ActivitiesInWeekView(filterTitle string, activitiesPage *ActivitiesPaged, p
 	}
 	nodes := []g.Node{
 		Div(
-			Class("d-flex justify-content-between"),
+			Class("mb-4 d-flex justify-content-between"),
 			H2(
-				Class("mb-4"),
-				g.Text("My Week "),
-				Small(Class("text-muted"), g.Text(filterTitle)),
+				g.Text(
+					filter.StringFormatted(),
+				),
+				Small(
+					Class("ms-4 text-muted"),
+					g.Text("My Week "),
+				),
 			),
 			Div(
 				A(
@@ -472,9 +484,16 @@ func ActivitiesInWeekView(filterTitle string, activitiesPage *ActivitiesPaged, p
 						Class("card-subtitle mt-2"),
 						Div(
 							Class("d-flex justify-content-between mb-2"),
-							Span(
+							Div(
 								Class("flex-grow-1 text-muted"),
-								g.Text(activity.Start.Format("Monday")),
+								Span(
+									g.Text(activity.Start.Format("Monday")),
+								),
+								Span(
+									Class("ms-2"),
+									StyleAttr("opacity: .45; font-size: 80%;"),
+									g.Text(util.FormatDateDEShort(activity.Start)),
+								),
 							),
 							A(
 								hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),

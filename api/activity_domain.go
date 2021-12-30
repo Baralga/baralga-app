@@ -5,6 +5,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/baralga/util"
 	"github.com/google/uuid"
 )
 
@@ -136,6 +137,25 @@ func (f *ActivityFilter) String() string {
 		return f.Start().Format("2006")
 	default:
 		return "Custom"
+	}
+}
+
+func (f *ActivityFilter) StringFormatted() string {
+	switch f.Timespan {
+	case TimespanCustom:
+		return fmt.Sprintf(
+			"%v - %v",
+			util.FormatDateDEShort(f.Start()),
+			util.FormatDateDEShort(f.End()),
+		)
+	case TimespanDay:
+		return util.FormatDateDEShort(f.Start())
+	default:
+		return fmt.Sprintf(
+			"%v - %v",
+			util.FormatDateDEShort(f.Start()),
+			util.FormatDateDEShort(f.End().AddDate(0, 0, -1)),
+		)
 	}
 }
 
