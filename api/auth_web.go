@@ -137,17 +137,17 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 			Class("row justify-content-around mt-2"),
 			Div(
 				Class("col-4 text-center"),
-				A(
-					Class("link-secondary"),
-					g.Text("Forgot Password?"),
-				),
+				//A(
+				//	Class("link-secondary"),
+				//	g.Text("Forgot Password?"),
+				//),
 			),
 			Div(
 				Class("col-4 text-center"),
-				A(
-					Class("link-secondary"),
-					g.Text("Sign Up?"),
-				),
+				//A(
+				//	Class("link-secondary"),
+				//	g.Text("Sign Up?"),
+				//),
 			),
 		),
 	)
