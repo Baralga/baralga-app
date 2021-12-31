@@ -6,14 +6,16 @@ import (
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/util"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
 )
 
 type loginFormModel struct {
-	Username string
-	Password string
+	CSRFToken string
+	Username  string
+	Password  string
 }
 
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
@@ -25,17 +27,18 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 			util.RenderProblemHTML(w, isProduction, err)
 		}
 
-		var loginFormModel loginFormModel
-		err = schema.NewDecoder().Decode(&loginFormModel, r.PostForm)
+		var formModel loginFormModel
+		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
-		principal, err := a.Authenticate(r.Context(), loginFormModel.Username, loginFormModel.Password)
+		principal, err := a.Authenticate(r.Context(), formModel.Username, formModel.Password)
 		if err != nil {
-			_ = LoginPage("Sign In", r.URL.Path).Render(w)
+			formModel.CSRFToken = csrf.Token(r)
+			util.RenderHTML(w, LoginPage("Sign In", r.URL.Path, formModel))
 			return
 		}
 
@@ -48,11 +51,13 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 
 func (a *app) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.RenderHTML(w, LoginPage("Sign In", r.URL.Path))
+		formModel := loginFormModel{}
+		formModel.CSRFToken = csrf.Token(r)
+		util.RenderHTML(w, LoginPage("Sign In", r.URL.Path, formModel))
 	}
 }
 
-func LoginPage(title, currentPath string) g.Node {
+func LoginPage(title, currentPath string, formModel loginFormModel) g.Node {
 	return Page(
 		title,
 		currentPath,
@@ -60,14 +65,14 @@ func LoginPage(title, currentPath string) g.Node {
 			Section(
 				Class("full-center"),
 				Div(Class("container"),
-					LoginForm(loginFormModel{}, ""),
+					LoginForm(formModel, ""),
 				),
 			),
 		},
 	)
 }
 
-func LoginForm(loginFormModel loginFormModel, errorMessage string) g.Node {
+func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 	return FormEl(
 		ID("login_form"),
 		Action("/login"),
@@ -86,6 +91,11 @@ func LoginForm(loginFormModel loginFormModel, errorMessage string) g.Node {
 				Span(g.Text(errorMessage)),
 			),
 		),
+		Input(
+			Type("hidden"),
+			Name("CSRFToken"),
+			Value(formModel.CSRFToken),
+		),
 		Div(
 			Class("form-floating mb-3"),
 			Input(
@@ -94,7 +104,7 @@ func LoginForm(loginFormModel loginFormModel, errorMessage string) g.Node {
 				Name("Username"),
 				Class("form-control"),
 				g.Attr("placeholder", "john.doe"),
-				Value(loginFormModel.Username),
+				Value(formModel.Username),
 			),
 			Label(
 				g.Attr("for", "username"),

@@ -17,6 +17,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/gorilla/csrf"
 	"github.com/hellofresh/health-go/v4"
 	healthPgx4 "github.com/hellofresh/health-go/v4/checks/pgx4"
 	"github.com/jackc/pgx/v4"
@@ -151,9 +152,11 @@ func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 }
 
 func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
+	CSRF := csrf.Protect([]byte("32-byte-long-auth-key"), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
 	a.Router.Group(func(r chi.Router) {
 		r.Use(WebVerifier(tokenAuth))
 		r.Use(a.JWTPrincipalHandler())
+		r.Use(CSRF)
 
 		r.Get("/", a.HandleIndexPage())
 		r.Get("/reports", a.HandleReportPage())
@@ -166,9 +169,12 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Post("/activities/track", a.HandleActivityTrackForm())
 	})
 
-	a.Router.Get("/login", a.HandleLoginPage())
-	a.Router.Post("/login", a.HandleLoginForm(tokenAuth))
-	//	a.Router.Get("/", a.HandleIndexPage())
+	a.Router.Group(func(r chi.Router) {
+		r.Use(CSRF)
+
+		r.Get("/login", a.HandleLoginPage())
+		r.Post("/login", a.HandleLoginForm(tokenAuth))
+	})
 }
 
 func (a *app) isProduction() bool {

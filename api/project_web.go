@@ -7,14 +7,16 @@ import (
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
 )
 
 type projectFormModel struct {
-	ID    string
-	Title string
+	CSRFToken string
+	ID        string
+	Title     string
 }
 
 func (a *app) HandleProjectsPage() http.HandlerFunc {
@@ -39,13 +41,20 @@ func (a *app) HandleProjectsPage() http.HandlerFunc {
 				currentPath: r.URL.Path,
 				title:       "Projects",
 			}
-			util.RenderHTML(w, ProjectsPage(pageContext, projects))
+
+			formModel := projectFormModel{}
+			formModel.CSRFToken = csrf.Token(r)
+
+			util.RenderHTML(w, ProjectsPage(pageContext, formModel, projects))
 			return
 		}
 
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
 
-		util.RenderHTML(w, ProjectsView(projects))
+		formModel := projectFormModel{}
+		formModel.CSRFToken = csrf.Token(r)
+
+		util.RenderHTML(w, ProjectsView(formModel, projects))
 	}
 }
 
@@ -88,11 +97,14 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 
 		w.Header().Set("HX-Trigger", "baralga__projects-changed")
 
-		util.RenderHTML(w, ProjectsView(projects))
+		formModel = projectFormModel{}
+		formModel.CSRFToken = csrf.Token(r)
+
+		util.RenderHTML(w, ProjectsView(formModel, projects))
 	}
 }
 
-func ProjectsPage(pageContext *pageContext, projects *ProjectsPaged) g.Node {
+func ProjectsPage(pageContext *pageContext, formModel projectFormModel, projects *ProjectsPaged) g.Node {
 	return Page(
 		pageContext.title,
 		pageContext.currentPath,
@@ -105,14 +117,14 @@ func ProjectsPage(pageContext *pageContext, projects *ProjectsPaged) g.Node {
 					Div(
 						Class("mt-4 mb-4"),
 					),
-					ProjectsView(projects),
+					ProjectsView(formModel, projects),
 				),
 			),
 		},
 	)
 }
 
-func ProjectsView(projects *ProjectsPaged) g.Node {
+func ProjectsView(formModel projectFormModel, projects *ProjectsPaged) g.Node {
 	return Div(
 		ID("baralga__main_content_modal_content"),
 		Class("modal-content"),
@@ -130,7 +142,7 @@ func ProjectsView(projects *ProjectsPaged) g.Node {
 		),
 		Div(
 			Class("modal-body"),
-			ProjectForm(projectFormModel{}, ""),
+			ProjectForm(formModel, ""),
 			g.Group(
 				g.Map(len(projects.Projects), func(i int) g.Node {
 					project := projects.Projects[i]
@@ -166,7 +178,7 @@ func ProjectsView(projects *ProjectsPaged) g.Node {
 	)
 }
 
-func ProjectForm(projectFormModel projectFormModel, errorMessage string) g.Node {
+func ProjectForm(formModel projectFormModel, errorMessage string) g.Node {
 	return FormEl(
 		ID("project_form"),
 		Class("mb-4 mt-2"),
@@ -174,7 +186,14 @@ func ProjectForm(projectFormModel projectFormModel, errorMessage string) g.Node 
 		hx.Target("#baralga__main_content_modal_content"),
 		hx.Swap("outerHTML"),
 
-		hx.Swap("innerHTML"),
+		//hx.Swap("innerHTML"),
+
+		Input(
+			Type("hidden"),
+			Name("CSRFToken"),
+			Value(formModel.CSRFToken),
+		),
+
 		Div(
 			Class("input-group mb-3"),
 			Input(
@@ -183,7 +202,7 @@ func ProjectForm(projectFormModel projectFormModel, errorMessage string) g.Node 
 				Name("Title"),
 				MinLength("3"),
 				MaxLength("100"),
-				Value(projectFormModel.Title),
+				Value(formModel.Title),
 				g.Attr("required", "required"),
 				Class("form-control"),
 				g.Attr("placeholder", "My new Project"),

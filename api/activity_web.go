@@ -10,6 +10,7 @@ import (
 	"github.com/baralga/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
@@ -17,6 +18,7 @@ import (
 )
 
 type activityFormModel struct {
+	CSRFToken   string
 	ID          string
 	ProjectID   string
 	Date        string
@@ -67,14 +69,17 @@ func (a *app) HandleActivityAddPage() http.HandlerFunc {
 			title:       "Add Activity",
 		}
 		activityFormModel := newActivityFormModel()
+		activityFormModel.CSRFToken = csrf.Token(r)
 
 		if !hx.IsHXRequest(r) {
+			activityFormModel.CSRFToken = csrf.Token(r)
 			util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
 			return
 		}
 
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
 
+		activityFormModel.CSRFToken = csrf.Token(r)
 		util.RenderHTML(w, ActivityForm(activityFormModel, projects, ""))
 	}
 }
@@ -116,12 +121,14 @@ func (a *app) HandleActivityEditPage() http.HandlerFunc {
 		formModel := mapActivityToForm(*activity)
 
 		if !hx.IsHXRequest(r) {
+			formModel.CSRFToken = csrf.Token(r)
 			_ = ActivityAddPage(pageContext, formModel, projects).Render(w)
 			return
 		}
 
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
 
+		formModel.CSRFToken = csrf.Token(r)
 		util.RenderHTML(w, ActivityForm(formModel, projects, ""))
 	}
 }
@@ -257,6 +264,7 @@ func (a *app) HandleActivityForm() http.HandlerFunc {
 			}
 
 			if hx.IsHXRequest(r) {
+				activityFormModel.CSRFToken = csrf.Token(r)
 				util.RenderHTML(w, ActivityForm(activityFormModel, projects, ""))
 				return
 			}
@@ -267,6 +275,7 @@ func (a *app) HandleActivityForm() http.HandlerFunc {
 				title:       "Add Activity",
 			}
 			activityFormModel := newActivityFormModel()
+			activityFormModel.CSRFToken = csrf.Token(r)
 			util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
 		}
 
@@ -346,6 +355,11 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 					Name("ID"),
 					Value(formModel.ID),
 				),
+			),
+			Input(
+				Type("hidden"),
+				Name("CSRFToken"),
+				Value(formModel.CSRFToken),
 			),
 			Div(
 				Class("mb-3"),
