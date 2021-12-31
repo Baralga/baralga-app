@@ -81,6 +81,7 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 			Class("mt-4 mb-4"),
 			Img(
 				Class("img-responsive center-block d-block mx-auto"),
+				Src("/assets/baralga_192.png"),
 			),
 		),
 		g.If(

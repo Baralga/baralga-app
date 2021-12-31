@@ -12,8 +12,8 @@
             "program": "${fileDirname}",
             "env": {
                 "BARALGA_JWTSECRET": "my***secret",
-                "PORT": "9090"
-            }        
+                "PORT": "8080"
+            }
         }
     ]
 }

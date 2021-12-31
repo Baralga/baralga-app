@@ -569,15 +569,24 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 				g.Attr("color-scheme", "light dark"),
 			),
 			Link(
-				Rel("stylesheet"), Href("https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-dark.min.css"),
-				//				g.Attr("integrity", "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"),
+				Rel("stylesheet"),
+				Href("https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-dark.min.css"),
 				g.Attr("crossorigin", "anonymous"),
 			),
 			Link(
-				Rel("stylesheet"), Href("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"),
+				Rel("stylesheet"),
+				Href("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"),
 				g.Attr("media", "print"),
 				g.Attr("onload", "this.media='all'"),
 				g.Attr("crossorigin", "anonymous"),
+			),
+			Link(
+				Rel("shortcut icon"),
+				Href("/assets/favicon.png"),
+			),
+			Link(
+				Rel("apple-touch-icon"),
+				Href("/assets/baralga_192.png"),
 			),
 			Script(
 				Src("https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"),
@@ -597,27 +606,36 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 
 func Navbar(pageContext *pageContext) g.Node {
 	return Nav(
-		Class("navbar navbar-expand-lg navbar-light bg-dark"),
+		Class("container-xxl flex-wrap flex-md-nowrap navbar navbar-expand-lg navbar-light bg-dark"),
 		hx.Boost(),
+		A(
+			Class("navbar-brand p-0 me-2"), Href("/"),
+			Img(
+				Src("assets/baralga_48.png"),
+			),
+		),
+		Button(
+			Class("navbar-toggler"), Type("button"),
+			g.Attr("data-bs-toggle", "collapse"),
+			g.Attr("data-bs-target", "#navbarSupportedContent"),
+			Span(Class("navbar-toggler-icon")),
+		),
 		Div(
-			Class("container-fluid"),
-			A(
-				Class("navbar-brand"), Href("/"),
-				g.Text("baralga"),
+			ID("navbarSupportedContent"),
+			Class("collapse navbar-collapse"),
+			Ul(
+				Class("navbar-nav flex-row flex-wrap bd-navbar-nav pt-2 py-md-0"),
+				NavbarLi("/", "Track", pageContext.currentPath),
+				NavbarLi("/reports", "Report", pageContext.currentPath),
 			),
-			Button(
-				Class("navbar-toggler"), Type("button"),
-				g.Attr("data-bs-toggle", "collapse"),
-				g.Attr("data-bs-target", "#navbarSupportedContent"),
-				Span(Class("navbar-toggler-icon")),
+			Hr(
+				Class("d-md-none text-white-50"),
 			),
-			Div(
-				ID("navbarSupportedContent"),
-				Class("collapse navbar-collapse"),
-				Ul(
-					Class("navbar-nav me-auto mb-2 mb-lg-0"),
-					NavbarLi("/", "Track", pageContext.currentPath),
-					NavbarLi("/reports", "Report", pageContext.currentPath),
+			Ul(
+				Class("navbar-nav flex-row flex-wrap ms-md-auto"),
+				Li(
+					Class("nav-item col-6 col-md-auto"),
+					I(Class("bi-person-fill")),
 				),
 			),
 		),
@@ -626,7 +644,7 @@ func Navbar(pageContext *pageContext) g.Node {
 
 func NavbarLi(href, name, currentPath string) g.Node {
 	return Li(
-		Class("nav-item"),
+		Class("nav-item col-6 col-md-auto"),
 		A(
 			Class("nav-link active"),
 			Href(href),

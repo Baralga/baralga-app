@@ -57,6 +57,9 @@ type app struct {
 //go:embed migrations
 var migrations embed.FS
 
+//go:embed assets
+var assets embed.FS
+
 func newApp() (*app, error) {
 	var c config
 	err := envconfig.Process("baralga", &c)
@@ -153,6 +156,8 @@ func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 }
 
 func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
+	a.Router.Mount("/assets/", http.FileServer(http.FS(assets)))
+
 	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
 	a.Router.Group(func(r chi.Router) {
 		r.Use(WebVerifier(tokenAuth))
