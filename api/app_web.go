@@ -433,14 +433,28 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 	}
 	nodes := []g.Node{
 		Div(
-			Class("mb-4 d-flex justify-content-between"),
-			H2(
-				g.Text(
-					filter.StringFormatted(),
-				),
-				Small(
-					Class("ms-4 text-muted"),
-					g.Text("My Week "),
+			Class("mb-4 d-flex"),
+			Div(
+				Class("flex-fill"),
+				H2(
+					Span(
+						StyleAttr("white-space: nowrap;"),
+
+						g.Text(
+							filter.StringFormatted(),
+						),
+					),
+					Br(
+						Class("d-block d-md-none"),
+					),
+					Span(
+						Class("ms-4 d-none d-md-inline"),
+					),
+					Small(
+						StyleAttr("white-space: nowrap;"),
+						Class("text-muted"),
+						g.Text("My Week "),
+					),
 				),
 			),
 			Div(
@@ -452,6 +466,8 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 					I(Class("bi-card-list")),
 					TitleAttr("Manage Projects"),
 				),
+			),
+			Div(
 				A(
 					hx.Target("#baralga__main_content_modal_content"),
 					hx.Swap("outerHTML"),
