@@ -17,6 +17,7 @@ The backend is configured using the following environment variables:
 | `BARALGA_DB`      | `postgres://postgres:postgres@localhost:5432/baralga`| PostgreSQL Connection string for database |
 | `PORT` | `8080`      |    http server port |
 | `BARALGA_JWTSECRET` | `secret`      |    Random secret for JWT generation |
+| `BARALGA_CSRFSECRET` | `CSRFsecret`      |    Random secret for CSRF protection |
 | `BARALGA_ENV` | `dev`      |    use `production` for production mode |
 
 
