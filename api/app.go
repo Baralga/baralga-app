@@ -64,8 +64,8 @@ func newApp() (*app, error) {
 		log.Fatal(err.Error())
 	}
 	port := os.Getenv("PORT")
-	if port == "" {
-		c.BindPort = "8080"
+	if port != "" {
+		c.BindPort = port
 	}
 
 	router := chi.NewRouter()
