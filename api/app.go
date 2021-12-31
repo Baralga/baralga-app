@@ -30,8 +30,9 @@ type config struct {
 	Db       string `default:"postgres://postgres:postgres@localhost:5432/baralga"`
 	Env      string `default:"dev"`
 
-	JWTSecret string `default:"secret"`
-	JWTExpiry string `default:"1d"`
+	JWTSecret  string `default:"secret"`
+	JWTExpiry  string `default:"1d"`
+	CSRFSecret string `default:"CSRFsecret"`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
@@ -152,7 +153,7 @@ func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 }
 
 func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
-	CSRF := csrf.Protect([]byte("32-byte-long-auth-key"), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
+	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
 	a.Router.Group(func(r chi.Router) {
 		r.Use(WebVerifier(tokenAuth))
 		r.Use(a.JWTPrincipalHandler())

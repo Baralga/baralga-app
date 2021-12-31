@@ -28,6 +28,8 @@ type activityFormModel struct {
 }
 
 type activityTrackFormModel struct {
+	CSRFToken string
+
 	Action   string
 	Duration string
 
@@ -186,6 +188,7 @@ func (a *app) HandleActivityTrackForm() http.HandlerFunc {
 				}
 			}
 
+			formModel.CSRFToken = csrf.Token(r)
 			util.RenderHTML(w, TrackPanel(projects, formModel))
 		} else if formModel.Action == "running" {
 			projects = []*Project{
@@ -227,6 +230,8 @@ func (a *app) HandleActivityTrackForm() http.HandlerFunc {
 			projects = projectsPage.Projects
 
 			formModel = activityTrackFormModel{Action: "start"}
+			formModel.CSRFToken = csrf.Token(r)
+
 			util.RenderHTML(w, TrackPanel(projects, formModel))
 		}
 	}
@@ -501,6 +506,12 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 			hx.Swap("outerHTML"),
 			hx.Trigger("baralga__projects-changed from:body"),
 			hx.Post("/activities/track?action=reload"),
+		),
+
+		Input(
+			Type("hidden"),
+			Name("CSRFToken"),
+			Value(formModel.CSRFToken),
 		),
 
 		g.If(formModel.Action == "running",

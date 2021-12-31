@@ -9,6 +9,7 @@ import (
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
 	"github.com/google/uuid"
+	"github.com/gorilla/csrf"
 	g "github.com/maragudk/gomponents"
 	c "github.com/maragudk/gomponents/components"
 	. "github.com/maragudk/gomponents/html"
@@ -102,7 +103,11 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 			currentPath: r.URL.Path,
 			title:       "Track Activities",
 		}
-		util.RenderHTML(w, IndexPage(pageContext, filter, activitiesPage, projects))
+
+		formModel := activityTrackFormModel{Action: "start"}
+		formModel.CSRFToken = csrf.Token(r)
+
+		util.RenderHTML(w, IndexPage(pageContext, formModel, filter, activitiesPage, projects))
 	}
 }
 
@@ -360,7 +365,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 	)
 }
 
-func IndexPage(pageContext *pageContext, filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
+func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
 	return Page(
 		pageContext.title,
 		pageContext.currentPath,
@@ -383,7 +388,7 @@ func IndexPage(pageContext *pageContext, filter *ActivityFilter, activitiesPage 
 						ActivitiesInWeekView(filter, activitiesPage, projects),
 					),
 					Div(Class("col-lg-4 col-sm-12"),
-						TrackPanel(projects.Projects, activityTrackFormModel{Action: "start"}),
+						TrackPanel(projects.Projects, formModel),
 					),
 				),
 			),
