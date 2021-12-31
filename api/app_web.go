@@ -135,15 +135,16 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 
 	return Div(
 		ID("baralga__report_content"),
-		Class("container mt-4"),
+		Class("container mt-2"),
 
 		hx.Trigger("baralga__activities-changed from:body"),
 		hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", filter.Timespan, filter.String())),
 		hx.Target("#baralga__report_content"),
 
 		Div(
-			Class("d-flex justify-content-between mb-4"),
+			Class("row mb-4"),
 			Div(
+				Class("col-md-4 col-12 mt-2"),
 				Select(
 					hx.Get("/reports"),
 					hx.Target("#baralga__report_content"),
@@ -178,35 +179,38 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 				),
 			),
 			Div(
-				Class("btn-group"),
-				Role("group"),
-				A(
-					hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", previousFilter.Timespan, previousFilter.String())),
-					hx.Target("#baralga__report_content"),
+				Class("col-md-4 col-6 text-center mt-2"),
+				Div(
+					Class("btn-group"),
+					Role("group"),
+					A(
+						hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", previousFilter.Timespan, previousFilter.String())),
+						hx.Target("#baralga__report_content"),
 
-					TitleAttr(previousFilter.String()),
-					Class("btn btn-outline-primary"),
-					I(Class("bi-arrow-left")),
-				),
-				A(
-					hx.Get(fmt.Sprintf("/reports?t=%v", filter.Timespan)),
-					hx.Target("#baralga__report_content"),
+						TitleAttr(previousFilter.String()),
+						Class("btn btn-outline-primary"),
+						I(Class("bi-arrow-left")),
+					),
+					A(
+						hx.Get(fmt.Sprintf("/reports?t=%v", filter.Timespan)),
+						hx.Target("#baralga__report_content"),
 
-					Class("btn btn-outline-primary"),
-					I(Class("bi-house-fill")),
-				),
-				A(
-					hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", nextFilter.Timespan, nextFilter.String())),
-					hx.Target("#baralga__report_content"),
+						Class("btn btn-outline-primary"),
+						I(Class("bi-house-fill")),
+					),
+					A(
+						hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", nextFilter.Timespan, nextFilter.String())),
+						hx.Target("#baralga__report_content"),
 
-					TitleAttr(nextFilter.String()),
-					Class("btn btn-outline-primary"),
-					I(Class("bi-arrow-right")),
+						TitleAttr(nextFilter.String()),
+						Class("btn btn-outline-primary"),
+						I(Class("bi-arrow-right")),
+					),
 				),
 			),
 			Div(
+				Class("col-md-3 col-3 mt-2"),
 				H5(
-					StyleAttr("min-width: 10rem"),
 					Class("text-muted"),
 					Span(
 						g.Text(filter.String()),
@@ -220,6 +224,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 				),
 			),
 			Div(
+				Class("col-1 text-end mt-2"),
 				A(
 					Href(
 						fmt.Sprintf("/api/activities?contentType=text/csv&t=%v&v=%v", filter.Timespan, filter.String()),
@@ -230,6 +235,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 				),
 			),
 		),
+
 		g.If(
 			len(activitiesPage.Activities) == 0,
 			Div(
