@@ -9,11 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}",
-            "showLog": true,
+            "program": "${fileDirname}",
             "env": {
-                "BARALGA_JWTSECRET": "my***secret"
-            }
+                "BARALGA_JWTSECRET": "my***secret",
+                "PORT": "9090"
+            }        
         }
     ]
 }
