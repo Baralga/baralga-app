@@ -21,15 +21,15 @@ jobs:
         with:
           go-version: 1.16
       - name: Generate app.yaml
-        working-directory: api
+        working-directory: . 
         run: make app.yaml
         env:
           BARALGA_DB: ${{ secrets.BARALGA_DB }}
           BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
-      - name: Deploy api + web
+      - name: Deploy
         uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy api/app.yaml api/dispatch.yaml --quiet
+          args: app deploy app.yaml dispatch.yaml --quiet

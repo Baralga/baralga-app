@@ -45,3 +45,7 @@ BARALGA_DB=postgres://postgres:postgres@localhost:5432/baralga
 ### Health Check
 
 A health check is available at `http://localhost:8080/health`.
+
+## TODO
+* use nicer icons
+* add manifest.json

@@ -1,7 +1,0 @@
-.DS_Store
-node_modules
-public/bundle.*
-.cache
-dist
-*iml
-.parcel-cache
