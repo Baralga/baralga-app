@@ -61,6 +61,41 @@ func (a *app) HandleReportPage() http.HandlerFunc {
 	}
 }
 
+func (a *app) HandleWebManifest() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/manifest+json")
+		w.Write(
+			[]byte(`
+			{
+				"short_name": "Baralga",
+				"name": "Baralga time tracker",
+				"icons": [
+				  {
+					"src": "assets/favicon.png",
+					"type": "image/x-icon",
+					"sizes": "64x64 32x32 24x24 16x16"
+				  },
+				  {
+					"src": "assets/baralga_192.png",
+					"type": "image/png",
+					"sizes": "192x192"
+				  },
+				  {
+					"src": "assets/baralga_512.png",
+					"type": "image/png",
+					"sizes": "512x512"
+				  }
+				],
+				"start_url": ".",
+				"display": "standalone",
+				"theme_color": "#000000",
+				"background_color": "#ffffff"
+			  }
+			`),
+		)
+	}
+}
+
 func (a *app) HandleIndexPage() http.HandlerFunc {
 	isProduction := a.isProduction()
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -587,6 +622,10 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			Link(
 				Rel("apple-touch-icon"),
 				Href("/assets/baralga_192.png"),
+			),
+			Link(
+				Rel("manifest"),
+				Href("manifest.webmanifest"),
 			),
 			Script(
 				Src("https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"),

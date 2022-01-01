@@ -157,6 +157,7 @@ func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 
 func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 	a.Router.Mount("/assets/", http.FileServer(http.FS(assets)))
+	a.Router.Get("/manifest.webmanifest", a.HandleWebManifest())
 
 	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
 	a.Router.Group(func(r chi.Router) {
