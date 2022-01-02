@@ -7,6 +7,7 @@ import (
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
@@ -16,7 +17,7 @@ import (
 type projectFormModel struct {
 	CSRFToken string
 	ID        string
-	Title     string
+	Title     string ` validate:"required,min=3,max=50"`
 }
 
 func (a *app) HandleProjectsPage() http.HandlerFunc {
@@ -60,48 +61,87 @@ func (a *app) HandleProjectsPage() http.HandlerFunc {
 
 func (a *app) HandleProjectForm() http.HandlerFunc {
 	isProduction := a.isProduction()
+	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
+		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
+
 		err := r.ParseForm()
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			a.renderProjectsView(
+				w,
+				r,
+				principal,
+				isProduction,
+				projectFormModel{},
+			)
 			return
 		}
 
 		var formModel projectFormModel
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			a.renderProjectsView(
+				w,
+				r,
+				principal,
+				isProduction,
+				projectFormModel{},
+			)
 			return
 		}
 
-		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
+		err = validator.Struct(formModel)
+		if err != nil {
+			a.renderProjectsView(
+				w,
+				r,
+				principal,
+				isProduction,
+				formModel,
+			)
+			return
+		}
 
 		projectToCreate := mapFormToProject(formModel)
-
 		_, err = a.CreateProject(r.Context(), principal, &projectToCreate)
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
-		pageParams := &paged.PageParams{
-			Page: 0,
-			Size: 50,
-		}
+		err = a.renderProjectsView(
+			w,
+			r,
+			principal,
+			isProduction,
+			projectFormModel{},
+		)
 
-		projects, err := a.ProjectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
 		w.Header().Set("HX-Trigger", "baralga__projects-changed")
-
-		formModel = projectFormModel{}
-		formModel.CSRFToken = csrf.Token(r)
-
-		util.RenderHTML(w, ProjectsView(formModel, projects))
 	}
+}
+
+func (a *app) renderProjectsView(w http.ResponseWriter, r *http.Request, principal *Principal, isProduction bool, formModel projectFormModel) error {
+	pageParams := &paged.PageParams{
+		Page: 0,
+		Size: 50,
+	}
+
+	projects, err := a.ProjectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
+	if err != nil {
+		return err
+	}
+
+	formModel.CSRFToken = csrf.Token(r)
+
+	util.RenderHTML(w, ProjectsView(formModel, projects))
+
+	return nil
 }
 
 func ProjectsPage(pageContext *pageContext, formModel projectFormModel, projects *ProjectsPaged) g.Node {

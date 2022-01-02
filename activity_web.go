@@ -9,6 +9,7 @@ import (
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
@@ -20,11 +21,11 @@ import (
 type activityFormModel struct {
 	CSRFToken   string
 	ID          string
-	ProjectID   string
-	Date        string
-	StartTime   string
-	EndTime     string
-	Description string
+	ProjectID   string `validate:"required"`
+	Date        string `validate:"required"`
+	StartTime   string `validate:"required,min=5,max=5"`
+	EndTime     string `validate:"required,min=5,max=5"`
+	Description string `validate:"required,min=0,max=500"`
 }
 
 type activityTrackFormModel struct {
@@ -239,49 +240,57 @@ func (a *app) HandleActivityTrackForm() http.HandlerFunc {
 
 func (a *app) HandleActivityForm() http.HandlerFunc {
 	isProduction := a.isProduction()
+	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := r.ParseForm()
-		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
-			return
-		}
-
-		var activityFormModel activityFormModel
-		err = schema.NewDecoder().Decode(&activityFormModel, r.PostForm)
-		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
-			return
-		}
-
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
 
-		activityNew, err := mapFormToActivity(activityFormModel)
+		err := r.ParseForm()
 		if err != nil {
-			pageParams := &paged.PageParams{
-				Page: 0,
-				Size: 50,
-			}
+			a.renderActivityAddView(
+				w,
+				r,
+				principal,
+				isProduction,
+				activityFormModel{},
+			)
+			return
+		}
 
-			projects, err := a.ProjectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
-			if err != nil {
-				util.RenderProblemHTML(w, isProduction, err)
-				return
-			}
+		var formModel activityFormModel
+		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
+		if err != nil {
+			a.renderActivityAddView(
+				w,
+				r,
+				principal,
+				isProduction,
+				activityFormModel{},
+			)
+			return
+		}
 
-			if hx.IsHXRequest(r) {
-				activityFormModel.CSRFToken = csrf.Token(r)
-				util.RenderHTML(w, ActivityForm(activityFormModel, projects, ""))
-				return
-			}
+		err = validator.Struct(formModel)
+		if err != nil {
+			a.renderActivityAddView(
+				w,
+				r,
+				principal,
+				isProduction,
+				formModel,
+			)
+			return
+		}
 
-			pageContext := &pageContext{
-				principal:   principal,
-				currentPath: r.URL.Path,
-				title:       "Add Activity",
-			}
-			activityFormModel := newActivityFormModel()
-			activityFormModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
+		activityNew, err := mapFormToActivity(formModel)
+		if err != nil {
+			a.renderActivityAddView(
+				w,
+				r,
+				principal,
+				isProduction,
+				formModel,
+			)
+			return
 		}
 
 		if uuid.Nil == activityNew.ID {
@@ -635,6 +644,34 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 			),
 		),
 	)
+}
+
+func (a *app) renderActivityAddView(w http.ResponseWriter, r *http.Request, principal *Principal, isProduction bool, formModel activityFormModel) {
+	pageParams := &paged.PageParams{
+		Page: 0,
+		Size: 50,
+	}
+
+	projects, err := a.ProjectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
+	if err != nil {
+		util.RenderProblemHTML(w, isProduction, err)
+		return
+	}
+
+	if hx.IsHXRequest(r) {
+		formModel.CSRFToken = csrf.Token(r)
+		util.RenderHTML(w, ActivityForm(formModel, projects, ""))
+		return
+	}
+
+	pageContext := &pageContext{
+		principal:   principal,
+		currentPath: r.URL.Path,
+		title:       "Add Activity",
+	}
+	activityFormModel := newActivityFormModel()
+	activityFormModel.CSRFToken = csrf.Token(r)
+	util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
 }
 
 func mapFormToActivity(formModel activityFormModel) (*Activity, error) {

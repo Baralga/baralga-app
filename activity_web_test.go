@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -52,4 +53,67 @@ func TestHandleActivityEditPage(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "<form"))
+}
+
+func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	a := &app{
+		Config:             &config{},
+		ProjectRepository:  NewInMemProjectRepository(),
+		ActivityRepository: repo,
+	}
+
+	countBefore := len(repo.activities)
+
+	data := url.Values{}
+	data["ProjectID"] = []string{projectIDSample.String()}
+	data["Date"] = []string{"21.12.2021"}
+	data["StartTime"] = []string{"10:00"}
+	data["EndTime"] = []string{"11:00"}
+	data["Description"] = []string{"My description"}
+
+	r, _ := http.NewRequest("POST", "/activities/new", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	a.HandleActivityForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(countBefore+1, len(repo.activities))
+}
+
+func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	a := &app{
+		Config:             &config{},
+		ProjectRepository:  NewInMemProjectRepository(),
+		ActivityRepository: repo,
+	}
+
+	countBefore := len(repo.activities)
+
+	data := url.Values{}
+	data["ProjectID"] = []string{projectIDSample.String()}
+	data["Date"] = []string{"2"}
+	data["StartTime"] = []string{"1"}
+	data["EndTime"] = []string{"1"}
+
+	r, _ := http.NewRequest("POST", "/activities/new", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	a.HandleActivityForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(countBefore, len(repo.activities))
 }
