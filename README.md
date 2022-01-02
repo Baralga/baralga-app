@@ -47,5 +47,6 @@ BARALGA_DB=postgres://postgres:postgres@localhost:5432/baralga
 A health check is available at `http://localhost:8080/health`.
 
 ## TODO
+* server side validation for forms
 * use nicer icons
 * add manifest.json

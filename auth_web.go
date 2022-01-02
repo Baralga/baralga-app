@@ -20,25 +20,28 @@ type loginFormModel struct {
 
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 	expiryDuration := a.Config.ExpiryDuration()
-	isProduction := a.isProduction()
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			formModel := loginFormModel{}
+			formModel.CSRFToken = csrf.Token(r)
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			return
 		}
 
 		var formModel loginFormModel
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			formModel.CSRFToken = csrf.Token(r)
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
 			return
 		}
 
 		principal, err := a.Authenticate(r.Context(), formModel.Username, formModel.Password)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage("Sign In", r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
 			return
 		}
 
@@ -53,13 +56,13 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := loginFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, LoginPage("Sign In", r.URL.Path, formModel))
+		util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
 	}
 }
 
-func LoginPage(title, currentPath string, formModel loginFormModel) g.Node {
+func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 	return Page(
-		title,
+		"Sign In",
 		currentPath,
 		[]g.Node{
 			Section(
