@@ -125,7 +125,7 @@ func (a *app) HandleActivityEditPage() http.HandlerFunc {
 
 		if !hx.IsHXRequest(r) {
 			formModel.CSRFToken = csrf.Token(r)
-			_ = ActivityAddPage(pageContext, formModel, projects).Render(w)
+			util.RenderHTML(w, ActivityAddPage(pageContext, formModel, projects))
 			return
 		}
 
@@ -669,8 +669,10 @@ func (a *app) renderActivityAddView(w http.ResponseWriter, r *http.Request, prin
 		currentPath: r.URL.Path,
 		title:       "Add Activity",
 	}
+
 	activityFormModel := newActivityFormModel()
 	activityFormModel.CSRFToken = csrf.Token(r)
+
 	util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
 }
 
