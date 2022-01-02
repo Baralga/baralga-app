@@ -26,6 +26,7 @@ jobs:
         env:
           BARALGA_DB: ${{ secrets.BARALGA_DB }}
           BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
+          BARALGA_CSRFSECRET: ${{ secrets.BARALGA_CSRFSECRET }}
       - name: Deploy
         uses: actions-hub/gcloud@master
         env:
