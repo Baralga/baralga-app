@@ -31,14 +31,14 @@ type config struct {
 	Env      string `default:"dev"`
 
 	JWTSecret  string `default:"secret"`
-	JWTExpiry  string `default:"1d"`
+	JWTExpiry  string `default:"24h"`
 	CSRFSecret string `default:"CSRFsecret"`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
-	expiryDuration, err := time.ParseDuration("1d")
+	expiryDuration, err := time.ParseDuration(c.JWTExpiry)
 	if err != nil {
-		log.Printf("could not parse jwt expiry %v", c.JWTExpiry)
+		log.Printf("could not parse jwt expiry %s", c.JWTExpiry)
 		expiryDuration = time.Duration(24 * time.Hour)
 	}
 	return expiryDuration
