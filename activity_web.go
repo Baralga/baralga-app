@@ -25,7 +25,7 @@ type activityFormModel struct {
 	Date        string `validate:"required"`
 	StartTime   string `validate:"required,min=5,max=5"`
 	EndTime     string `validate:"required,min=5,max=5"`
-	Description string `validate:"required,min=0,max=500"`
+	Description string `validate:"min=0,max=500"`
 }
 
 type activityTrackFormModel struct {

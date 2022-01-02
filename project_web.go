@@ -55,7 +55,7 @@ func (a *app) HandleProjectsPage() http.HandlerFunc {
 		formModel := projectFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
 
-		util.RenderHTML(w, ProjectsView(formModel, projects))
+		util.RenderHTML(w, ProjectsView(principal, formModel, projects))
 	}
 }
 
@@ -64,6 +64,11 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 	validator := validator.New()
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
+
+		if !principal.HasRole("ROLE_ADMIN") {
+			http.Error(w, "No permission.", http.StatusForbidden)
+			return
+		}
 
 		err := r.ParseForm()
 		if err != nil {
@@ -139,7 +144,7 @@ func (a *app) renderProjectsView(w http.ResponseWriter, r *http.Request, princip
 
 	formModel.CSRFToken = csrf.Token(r)
 
-	util.RenderHTML(w, ProjectsView(formModel, projects))
+	util.RenderHTML(w, ProjectsView(principal, formModel, projects))
 
 	return nil
 }
@@ -157,14 +162,14 @@ func ProjectsPage(pageContext *pageContext, formModel projectFormModel, projects
 					Div(
 						Class("mt-4 mb-4"),
 					),
-					ProjectsView(formModel, projects),
+					ProjectsView(pageContext.principal, formModel, projects),
 				),
 			),
 		},
 	)
 }
 
-func ProjectsView(formModel projectFormModel, projects *ProjectsPaged) g.Node {
+func ProjectsView(principal *Principal, formModel projectFormModel, projects *ProjectsPaged) g.Node {
 	return Div(
 		ID("baralga__main_content_modal_content"),
 		Class("modal-content"),
@@ -182,7 +187,10 @@ func ProjectsView(formModel projectFormModel, projects *ProjectsPaged) g.Node {
 		),
 		Div(
 			Class("modal-body"),
-			ProjectForm(formModel, ""),
+			g.If(
+				principal.HasRole("ROLE_ADMIN"),
+				ProjectForm(formModel, ""),
+			),
 			g.Group(
 				g.Map(len(projects.Projects), func(i int) g.Node {
 					project := projects.Projects[i]
@@ -202,11 +210,14 @@ func ProjectsView(formModel projectFormModel, projects *ProjectsPaged) g.Node {
 										Class("flex-grow-1"),
 										g.Text(project.Title),
 									),
-									A(
-										hx.Confirm(fmt.Sprintf("Do you really want to delete project %v?", project.Title)),
-										hx.Delete(fmt.Sprintf("/api/projects/%v", project.ID)),
-										Class("btn btn-outline-secondary btn-sm ms-1"),
-										I(Class("bi-trash2")),
+									g.If(
+										principal.HasRole("ROLE_ADMIN"),
+										A(
+											hx.Confirm(fmt.Sprintf("Do you really want to delete project %v?", project.Title)),
+											hx.Delete(fmt.Sprintf("/api/projects/%v", project.ID)),
+											Class("btn btn-outline-secondary btn-sm ms-1"),
+											I(Class("bi-trash2")),
+										),
 									),
 								),
 							),
