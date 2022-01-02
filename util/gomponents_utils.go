@@ -16,7 +16,7 @@ func RenderHTML(w http.ResponseWriter, n g.Node) {
 }
 
 func RenderProblemHTML(w http.ResponseWriter, isProduction bool, err error) {
-	log.Printf("internal server error: %v", err)
+	log.Printf("internal server error: %s", err)
 
 	if !isProduction {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

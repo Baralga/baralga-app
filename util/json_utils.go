@@ -17,7 +17,7 @@ func RenderJSON(w http.ResponseWriter, jsonModel interface{}) {
 }
 
 func RenderProblemJSON(w http.ResponseWriter, isProduction bool, err error) {
-	log.Printf("internal server error: %v", err)
+	log.Printf("internal server error: %s", err)
 
 	if !isProduction {
 		http.Error(w, problem.New(problem.Title("internal server error"), problem.Wrap(err)).JSONString(), http.StatusInternalServerError)

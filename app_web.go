@@ -13,6 +13,7 @@ import (
 	g "github.com/maragudk/gomponents"
 	c "github.com/maragudk/gomponents/components"
 	. "github.com/maragudk/gomponents/html"
+	"github.com/pkg/errors"
 	"github.com/snabb/isoweek"
 )
 
@@ -38,7 +39,7 @@ func (a *app) HandleReportPage() http.HandlerFunc {
 		}
 		filter, err := filterFromQueryParams(queryParams)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			util.RenderProblemHTML(w, isProduction, errors.New("invalid query params"))
 			return
 		}
 

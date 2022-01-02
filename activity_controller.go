@@ -58,7 +58,7 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 
 		filter, err := filterFromQueryParams(r.URL.Query())
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			util.RenderProblemJSON(w, isProduction, errors.New("invalid query params"))
 			return
 		}
 
