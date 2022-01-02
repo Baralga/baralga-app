@@ -77,6 +77,15 @@ func (a *app) HandleGetActivities() http.HandlerFunc {
 				return
 			}
 			return
+		} else if r.URL.Query().Get("contentType") == "application/vnd.ms-excel" || r.Header.Get("Content-Type") == "application/vnd.ms-excel" {
+			w.Header().Set("Content-Type", "!!")
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Activities_%v.xlsx\"", filter.String()))
+			err := a.WriteAsExcel(activitiesPage.Activities, projects, w)
+			if err != nil {
+				util.RenderProblemJSON(w, isProduction, err)
+				return
+			}
+			return
 		}
 
 		activityModels := mapToActivityModels(activitiesPage.Activities)

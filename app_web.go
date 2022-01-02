@@ -262,7 +262,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 				Class("col-1 text-end mt-2"),
 				A(
 					Href(
-						fmt.Sprintf("/api/activities?contentType=text/csv&t=%v&v=%v", filter.Timespan, filter.String()),
+						fmt.Sprintf("/api/activities?contentType=application/vnd.ms-excel&t=%v&v=%v", filter.Timespan, filter.String()),
 					),
 					Class("btn btn-outline-primary"),
 					I(Class("bi-file-excel")),

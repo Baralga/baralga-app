@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/baralga/paged"
 	"github.com/google/uuid"
+	"github.com/xuri/excelize/v2"
 )
 
 // ReadActivitiesWithProjects reads activities with their associated projects
@@ -95,6 +98,57 @@ func (a *app) WriteAsCSV(activities []*Activity, projects []*Project, w io.Write
 	}
 
 	return nil
+}
+
+func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Writer) error {
+	// prepare projects
+	projectsById := make(map[uuid.UUID]*Project)
+	for _, project := range projects {
+		projectsById[project.ID] = project
+	}
+
+	f := excelize.NewFile()
+	f.SetActiveSheet(0)
+	f.SetSheetName("Sheet1", "Activities")
+
+	f.SetCellValue("Activities", "A1", "Project")
+	f.SetCellValue("Activities", "B1", "Date")
+	f.SetCellValue("Activities", "C1", "Start")
+	f.SetCellValue("Activities", "D1", "End")
+	f.SetCellValue("Activities", "E1", "Hours")
+	f.SetCellValue("Activities", "F1", "Description")
+
+	style, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Fill: excelize.Fill{
+			Type:  "color",
+			Color: []string{"#adadad"},
+		},
+	})
+
+	styleDuration, _ := f.NewStyle(&excelize.Style{
+		NumFmt: 4,
+	})
+	f.SetCellStyle("Activities", "A1", "F1", style)
+
+	for i, activity := range activities {
+		idx := i + 2
+
+		duration, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", activity.DurationDecimal()), 64)
+
+		f.SetCellValue("Activities", fmt.Sprintf("A%v", idx), projectsById[activity.ProjectID].Title)
+		f.SetCellValue("Activities", fmt.Sprintf("B%v", idx), activity.Start.Format("2006-01-02"))
+		f.SetCellValue("Activities", fmt.Sprintf("C%v", idx), activity.Start.Format("15:04"))
+		f.SetCellValue("Activities", fmt.Sprintf("D%v", idx), activity.End.Format("15:04"))
+		f.SetCellValue("Activities", fmt.Sprintf("E%v", idx), duration)
+		f.SetCellValue("Activities", fmt.Sprintf("F%v", idx), activity.Description)
+
+		f.SetCellStyle("Activities", fmt.Sprintf("E%v", idx), fmt.Sprintf("E%v", idx), styleDuration)
+	}
+
+	return f.Write(w)
 }
 
 func distinctProjectIds(activitiesPage *ActivitiesPaged) []uuid.UUID {
