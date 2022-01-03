@@ -133,6 +133,12 @@ func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Wri
 	})
 	f.SetCellStyle("Activities", "A1", "F1", style)
 
+	descriptionStyle, _ := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			WrapText: true,
+		},
+	})
+
 	for i, activity := range activities {
 		idx := i + 2
 
@@ -142,10 +148,13 @@ func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Wri
 		f.SetCellValue("Activities", fmt.Sprintf("B%v", idx), activity.Start.Format("2006-01-02"))
 		f.SetCellValue("Activities", fmt.Sprintf("C%v", idx), activity.Start.Format("15:04"))
 		f.SetCellValue("Activities", fmt.Sprintf("D%v", idx), activity.End.Format("15:04"))
-		f.SetCellValue("Activities", fmt.Sprintf("E%v", idx), duration)
-		f.SetCellValue("Activities", fmt.Sprintf("F%v", idx), activity.Description)
 
+		f.SetCellValue("Activities", fmt.Sprintf("E%v", idx), duration)
 		f.SetCellStyle("Activities", fmt.Sprintf("E%v", idx), fmt.Sprintf("E%v", idx), styleDuration)
+
+		f.SetCellValue("Activities", fmt.Sprintf("F%v", idx), activity.Description)
+		f.SetCellStyle("Activities", fmt.Sprintf("F%v", idx), fmt.Sprintf("F%v", idx), descriptionStyle)
+
 	}
 
 	return f.Write(w)
