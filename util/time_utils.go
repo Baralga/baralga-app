@@ -76,8 +76,6 @@ func CompleteTimeValue(time string) string {
 			mm = mm + "0"
 		}
 
-		// Convert to integer value
-		//m =  parseInt(mm);
 		// Convert to float for calculation
 		fm, err := strconv.ParseFloat(mm, 64)
 		if err != nil {
