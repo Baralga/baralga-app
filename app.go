@@ -170,6 +170,8 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Get("/projects", a.HandleProjectsPage())
 		r.Post("/projects/new", a.HandleProjectForm())
 		r.Get("/activities/new", a.HandleActivityAddPage())
+		r.Post("/activities/validate-start-time", a.HandleStartTimeValidation())
+		r.Post("/activities/validate-end-time", a.HandleEndTimeValidation())
 		r.Get("/activities/{activity-id}/edit", a.HandleActivityEditPage())
 		r.Post("/activities/new", a.HandleActivityForm())
 		r.Post("/activities/{activity-id}", a.HandleActivityForm())

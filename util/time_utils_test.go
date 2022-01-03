@@ -56,3 +56,37 @@ func TestFormatDateTime(t *testing.T) {
 	formattedTime := FormatDateTime(*time)
 	is.Equal(formattedTime, "2020-11-21T16:46:28.2328113")
 }
+
+func TestCompleteTimeValue(t *testing.T) {
+	is := is.New(t)
+
+	t.Run("only short hours", func(t *testing.T) {
+		time := CompleteTimeValue("9")
+		is.Equal(time, "09:00")
+	})
+
+	t.Run("with backslash", func(t *testing.T) {
+		time := CompleteTimeValue("10/12")
+		is.Equal(time, "10:12")
+	})
+
+	t.Run("only hours", func(t *testing.T) {
+		time := CompleteTimeValue("10")
+		is.Equal(time, "10:00")
+	})
+
+	t.Run("hours with comma ,5", func(t *testing.T) {
+		time := CompleteTimeValue("10,5")
+		is.Equal(time, "10:30")
+	})
+
+	t.Run("hours with comma ,75", func(t *testing.T) {
+		time := CompleteTimeValue("10,75")
+		is.Equal(time, "10:45")
+	})
+
+	t.Run("no time", func(t *testing.T) {
+		time := CompleteTimeValue("xxx")
+		is.Equal(time, "xxx")
+	})
+}

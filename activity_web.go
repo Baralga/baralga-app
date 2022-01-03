@@ -307,6 +307,44 @@ func (a *app) HandleActivityForm() http.HandlerFunc {
 	}
 }
 
+func (a *app) HandleStartTimeValidation() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			return
+		}
+
+		var formModel activityFormModel
+		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
+		if err != nil {
+			return
+		}
+
+		formModel.StartTime = util.CompleteTimeValue(formModel.StartTime)
+
+		util.RenderHTML(w, StartTimeInputView(formModel))
+	}
+}
+
+func (a *app) HandleEndTimeValidation() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			return
+		}
+
+		var formModel activityFormModel
+		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
+		if err != nil {
+			return
+		}
+
+		formModel.EndTime = util.CompleteTimeValue(formModel.EndTime)
+
+		util.RenderHTML(w, EndTimeInputView(formModel))
+	}
+}
+
 func ActivityAddPage(pageContext *pageContext, activityFormModel activityFormModel, projects *ProjectsPaged) g.Node {
 	return Page(
 		pageContext.title,
@@ -324,6 +362,58 @@ func ActivityAddPage(pageContext *pageContext, activityFormModel activityFormMod
 				),
 			),
 		},
+	)
+}
+
+func StartTimeInputView(formModel activityFormModel) g.Node {
+	return Div(
+		ID("activity_start_time"),
+		Class("mb-3"),
+		Label(
+			Class("form-label"),
+			g.Attr("for", "StartTime"),
+			g.Text("Start Time"),
+		),
+		Input(
+			ID("StartTime"),
+			Type("text"),
+			Name("StartTime"),
+			hx.Target("#activity_start_time"),
+			hx.Post("/activities/validate-start-time"),
+			Value(formModel.StartTime),
+			Pattern("[0-9]{2}:[0-5][0-9]"),
+			MinLength("5"),
+			MaxLength("5"),
+			g.Attr("required", "required"),
+			Class("form-control"),
+			g.Attr("placeholder", "10:00"),
+		),
+	)
+}
+
+func EndTimeInputView(formModel activityFormModel) g.Node {
+	return Div(
+		ID("activity_end_time"),
+		Class("mb-3"),
+		Label(
+			Class("form-label"),
+			g.Attr("for", "EndTime"),
+			g.Text("End Time"),
+		),
+		Input(
+			ID("EndTime"),
+			Type("text"),
+			Name("EndTime"),
+			hx.Target("#activity_end_time"),
+			hx.Post("/activities/validate-end-time"),
+			Value(formModel.EndTime),
+			Pattern("[0-9]{2}:[0-5][0-9]"),
+			MinLength("5"),
+			MaxLength("5"),
+			g.Attr("required", "required"),
+			Class("form-control"),
+			g.Attr("placeholder", "10:00"),
+		),
 	)
 }
 
@@ -419,46 +509,8 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 					g.Attr("placeholder", "16.11.2021"),
 				),
 			),
-			Div(
-				Class("mb-3"),
-				Label(
-					Class("form-label"),
-					g.Attr("for", "StartTime"),
-					g.Text("Start Time"),
-				),
-				Input(
-					ID("StartTime"),
-					Type("text"),
-					Name("StartTime"),
-					Value(formModel.StartTime),
-					Pattern("[0-9]{2}:[0-5][0-9]"),
-					MinLength("5"),
-					MaxLength("5"),
-					g.Attr("required", "required"),
-					Class("form-control"),
-					g.Attr("placeholder", "10:00"),
-				),
-			),
-			Div(
-				Class("mb-3"),
-				Label(
-					Class("form-label"),
-					g.Attr("for", "EndTime"),
-					g.Text("End Time"),
-				),
-				Input(
-					ID("EndTime"),
-					Type("text"),
-					Name("EndTime"),
-					Value(formModel.EndTime),
-					Pattern("[0-9]{2}:[0-5][0-9]"),
-					MinLength("5"),
-					MaxLength("5"),
-					g.Attr("required", "required"),
-					Class("form-control"),
-					g.Attr("placeholder", "12:00"),
-				),
-			),
+			StartTimeInputView(formModel),
+			EndTimeInputView(formModel),
 			Div(
 				Class("mb-3"),
 				Label(

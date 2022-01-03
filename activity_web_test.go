@@ -117,3 +117,49 @@ func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(countBefore, len(repo.activities))
 }
+
+func TestHandleStartTimeValidation(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config: &config{},
+	}
+
+	data := url.Values{}
+	data["StartTime"] = []string{"10"}
+
+	r, _ := http.NewRequest("POST", "/activities/validation-start-time", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleStartTimeValidation()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "10:00"))
+}
+
+func TestHandleEndTimeValidation(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config: &config{},
+	}
+
+	data := url.Values{}
+	data["StartTime"] = []string{"10"}
+
+	r, _ := http.NewRequest("POST", "/activities/validation-end-time", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleEndTimeValidation()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "10:00"))
+}

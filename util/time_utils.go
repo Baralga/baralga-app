@@ -2,6 +2,9 @@ package util
 
 import (
 	"fmt"
+	"math"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,4 +55,64 @@ func ParseDate(date string) (*time.Time, error) {
 		return nil, fmt.Errorf("could not parse date from '%s'", date)
 	}
 	return &t, nil
+}
+
+func CompleteTimeValue(time string) string {
+	completedTime := time
+
+	completedTime = strings.Replace(completedTime, ",,", ":", -1)
+	completedTime = strings.Replace(completedTime, "/", ":", -1)
+	completedTime = strings.Replace(completedTime, ";", ",", -1)
+	completedTime = strings.Replace(completedTime, ".", ":", -1)
+
+	// Treat 11,25 as 11:15
+	// Treat 11,75 as 11:45
+	// Treat 11,5 and 11,50 as 11:30
+	splittedTime := strings.Split(completedTime, ",")
+	if strings.Contains(completedTime, ",") && len(splittedTime) >= 2 {
+		hh := splittedTime[0]
+		mm := splittedTime[1]
+		if len(mm) < 2 {
+			mm = mm + "0"
+		}
+
+		// Convert to integer value
+		//m =  parseInt(mm);
+		// Convert to float for calculation
+		fm, err := strconv.ParseFloat(mm, 64)
+		if err != nil {
+			return time
+		}
+
+		// Convert from base100 to base60
+		fm *= 0.6
+		// Round to int
+		m := math.Round(fm)
+		mm = fmt.Sprintf("%02.0f", m)
+
+		if len(hh) < 2 {
+			hh = "0" + hh
+		}
+		completedTime = hh + ":" + mm
+		return completedTime
+	}
+
+	if strings.Contains(completedTime, ":") {
+		return completedTime
+	}
+
+	_, err := strconv.ParseInt(completedTime, 10, 32)
+	if err != nil {
+		return time
+	}
+
+	if len(completedTime) < 2 {
+		completedTime = "0" + completedTime
+	}
+
+	if !strings.Contains(completedTime, ":") {
+		completedTime += ":00"
+	}
+
+	return completedTime
 }
