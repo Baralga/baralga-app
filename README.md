@@ -47,5 +47,7 @@ BARALGA_DB=postgres://postgres:postgres@localhost:5432/baralga
 A health check is available at `http://localhost:8080/health`.
 
 ## TODO
-* Add Excel export
-* use nicer icons
+* simplified entry of start time
+* Add sign up support
+* Add password forgot support
+
