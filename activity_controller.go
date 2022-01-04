@@ -195,6 +195,8 @@ func (a *app) HandleDeleteActivity() http.HandlerFunc {
 			util.RenderProblemJSON(w, isProduction, err)
 			return
 		}
+
+		w.Header().Set("HX-Trigger", "baralga__activities-changed")
 	}
 }
 

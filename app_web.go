@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	hx "github.com/baralga/htmx"
@@ -108,7 +109,7 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		}
 		pageParams := &paged.PageParams{
 			Page: 0,
-			Size: 50,
+			Size: 100,
 		}
 
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
@@ -120,6 +121,11 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		)
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+
+		if hx.IsHXTargetRequest(r, "baralga__my_week_sum_panel") {
+			util.RenderHTML(w, ActivitiesSumByDayView(activitiesPage))
 			return
 		}
 
@@ -137,7 +143,6 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		pageContext := &pageContext{
 			principal:   principal,
 			currentPath: r.URL.Path,
-			title:       "Track Activities",
 		}
 
 		formModel := activityTrackFormModel{Action: "start"}
@@ -409,7 +414,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 
 func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
 	return Page(
-		pageContext.title,
+		"Track Activities",
 		pageContext.currentPath,
 		[]g.Node{
 			Navbar(pageContext),
@@ -473,9 +478,10 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 	for _, project := range projects.Projects {
 		projectsById[project.ID] = project
 	}
+
 	nodes := []g.Node{
 		Div(
-			Class("mb-4 d-flex"),
+			Class("mb-2 d-flex"),
 			Div(
 				Class("flex-fill"),
 				H2(
@@ -520,6 +526,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 				),
 			),
 		),
+		ActivitiesSumByDayView(activitiesPage),
 		g.If(
 			len(activitiesPage.Activities) == 0,
 			Div(
@@ -594,6 +601,56 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 		})),
 	}
 	return g.Group(nodes)
+}
+
+func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged) g.Node {
+	// prepare activities
+	activitySumByDay := make(map[int]float64)
+	dayFormattedByDay := make(map[int]string)
+	for _, activity := range activitiesPage.Activities {
+		day := activity.Start.Day()
+		dayFormattedByDay[day] = activity.Start.Format("Monday")
+		activitySumByDay[day] = activitySumByDay[day] + float64(activity.DurationMinutesTotal())
+	}
+
+	var dayNodes []int
+	for day := range activitySumByDay {
+		dayNodes = append(dayNodes, day)
+	}
+
+	sort.Slice(dayNodes, func(i, j int) bool { return dayNodes[i] < dayNodes[j] })
+
+	today := time.Now().Day()
+
+	return Div(
+		Class("mb-4 d-none d-md-flex"),
+		ID("baralga__my_week_sum_panel"),
+
+		hx.Target("#baralga__my_week_sum_panel"),
+		hx.Swap("outerHTML"),
+		hx.Trigger("baralga__activities-changed from:body"),
+		hx.Get("/"),
+
+		g.Group(g.Map(len(dayNodes), func(i int) g.Node {
+			sum := activitySumByDay[dayNodes[i]]
+			durationFormatted := FormatMinutesAsDuration(sum)
+			return Span(
+				TitleAttr(durationFormatted),
+				g.If(today == dayNodes[i],
+					Class("badge bg-primary position-relative me-4"),
+				),
+				g.If(today != dayNodes[i],
+					Class("badge bg-light text-dark position-relative me-4"),
+				),
+				g.Text(dayFormattedByDay[dayNodes[i]]),
+				Span(
+					Class("position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary"),
+					g.Text(durationFormatted),
+				),
+			)
+		}),
+		),
+	)
 }
 
 func Page(title, currentPath string, body []g.Node) g.Node {

@@ -31,6 +31,18 @@ func TestActivityDurationMinutes(t *testing.T) {
 	is.Equal(minutes, 30)
 }
 
+func TestActivityDurationMinutesTotal(t *testing.T) {
+	is := is.New(t)
+
+	a := &Activity{
+		Start: time.Now(),
+		End:   time.Now().Add(1 * time.Hour).Add(30 * time.Minute),
+	}
+
+	minutes := a.DurationMinutesTotal()
+	is.Equal(minutes, 90)
+}
+
 func TestActivityDurationDecimal(t *testing.T) {
 	is := is.New(t)
 	now := time.Now()

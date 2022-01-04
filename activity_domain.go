@@ -190,14 +190,24 @@ func (ad *Activity) DurationMinutes() int {
 	return m % 60
 }
 
+// DurationMinutesTotal is the activity duration in minutes in total (unrounded)
+func (ad *Activity) DurationMinutesTotal() int {
+	return int(ad.duration().Minutes())
+}
+
 // DurationDecimal is the activity duration as decimal (e.g. 0.75)
 func (ad *Activity) DurationDecimal() float64 {
 	return ad.duration().Minutes() / 60.0
 }
 
-// DurationDecimal is the activity duration as formatted string (e.g. 1:15 h)
+// DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
 func (ad *Activity) DurationFormatted() string {
-	return fmt.Sprintf("%v:%02d h", ad.DurationHours(), ad.DurationMinutes())
+	return FormatMinutesAsDuration(float64(ad.DurationMinutesTotal()))
+}
+
+// FormatMinutesAsDuration formates the duration in minutes as formatted string (e.g. 1:15 h)
+func FormatMinutesAsDuration(minutes float64) string {
+	return fmt.Sprintf("%v:%02d h", math.Floor(minutes/60), int(minutes)%60)
 }
 
 func (a *Activity) duration() time.Duration {
