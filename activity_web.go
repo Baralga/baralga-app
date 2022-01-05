@@ -437,10 +437,9 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 				g.If(isEditMode, g.Text("Edit Activity")),
 				g.If(!isEditMode, g.Text("Add Activity")),
 			),
-			Button(
-				Type("type"),
-				Class("btn-close"),
+			A(
 				g.Attr("data-bs-dismiss", "modal"),
+				Class("btn-close"),
 			),
 		),
 		Div(
