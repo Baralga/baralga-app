@@ -30,7 +30,6 @@ Baralga supports the following roles:
 | User  | `ROLE_USER` |Full access to his own activities but can only read projects. |
 | Admin | `ROLE_ADMIN`  | Full access to activities of all users and projects.          |
 
-
 #### Administration
 
 ### Database
@@ -47,7 +46,6 @@ BARALGA_DB=postgres://postgres:postgres@localhost:5432/baralga
 A health check is available at `http://localhost:8080/health`.
 
 ## TODO
-* simplified entry of start time
 * Add sign up support
 * Add password forgot support
 

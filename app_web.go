@@ -293,7 +293,7 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 					Class("table table-borderless table-striped"),
 					THead(
 						Tr(
-							Th(g.Text("Project SM")),
+							Th(g.Text("Project")),
 							Th(g.Text("Date")),
 							Th(
 								Class("text-end"),
