@@ -113,7 +113,7 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		}
 
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
-		activitiesPage, _, err := a.ReadActivitiesWithProjects(
+		activitiesPage, projectsOfActivities, err := a.ReadActivitiesWithProjects(
 			r.Context(),
 			principal,
 			filter,
@@ -124,11 +124,6 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 			return
 		}
 
-		if hx.IsHXTargetRequest(r, "baralga__my_week_sum_panel") {
-			util.RenderHTML(w, ActivitiesSumByDayView(activitiesPage))
-			return
-		}
-
 		projects, err := a.ProjectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
@@ -136,7 +131,7 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		}
 
 		if hx.IsHXTargetRequest(r, "baralga__main_content") {
-			util.RenderHTML(w, Div(ActivitiesInWeekView(filter, activitiesPage, projects)))
+			util.RenderHTML(w, Div(ActivitiesInWeekView(filter, activitiesPage, projectsOfActivities)))
 			return
 		}
 
@@ -432,7 +427,7 @@ func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filte
 						hx.Trigger("baralga__activities-changed from:body"),
 						hx.Get("/"),
 
-						ActivitiesInWeekView(filter, activitiesPage, projects),
+						ActivitiesInWeekView(filter, activitiesPage, projects.Projects),
 					),
 					Div(Class("col-lg-4 col-sm-12"),
 						TrackPanel(projects.Projects, formModel),
@@ -472,10 +467,10 @@ func ModalView() g.Node {
 	})
 }
 
-func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
+func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects []*Project) g.Node {
 	// prepare projects
 	projectsById := make(map[uuid.UUID]*Project)
-	for _, project := range projects.Projects {
+	for _, project := range projects {
 		projectsById[project.ID] = project
 	}
 
@@ -526,7 +521,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 				),
 			),
 		),
-		ActivitiesSumByDayView(activitiesPage),
+		ActivitiesSumByDayView(activitiesPage, projects),
 		g.If(
 			len(activitiesPage.Activities) == 0,
 			Div(
@@ -535,36 +530,91 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 				g.Text("No activities in current week. Add some here!"),
 			),
 		),
-		g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
-			activity := activitiesPage.Activities[i]
-			activityCardID := fmt.Sprintf("activity-card-%v", activity.ID)
-			return Div(
-				ID(activityCardID),
-				Class("card mb-2"),
+	}
+	return g.Group(nodes)
+}
 
-				TitleAttr(activity.Description),
+func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project) g.Node {
+	// prepare projects
+	projectsById := make(map[uuid.UUID]*Project)
+	for _, project := range projects {
+		projectsById[project.ID] = project
+	}
 
-				hx.Target("this"),
-				hx.Swap("outerHTML"),
+	// prepare activities
+	activitySumByDay := make(map[int]float64)
+	activitiesByDay := make(map[int][]*Activity)
+	dayFormattedByDay := make(map[int][]string)
+	for _, activity := range activitiesPage.Activities {
+		day := activity.Start.Day()
+		dayFormattedByDay[day] = []string{
+			activity.Start.Format("Monday"),
+			util.FormatDateDEShort(activity.Start),
+			util.FormatDate(activity.Start),
+		}
+		activitySumByDay[day] = activitySumByDay[day] + float64(activity.DurationMinutesTotal())
+		activitiesByDay[day] = append(activitiesByDay[day], activity)
+	}
 
-				Div(
-					Class("card-body"),
-					StyleAttr("padding: 0.2rem 1rem"),
-					H6(
-						Class("card-subtitle mt-2"),
+	var dayNodes []int
+	for day := range activitySumByDay {
+		dayNodes = append(dayNodes, day)
+	}
+
+	sort.Slice(dayNodes, func(i, j int) bool { return dayNodes[i] > dayNodes[j] })
+
+	today := time.Now().Day()
+
+	return g.Group(g.Map(len(activitiesByDay), func(i int) g.Node {
+		activities := activitiesByDay[dayNodes[i]]
+		activityCardID := fmt.Sprintf("baralga__activity_card_%v", dayFormattedByDay[dayNodes[i]][2])
+
+		sum := activitySumByDay[dayNodes[i]]
+		durationFormatted := FormatMinutesAsDuration(sum)
+
+		return Div(
+			ID(activityCardID),
+			Class("card mb-4 me-1"),
+
+			hx.Target("this"),
+			hx.Swap("outerHTML"),
+
+			Div(
+				Class("card-body position-relative p-2 pt-1"),
+				g.If(today == dayNodes[i],
+					StyleAttr("background-color: rgba(255, 255,255, 0.05);"),
+				),
+				H6(
+					Class("card-subtitle mt-2"),
+					Div(
+						Class("d-flex justify-content-between mb-2"),
 						Div(
-							Class("d-flex justify-content-between mb-2"),
-							Div(
-								Class("flex-grow-1 text-muted"),
-								Span(
-									g.Text(activity.Start.Format("Monday")),
-								),
-								Span(
-									Class("ms-2"),
-									StyleAttr("opacity: .45; font-size: 80%;"),
-									g.Text(util.FormatDateDEShort(activity.Start)),
-								),
+							Class("text-muted"),
+							Span(
+								g.Text(dayFormattedByDay[dayNodes[i]][0]),
 							),
+							Span(
+								Class("ms-2"),
+								StyleAttr("opacity: .45; font-size: 80%;"),
+								g.Text(dayFormattedByDay[dayNodes[i]][1]),
+							),
+						),
+					),
+					Span(
+						Class("position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary"),
+						g.Text(durationFormatted),
+					),
+				),
+				g.Group(g.Map(len(activities), func(i int) g.Node {
+					activity := activities[i]
+					return Div(
+						Class("d-flex justify-content-between mb-2"),
+						hx.Target(fmt.Sprintf("#%v", activityCardID)),
+						TitleAttr(activity.Description),
+						Span(g.Text(util.FormatTime(activity.Start)+" - "+util.FormatTime(activity.End))),
+						Span(g.Text(projectsById[activity.ProjectID].Title)),
+						Span(g.Text(activity.DurationFormatted())),
+						Div(
 							A(
 								hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
 								hx.Target("#baralga__main_content_modal_content"),
@@ -586,71 +636,11 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 								I(Class("bi-trash2")),
 							),
 						),
-					),
-					H6(
-						Class("card-title"),
-						Div(
-							Class("d-flex justify-content-between"),
-							Span(g.Text(util.FormatTime(activity.Start)+" - "+util.FormatTime(activity.End))),
-							Span(g.Text(projectsById[activity.ProjectID].Title)),
-							Span(g.Text(activity.DurationFormatted())),
-						),
-					),
-				),
-			)
-		})),
-	}
-	return g.Group(nodes)
-}
-
-func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged) g.Node {
-	// prepare activities
-	activitySumByDay := make(map[int]float64)
-	dayFormattedByDay := make(map[int]string)
-	for _, activity := range activitiesPage.Activities {
-		day := activity.Start.Day()
-		dayFormattedByDay[day] = activity.Start.Format("Monday")
-		activitySumByDay[day] = activitySumByDay[day] + float64(activity.DurationMinutesTotal())
-	}
-
-	var dayNodes []int
-	for day := range activitySumByDay {
-		dayNodes = append(dayNodes, day)
-	}
-
-	sort.Slice(dayNodes, func(i, j int) bool { return dayNodes[i] < dayNodes[j] })
-
-	today := time.Now().Day()
-
-	return Div(
-		Class("mb-4 d-none d-md-flex"),
-		ID("baralga__my_week_sum_panel"),
-
-		hx.Target("#baralga__my_week_sum_panel"),
-		hx.Swap("outerHTML"),
-		hx.Trigger("baralga__activities-changed from:body"),
-		hx.Get("/"),
-
-		g.Group(g.Map(len(dayNodes), func(i int) g.Node {
-			sum := activitySumByDay[dayNodes[i]]
-			durationFormatted := FormatMinutesAsDuration(sum)
-			return Span(
-				TitleAttr(durationFormatted),
-				g.If(today == dayNodes[i],
-					Class("badge bg-primary position-relative me-4"),
-				),
-				g.If(today != dayNodes[i],
-					Class("badge bg-light text-dark position-relative me-4"),
-				),
-				g.Text(dayFormattedByDay[dayNodes[i]]),
-				Span(
-					Class("position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary"),
-					g.Text(durationFormatted),
-				),
-			)
-		}),
-		),
-	)
+					)
+				})),
+			),
+		)
+	}))
 }
 
 func Page(title, currentPath string, body []g.Node) g.Node {

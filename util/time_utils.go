@@ -41,6 +41,10 @@ func FormatDateTime(dateTime time.Time) string {
 	return dateTime.Format(dateTimeFormat)
 }
 
+func FormatDate(dateTime time.Time) string {
+	return dateTime.Format(dateFormat)
+}
+
 func FormatDateDE(dateTime time.Time) string {
 	return dateTime.Format(dateFormatDE)
 }
