@@ -2,6 +2,17 @@
 
 Multi user time tracking application with web frontend and API.
 
+## User Guide
+
+### Keyboard Shortcuts
+
+#### Track Activities
+
+| Shortcut                         | Action          |
+| -------------------------------- |:----------------|
+| <kbd>Shift</kbd> + <kbd>n</kbd>  | Add Activity    |
+| <kbd>Shift</kbd> + <kbd>p</kbd>  | Manage Projects |
+
 ## Administration
 
 ### Accessing the Web User Interface
