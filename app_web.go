@@ -474,6 +474,11 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 		projectsById[project.ID] = project
 	}
 
+	var durationWeekTotal float64
+	for _, activity := range activitiesPage.Activities {
+		durationWeekTotal = durationWeekTotal + float64(activity.DurationMinutesTotal())
+	}
+
 	nodes := []g.Node{
 		Div(
 			Class("mb-2 d-flex"),
@@ -497,6 +502,12 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 						StyleAttr("white-space: nowrap;"),
 						Class("text-muted"),
 						g.Text("My Week "),
+						g.If(len(activitiesPage.Activities) > 0,
+							Span(
+								Class("badge rounded-pill bg-secondary fw-normal"),
+								g.Text(FormatMinutesAsDuration(durationWeekTotal)),
+							),
+						),
 					),
 				),
 			),
