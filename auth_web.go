@@ -18,6 +18,10 @@ type loginFormModel struct {
 	Password  string
 }
 
+type signupFormModel struct {
+	CSRFToken string
+}
+
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 	expiryDuration := a.Config.ExpiryDuration()
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +64,14 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 	}
 }
 
+func (a *app) HandleSignUpPage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		formModel := signupFormModel{}
+		formModel.CSRFToken = csrf.Token(r)
+		util.RenderHTML(w, SignUpPage(r.URL.Path, formModel))
+	}
+}
+
 func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 	return Page(
 		"Sign In",
@@ -69,6 +81,23 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 				Class("full-center"),
 				Div(Class("container"),
 					LoginForm(formModel, ""),
+				),
+			),
+		},
+	)
+}
+
+func SignUpPage(currentPath string, formModel signupFormModel) g.Node {
+	return Page(
+		"Sign Up",
+		currentPath,
+		[]g.Node{
+			Section(
+				Class("full-center"),
+				Div(Class("container"),
+					H2(
+						g.Text("Sign Up is coming soon, stay tuned ..."),
+					),
 				),
 			),
 		},

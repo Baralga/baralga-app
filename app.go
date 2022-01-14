@@ -183,6 +183,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 
 		r.Get("/login", a.HandleLoginPage())
 		r.Post("/login", a.HandleLoginForm(tokenAuth))
+		r.Get("/signup", a.HandleSignUpPage())
 	})
 }
 

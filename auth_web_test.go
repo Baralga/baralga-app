@@ -28,6 +28,23 @@ func TestHandleLoginPage(t *testing.T) {
 	is.True(strings.Contains(htmlBody, "Baralga # Sign In"))
 }
 
+func TestHandleSignUpPage(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config: &config{},
+	}
+
+	r, _ := http.NewRequest("GET", "/signup", nil)
+
+	a.HandleSignUpPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "Baralga # Sign Up"))
+}
+
 func TestHandleLoginFormWithSuccessfullLogin(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
