@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -19,7 +20,7 @@ func RenderProblemHTML(w http.ResponseWriter, isProduction bool, err error) {
 	log.Printf("internal server error: %s", err)
 
 	if !isProduction {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
