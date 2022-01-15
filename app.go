@@ -176,6 +176,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Post("/activities/new", a.HandleActivityForm())
 		r.Post("/activities/{activity-id}", a.HandleActivityForm())
 		r.Post("/activities/track", a.HandleActivityTrackForm())
+		r.Get("/logout", a.HandleLogoutPage())
 	})
 
 	a.Router.Group(func(r chi.Router) {

@@ -54,3 +54,14 @@ func (a *app) CreateCookie(tokenAuth *jwtauth.JWTAuth, expiryDuration time.Durat
 		Path:     "/",
 	}
 }
+
+func (a *app) DeleteCookie() http.Cookie {
+	return http.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Expires:  time.Now(),
+		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
+		Path:     "/",
+	}
+}

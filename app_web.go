@@ -738,8 +738,29 @@ func Navbar(pageContext *pageContext) g.Node {
 			Ul(
 				Class("navbar-nav flex-row flex-wrap ms-md-auto"),
 				Li(
-					Class("nav-item col-6 col-md-auto"),
-					I(Class("bi-person-fill")),
+					Class("nav-item dropdown col-6 col-md-auto"),
+					A(
+						Class("nav-link dropdown-toggle"),
+						Href("#"),
+						ID("navbarDropdown"),
+						Role("button"),
+						g.Attr("data-bs-toggle", "dropdown"),
+						I(Class("bi-person-fill")),
+						TitleAttr(pageContext.principal.Username),
+					),
+					Ul(
+						Class("dropdown-menu dropdown-menu-end"),
+						Li(
+							A(
+								Href("/logout"),
+								hx.Boost(),
+								Class("dropdown-item"),
+								I(Class("bi-box-arrow-right me-2")),
+								TitleAttr(fmt.Sprintf("Sign out %v", pageContext.principal.Username))),
+								g.Text("Sign out"),
+							),
+						),
+					),
 				),
 			),
 		),

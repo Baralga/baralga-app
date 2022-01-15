@@ -64,6 +64,15 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 	}
 }
 
+func (a *app) HandleLogoutPage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie := a.DeleteCookie()
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+}
+
 func (a *app) HandleSignUpPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := signupFormModel{}
