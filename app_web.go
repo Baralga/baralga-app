@@ -756,7 +756,7 @@ func Navbar(pageContext *pageContext) g.Node {
 								hx.Boost(),
 								Class("dropdown-item"),
 								I(Class("bi-box-arrow-right me-2")),
-								TitleAttr(fmt.Sprintf("Sign out %v", pageContext.principal.Username))),
+								TitleAttr(fmt.Sprintf("Sign out %v", pageContext.principal.Username)),
 								g.Text("Sign out"),
 							),
 						),
