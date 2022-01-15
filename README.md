@@ -13,6 +13,14 @@ Multi user time tracking application with web frontend and API.
 | <kbd>Shift</kbd> + <kbd>n</kbd>  | Add Activity    |
 | <kbd>Shift</kbd> + <kbd>p</kbd>  | Manage Projects |
 
+#### Report Activities
+
+| Shortcut                                  | Action                 |
+| ----------------------------------------- |:-----------------------|
+| <kbd>Shift</kbd> + <kbd>Arrow Left</kbd>  | Show previous Timespan |
+| <kbd>Shift</kbd> + <kbd>Arrow Down</kbd>  | Show current Timespan  |
+| <kbd>Shift</kbd> + <kbd>Arrow Right</kbd> | Show next Timespan     |
+
 ## Administration
 
 ### Accessing the Web User Interface

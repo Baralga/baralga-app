@@ -222,23 +222,27 @@ func ReportView(filter *ActivityFilter, activitiesPage *ActivitiesPaged, project
 					A(
 						hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", previousFilter.Timespan, previousFilter.String())),
 						hx.Target("#baralga__report_content"),
+						hx.Trigger("click, keyup[shiftKey && key == 'ArrowLeft'] from:body"),
 
-						TitleAttr(previousFilter.String()),
+						TitleAttr(fmt.Sprintf("Show previous actvities from %v", previousFilter.String())),
 						Class("btn btn-outline-primary"),
 						I(Class("bi-arrow-left")),
 					),
 					A(
 						hx.Get(fmt.Sprintf("/reports?t=%v", filter.Timespan)),
 						hx.Target("#baralga__report_content"),
+						hx.Trigger("click, keyup[shiftKey && key == 'ArrowDown'] from:body"),
 
+						TitleAttr(fmt.Sprintf("Show current actvities from %v", filter.String())),
 						Class("btn btn-outline-primary"),
 						I(Class("bi-house-fill")),
 					),
 					A(
 						hx.Get(fmt.Sprintf("/reports?t=%v&v=%v", nextFilter.Timespan, nextFilter.String())),
 						hx.Target("#baralga__report_content"),
+						hx.Trigger("click, keyup[shiftKey && key == 'ArrowRight'] from:body"),
 
-						TitleAttr(nextFilter.String()),
+						TitleAttr(fmt.Sprintf("Show next actvities from %v", nextFilter.String())),
 						Class("btn btn-outline-primary"),
 						I(Class("bi-arrow-right")),
 					),
@@ -514,7 +518,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			Div(
 				A(
 					hx.Target("#baralga__main_content_modal_content"),
-					hx.Trigger("keyup[shiftKey && key == 'P'] from:body"),
+					hx.Trigger("click, keyup[shiftKey && key == 'P'] from:body"),
 					hx.Swap("outerHTML"),
 					hx.Get("/projects"),
 					Class("btn btn-outline-primary btn-sm ms-1"),
@@ -525,7 +529,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			Div(
 				A(
 					hx.Target("#baralga__main_content_modal_content"),
-					hx.Trigger("keyup[shiftKey && key == 'N'] from:body"),
+					hx.Trigger("click, keyup[shiftKey && key == 'N'] from:body"),
 					hx.Swap("outerHTML"),
 					hx.Get("/activities/new"),
 					Class("btn btn-outline-primary btn-sm ms-1"),
