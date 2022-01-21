@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/go-http-utils/etag"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -156,7 +157,7 @@ func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 }
 
 func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
-	a.Router.Mount("/assets/", http.FileServer(http.FS(assets)))
+	a.Router.Mount("/assets/", etag.Handler(http.FileServer(http.FS(assets)), true))
 	a.Router.Get("/manifest.webmanifest", a.HandleWebManifest())
 
 	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
