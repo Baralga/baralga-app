@@ -88,7 +88,27 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 		[]g.Node{
 			Section(
 				Class("full-center"),
-				Div(Class("container"),
+				Div(
+					Class("container"),
+					Div(
+						Class("d-flex justify-content-center align-items-center mt-2 mb-2"),
+						Img(
+							Alt("Baralga"),
+							Class("img-responsive"),
+							Src("/assets/baralga_192.png"),
+						),
+						Div(
+							Class("ms-4"),
+							H2(
+								g.Text("Baralga"),
+								Small(
+									Class("text-muted"),
+									StyleAttr("display: block; font-size: 70%;"),
+									g.Text("project time tracking"),
+								),
+							),
+						),
+					),
 					LoginForm(formModel, ""),
 				),
 			),
@@ -118,13 +138,6 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 		ID("login_form"),
 		Action("/login"),
 		Method("POST"),
-		Div(
-			Class("mt-4 mb-4"),
-			Img(
-				Class("img-responsive center-block d-block mx-auto"),
-				Src("/assets/baralga_192.png"),
-			),
-		),
 		g.If(
 			errorMessage != "",
 			Div(
@@ -186,10 +199,11 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 			),
 			Div(
 				Class("col-4 text-center"),
-				//A(
-				//	Class("link-secondary"),
-				//	g.Text("Sign Up?"),
-				//),
+				A(
+					Href("/signup"),
+					Class("link-secondary"),
+					g.Text("Sign up here"),
+				),
 			),
 		),
 	)
