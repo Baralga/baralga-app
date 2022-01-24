@@ -32,3 +32,5 @@ README.md
 .air.toml
 build
 dist
+.github
+ci-util
