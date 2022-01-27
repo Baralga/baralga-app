@@ -49,6 +49,9 @@ Baralga supports the following roles:
 | User  | `ROLE_USER` |Full access to his own activities but can only read projects. |
 | Admin | `ROLE_ADMIN`  | Full access to activities of all users and projects.          |
 
+Passwords are encoded in BCrypt with BCrypt version `$2a` and strength 10. The tool https://8gwifi.org/bccrypt.jsp
+can be used to create a hashed password to be used in sql.
+
 #### Administration
 
 ### Database
