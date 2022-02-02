@@ -543,7 +543,16 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			Div(
 				Class("alert alert-info"),
 				Role("alert"),
-				g.Text("No activities in current week. Add some here!"),
+				g.Text("No activities in current week. Add some "),
+				A(
+					Href("#"),
+					Class("info-link"),
+					hx.Target("#baralga__main_content_modal_content"),
+					hx.Swap("outerHTML"),
+					hx.Get("/activities/new"),
+					g.Text("here"),
+				),
+				g.Text("!"),
 			),
 		),
 	}
