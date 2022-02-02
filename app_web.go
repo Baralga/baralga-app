@@ -678,7 +678,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-dark.min.css"),
+				Href("/assets/bootstrap-dark-5@1.1.3/bootstrap-dark.min.css"),
 				g.Attr("crossorigin", "anonymous"),
 			),
 			Link(
