@@ -683,7 +683,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css"),
+				Href("/assets/bootstrap-icons-1.8.0/bootstrap-icons.css"),
 				g.Attr("media", "print"),
 				g.Attr("onload", "this.media='all'"),
 				g.Attr("crossorigin", "anonymous"),
@@ -701,13 +701,13 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 				Href("manifest.webmanifest"),
 			),
 			Script(
-				Src("https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"),
+				Src("/assets/bootstrap-5.1.3/bootstrap.bundle.min.js"),
 				g.Attr("integrity", "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"),
 				g.Attr("crossorigin", "anonymous"),
 				g.Attr("defer", "defer"),
 			),
 			Script(
-				Src("https://unpkg.com/htmx.org@1.6.1/dist/htmx.min.js"),
+				Src("/assets/htmx-1.6.1/htmx.min.js"),
 				g.Attr("crossorigin", "anonymous"),
 				g.Attr("defer", "defer"),
 			),
