@@ -621,9 +621,9 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 		),
 
 		Div(
-			Class("row"),
+			Class("row g-2"),
 			Div(
-				Class("col-sm-3"),
+				Class("col-lg-3 col-sm-12"),
 				g.If(formModel.Action != "running",
 					Button(
 						Type("submit"),
@@ -642,8 +642,7 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 				),
 			),
 			Div(
-				Class("col-sm-9"),
-				StyleAttr("padding-left: 0"),
+				Class("col-lg-9 col-sm-12"),
 				Select(
 					Class("form-select form-select-lg"),
 					Name("ProjectID"),

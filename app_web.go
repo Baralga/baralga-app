@@ -417,12 +417,12 @@ func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filte
 		[]g.Node{
 			Navbar(pageContext),
 			Div(
-				Class("container mt-4"),
+				Class("container"),
 				Div(
 					Class("row"),
 					Div(
 						ID("baralga__main_content"),
-						Class("col-lg-8 col-sm-12 mb-2"),
+						Class("col-lg-8 col-sm-12 mb-2 order-2 order-lg-1 mt-lg-4 mt-2"),
 
 						hx.Target("#baralga__main_content"),
 						hx.Swap("innerHTML"),
@@ -432,7 +432,7 @@ func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filte
 
 						ActivitiesInWeekView(filter, activitiesPage, projects.Projects),
 					),
-					Div(Class("col-lg-4 col-sm-12"),
+					Div(Class("col-lg-4 col-sm-12 order-1 order-lg-2 mt-lg-4 mt-2"),
 						TrackPanel(projects.Projects, formModel),
 					),
 				),
