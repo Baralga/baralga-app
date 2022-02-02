@@ -674,7 +674,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"),
+				Href("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css"),
 				g.Attr("media", "print"),
 				g.Attr("onload", "this.media='all'"),
 				g.Attr("crossorigin", "anonymous"),
