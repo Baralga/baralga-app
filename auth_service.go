@@ -11,6 +11,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func (a *app) EncryptPassword(password string) string {
+	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
+	return string(encryptedPassword)
+}
+
 func (a *app) Authenticate(ctx context.Context, username, password string) (*Principal, error) {
 	user, err := a.UserRepository.FindUserByUsername(ctx, username)
 	if errors.Is(err, ErrUserNotFound) {

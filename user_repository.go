@@ -2,23 +2,33 @@ package main
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/pkg/errors"
 )
 
 var ErrUserNotFound = errors.New("user not found")
 
 type User struct {
 	ID             uuid.UUID
+	Name           string
 	Username       string
+	EMail          string
 	Password       string
 	OrganizationID uuid.UUID
 }
 
+type Organization struct {
+	ID    uuid.UUID
+	Title string
+}
+
 type UserRepository interface {
+	ConfirmUser(ctx context.Context, userID uuid.UUID) error
+	FindUserIDByConfirmationID(ctx context.Context, confirmationID string) (uuid.UUID, error)
+	InsertUserWithOrganizationAndConfirmation(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error)
 	FindUserByUsername(ctx context.Context, username string) (*User, error)
 	FindRolesByUserID(ctx context.Context, organizationID, userID uuid.UUID) ([]string, error)
 }
@@ -35,6 +45,175 @@ func NewDbUserRepository(connPool *pgxpool.Pool) *DbUserRepository {
 	return &DbUserRepository{
 		connPool: connPool,
 	}
+}
+
+func (r *DbUserRepository) InsertOrganization(ctx context.Context, tx pgx.Tx, organization *Organization) (*Organization, error) {
+	_, err := tx.Exec(
+		ctx,
+		`INSERT INTO organizations 
+		   (org_id, title) 
+		 VALUES 
+		   ($1, $2)`,
+		organization.ID,
+		organization.Title,
+	)
+	return organization, err
+}
+
+func (r *DbUserRepository) InsertConfirmation(ctx context.Context, tx pgx.Tx, user *User, confirmationID uuid.UUID) (uuid.UUID, error) {
+	_, err := tx.Exec(
+		ctx,
+		`INSERT INTO user_confirmations 
+		   (user_confirmation_id, user_id) 
+		 VALUES 
+		   ($1, $2)`,
+		confirmationID,
+		user.ID,
+	)
+	return confirmationID, err
+}
+
+func (r *DbUserRepository) InsertUserWithOrganizationAndConfirmation(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
+	tx, err := r.connPool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	organization := &Organization{
+		ID:    user.OrganizationID,
+		Title: user.Name,
+	}
+
+	_, err = r.InsertOrganization(ctx, tx, organization)
+	if err != nil {
+		rb := tx.Rollback(ctx)
+		if rb != nil {
+			return nil, errors.Wrap(rb, "rollback error")
+		}
+		return nil, err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO users 
+		   (user_id, username, email, name, password, enabled, org_id) 
+		 VALUES 
+		   ($1, $2, $3, $4, $5, $6, $7)`,
+		user.ID,
+		user.Username,
+		user.EMail,
+		user.Name,
+		user.Password,
+		0,
+		user.OrganizationID,
+	)
+	if err != nil {
+		rb := tx.Rollback(ctx)
+		if rb != nil {
+			return nil, errors.Wrap(rb, "rollback error")
+		}
+		return nil, err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO roles 
+		   (user_id, role, org_id) 
+		 VALUES 
+		   ($1, 'ROLE_ADMIN', $2)`,
+		user.ID,
+		user.OrganizationID,
+	)
+	if err != nil {
+		rb := tx.Rollback(ctx)
+		if rb != nil {
+			return nil, errors.Wrap(rb, "rollback error")
+		}
+		return nil, err
+	}
+
+	_, err = r.InsertConfirmation(ctx, tx, user, confirmationID)
+	if err != nil {
+		rb := tx.Rollback(ctx)
+		if rb != nil {
+			return nil, errors.Wrap(rb, "rollback error")
+		}
+		return nil, err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *DbUserRepository) FindUserIDByConfirmationID(ctx context.Context, confirmationID string) (uuid.UUID, error) {
+	row := r.connPool.QueryRow(
+		ctx,
+		`SELECT user_id 
+		 FROM user_confirmations 
+		 WHERE user_confirmation_id = $1`, confirmationID,
+	)
+
+	var (
+		userID string
+	)
+
+	err := row.Scan(&userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return uuid.Nil, ErrUserNotFound
+		}
+
+		return uuid.Nil, err
+	}
+
+	return uuid.MustParse(userID), nil
+}
+
+func (r *DbUserRepository) ConfirmUser(ctx context.Context, userID uuid.UUID) error {
+	tx, err := r.connPool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`DELETE FROM user_confirmations 
+		 WHERE user_id = $1`,
+		userID,
+	)
+	if err != nil {
+		rb := tx.Rollback(ctx)
+		if rb != nil {
+			return errors.Wrap(rb, "rollback error")
+		}
+		return err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`UPDATE users
+		 SET enabled = 1 
+		 WHERE user_id = $1`,
+		userID,
+	)
+	if err != nil {
+		rb := tx.Rollback(ctx)
+		if rb != nil {
+			return errors.Wrap(rb, "rollback error")
+		}
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *DbUserRepository) FindUserByUsername(ctx context.Context, username string) (*User, error) {

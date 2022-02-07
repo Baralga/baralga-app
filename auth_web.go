@@ -14,12 +14,8 @@ import (
 
 type loginFormModel struct {
 	CSRFToken string
-	Username  string
+	EMail     string
 	Password  string
-}
-
-type signupFormModel struct {
-	CSRFToken string
 }
 
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
@@ -42,7 +38,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 			return
 		}
 
-		principal, err := a.Authenticate(r.Context(), formModel.Username, formModel.Password)
+		principal, err := a.Authenticate(r.Context(), formModel.EMail, formModel.Password)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
 			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
@@ -73,14 +69,6 @@ func (a *app) HandleLogoutPage() http.HandlerFunc {
 	}
 }
 
-func (a *app) HandleSignUpPage() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		formModel := signupFormModel{}
-		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, SignUpPage(r.URL.Path, formModel))
-	}
-}
-
 func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 	return Page(
 		"Sign In",
@@ -91,7 +79,7 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 				Div(
 					Class("container"),
 					Div(
-						Class("d-flex justify-content-center align-items-center mt-2 mb-2"),
+						Class("d-flex justify-content-center align-items-center mt-2 mb-3"),
 						Img(
 							Alt("Baralga"),
 							Class("img-responsive"),
@@ -110,23 +98,6 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 						),
 					),
 					LoginForm(formModel, ""),
-				),
-			),
-		},
-	)
-}
-
-func SignUpPage(currentPath string, formModel signupFormModel) g.Node {
-	return Page(
-		"Sign Up",
-		currentPath,
-		[]g.Node{
-			Section(
-				Class("full-center"),
-				Div(Class("container"),
-					H2(
-						g.Text("Sign Up is coming soon, stay tuned ..."),
-					),
 				),
 			),
 		},
@@ -154,16 +125,16 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 		Div(
 			Class("form-floating mb-3"),
 			Input(
-				ID("username"),
+				ID("email"),
 				Type("text"),
-				Name("Username"),
+				Name("EMail"),
 				Class("form-control"),
 				g.Attr("placeholder", "john.doe"),
-				Value(formModel.Username),
+				Value(formModel.EMail),
 			),
 			Label(
-				g.Attr("for", "username"),
-				g.Text("Username"),
+				g.Attr("for", "email"),
+				g.Text("E-Mail"),
 			),
 		),
 		Div(
@@ -201,6 +172,7 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 				Class("col-4 text-center"),
 				A(
 					Href("/signup"),
+					hx.Boost(),
 					Class("link-secondary"),
 					g.Text("Sign up here"),
 				),

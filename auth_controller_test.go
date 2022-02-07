@@ -26,7 +26,7 @@ func TestHandleLogin(t *testing.T) {
 
 	body := `
 	{
-		"username": "admin",
+		"username": "admin@baralga.com",
 		"password": "adm1n"
 	 }
 	`

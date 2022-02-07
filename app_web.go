@@ -670,7 +670,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 
 func Page(title, currentPath string, body []g.Node) g.Node {
 	return c.HTML5(c.HTML5Props{
-		Title:    "Baralga # " + title,
+		Title:    fmt.Sprintf("%s # Baralga", title),
 		Language: "en",
 		Head: []g.Node{
 			Meta(

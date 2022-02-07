@@ -25,24 +25,7 @@ func TestHandleLoginPage(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Sign In"))
-}
-
-func TestHandleSignUpPage(t *testing.T) {
-	is := is.New(t)
-	httpRec := httptest.NewRecorder()
-
-	a := &app{
-		Config: &config{},
-	}
-
-	r, _ := http.NewRequest("GET", "/signup", nil)
-
-	a.HandleSignUpPage()(httpRec, r)
-	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
-
-	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Sign Up"))
+	is.True(strings.Contains(htmlBody, "Sign In # Baralga"))
 }
 
 func TestHandleLoginFormWithSuccessfullLogin(t *testing.T) {
@@ -56,7 +39,7 @@ func TestHandleLoginFormWithSuccessfullLogin(t *testing.T) {
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 
 	data := url.Values{}
-	data["Username"] = []string{"admin"}
+	data["EMail"] = []string{"admin@baralga.com"}
 	data["Password"] = []string{"adm1n"}
 
 	r, _ := http.NewRequest("POST", "/login", strings.NewReader(data.Encode()))
@@ -77,7 +60,7 @@ func TestHandleLoginFormWithInvalidLogin(t *testing.T) {
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 
 	data := url.Values{}
-	data["Username"] = []string{"admin"}
+	data["EMail"] = []string{"admin@baralga.com"}
 	data["Password"] = []string{"-just-wrong-"}
 
 	r, _ := http.NewRequest("POST", "/login", strings.NewReader(data.Encode()))
@@ -87,7 +70,7 @@ func TestHandleLoginFormWithInvalidLogin(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Sign In"))
+	is.True(strings.Contains(htmlBody, "Sign In # Baralga"))
 }
 
 func TestHandleLoginFormWithInvalidFormData(t *testing.T) {
@@ -110,7 +93,7 @@ func TestHandleLoginFormWithInvalidFormData(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Sign In"))
+	is.True(strings.Contains(htmlBody, "Sign In # Baralga"))
 }
 
 func TestHandleLoginFormWithInvalidBodyData(t *testing.T) {
@@ -133,5 +116,5 @@ func TestHandleLoginFormWithInvalidBodyData(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Sign In"))
+	is.True(strings.Contains(htmlBody, "Sign In # Baralga"))
 }

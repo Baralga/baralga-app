@@ -29,12 +29,18 @@ import (
 
 type config struct {
 	BindPort string `default:"8080"`
+	Webroot  string `default:"http://localhost:8080"`
 	Db       string `default:"postgres://postgres:postgres@localhost:5432/baralga"`
 	Env      string `default:"dev"`
 
 	JWTSecret  string `default:"secret"`
 	JWTExpiry  string `default:"24h"`
 	CSRFSecret string `default:"CSRFsecret"`
+
+	SMTPServername string `default:"smtp.server:465"`
+	SMTPFrom       string `default:"smtp.from@baralga.com"`
+	SMTPUser       string `default:"smtp.user@baralga.com"`
+	SMTPPassword   string `default:"SMTPPassword"`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
@@ -50,6 +56,8 @@ type app struct {
 	Router *chi.Mux
 	Conn   *pgx.Conn
 	Config *config
+
+	MailService MailService
 
 	UserRepository     UserRepository
 	ProjectRepository  ProjectRepository
@@ -96,6 +104,13 @@ func (a *app) run() error {
 		return err
 	}
 	defer connPool.Close()
+
+	a.MailService = NewSmtpMailService(
+		a.Config.SMTPServername,
+		a.Config.SMTPFrom,
+		a.Config.SMTPUser,
+		a.Config.SMTPPassword,
+	)
 
 	a.UserRepository = NewDbUserRepository(connPool)
 	a.ProjectRepository = NewDbProjectRepository(connPool)
@@ -205,6 +220,9 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Get("/login", a.HandleLoginPage())
 		r.Post("/login", a.HandleLoginForm(tokenAuth))
 		r.Get("/signup", a.HandleSignUpPage())
+		r.Post("/signup", a.HandleSignUpForm())
+		r.Post("/signup/validate", a.HandleSignUpFormValidate())
+		r.Get("/signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
 	})
 }
 

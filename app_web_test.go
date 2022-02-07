@@ -27,7 +27,7 @@ func TestHandleIndexPage(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Track Activities"))
+	is.True(strings.Contains(htmlBody, "Track Activities # Baralga"))
 }
 
 func TestHandleWebManifest(t *testing.T) {
@@ -64,5 +64,5 @@ func TestHandleReportPage(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
-	is.True(strings.Contains(htmlBody, "Baralga # Report Activities"))
+	is.True(strings.Contains(htmlBody, "Report Activities # Baralga"))
 }
