@@ -165,7 +165,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
 		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
 		ForceSTSHeader:        true,
-		IsDevelopment:         !a.isProduction(),
+		IsDevelopment:         false,
 		STSSeconds:            31536000,
 		STSIncludeSubdomains:  true,
 		STSPreload:            true,
