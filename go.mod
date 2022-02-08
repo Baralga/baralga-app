@@ -76,6 +76,7 @@ require (
 	github.com/richardlehane/mscfb v1.0.3 // indirect
 	github.com/richardlehane/msoleps v1.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/unrolled/secure v1.0.9 // indirect
 	github.com/xuri/efp v0.0.0-20210322160811-ab561f5b45e3 // indirect
 	github.com/xuri/excelize/v2 v2.5.0 // indirect
 	go.opencensus.io v0.23.0 // indirect

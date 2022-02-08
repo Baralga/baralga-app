@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/unrolled/secure"
 )
 
 type config struct {
@@ -133,6 +134,20 @@ func (a *app) routes() {
 
 func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	r := chi.NewRouter()
+
+	secureMiddleware := secure.New(secure.Options{
+		AllowedHosts:          []string{"baralga-app.tack.dev"},
+		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
+		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+		STSSeconds:            31536000,
+		STSIncludeSubdomains:  true,
+		STSPreload:            true,
+		FrameDeny:             true,
+		ContentTypeNosniff:    true,
+		BrowserXssFilter:      true,
+		ContentSecurityPolicy: "script-src $NONCE",
+	})
+	r.Use(secureMiddleware.Handler)
 
 	r.Post("/auth/login", a.HandleLogin(tokenAuth))
 
