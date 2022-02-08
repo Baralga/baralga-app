@@ -177,7 +177,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		PermissionsPolicy:     "fullscreen=*",
 	})
 
-	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
+	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("__Secure-csrf"), csrf.FieldName("CSRFToken"))
 	a.Router.Group(func(r chi.Router) {
 		r.Use(WebVerifier(tokenAuth))
 		r.Use(a.JWTPrincipalHandler())
