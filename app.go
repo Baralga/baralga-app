@@ -174,7 +174,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		BrowserXssFilter:      true,
 		ContentSecurityPolicy: "base-uri 'self'",
 		ReferrerPolicy:        "same-origin",
-		PermissionsPolicy:     "",
+		PermissionsPolicy:     "fullscreen=*",
 	})
 
 	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
