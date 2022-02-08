@@ -135,20 +135,6 @@ func (a *app) routes() {
 func (a *app) apiRouter(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	r := chi.NewRouter()
 
-	secureMiddleware := secure.New(secure.Options{
-		AllowedHosts:          []string{"baralga-app.tack.dev"},
-		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
-		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
-		STSSeconds:            31536000,
-		STSIncludeSubdomains:  true,
-		STSPreload:            true,
-		FrameDeny:             true,
-		ContentTypeNosniff:    true,
-		BrowserXssFilter:      true,
-		ContentSecurityPolicy: "script-src $NONCE",
-	})
-	r.Use(secureMiddleware.Handler)
-
 	r.Post("/auth/login", a.HandleLogin(tokenAuth))
 
 	r.Group(func(r chi.Router) {
@@ -175,11 +161,28 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 	a.Router.Mount("/assets/", etag.Handler(http.FileServer(http.FS(assets)), true))
 	a.Router.Get("/manifest.webmanifest", a.HandleWebManifest())
 
+	secureMiddleware := secure.New(secure.Options{
+		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
+		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+		ForceSTSHeader:        true,
+		IsDevelopment:         !a.isProduction(),
+		STSSeconds:            31536000,
+		STSIncludeSubdomains:  true,
+		STSPreload:            true,
+		FrameDeny:             true,
+		ContentTypeNosniff:    true,
+		BrowserXssFilter:      true,
+		ContentSecurityPolicy: "base-uri 'self'",
+		ReferrerPolicy:        "same-origin",
+		PermissionsPolicy:     "",
+	})
+
 	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName("_csrf"), csrf.FieldName("CSRFToken"))
 	a.Router.Group(func(r chi.Router) {
 		r.Use(WebVerifier(tokenAuth))
 		r.Use(a.JWTPrincipalHandler())
 		r.Use(CSRF)
+		r.Use(secureMiddleware.Handler)
 
 		r.Get("/", a.HandleIndexPage())
 		r.Get("/reports", a.HandleReportPage())
