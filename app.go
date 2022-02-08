@@ -165,7 +165,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
 		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
 		ForceSTSHeader:        true,
-		IsDevelopment:         false,
+		IsDevelopment:         !a.isProduction(),
 		STSSeconds:            31536000,
 		STSIncludeSubdomains:  true,
 		STSPreload:            true,
@@ -200,6 +200,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 
 	a.Router.Group(func(r chi.Router) {
 		r.Use(CSRF)
+		r.Use(secureMiddleware.Handler)
 
 		r.Get("/login", a.HandleLoginPage())
 		r.Post("/login", a.HandleLoginForm(tokenAuth))
