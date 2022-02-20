@@ -17,6 +17,7 @@ type User struct {
 	Username       string
 	EMail          string
 	Password       string
+	Origin         string
 	OrganizationID uuid.UUID
 }
 
@@ -63,19 +64,25 @@ func (r *DbUserRepository) insertConfirmation(ctx context.Context, tx pgx.Tx, us
 func (r *DbUserRepository) InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
 	tx := ctx.Value(contextKeyTx).(pgx.Tx)
 
+	enabled := 0
+	if confirmationID == uuid.Nil {
+		enabled = 1
+	}
+
 	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO users 
-		   (user_id, username, email, name, password, enabled, org_id) 
+		   (user_id, username, email, name, password, enabled, org_id, origin) 
 		 VALUES 
-		   ($1, $2, $3, $4, $5, $6, $7)`,
+		   ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		user.ID,
 		user.Username,
 		user.EMail,
 		user.Name,
 		user.Password,
-		0,
+		enabled,
 		user.OrganizationID,
+		user.Origin,
 	)
 	if err != nil {
 		return nil, err
@@ -92,6 +99,10 @@ func (r *DbUserRepository) InsertUserWithConfirmationID(ctx context.Context, use
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if confirmationID == uuid.Nil {
+		return user, nil
 	}
 
 	_, err = r.insertConfirmation(ctx, tx, user, confirmationID)

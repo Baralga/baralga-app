@@ -16,7 +16,7 @@ func (a *app) ConfirmUser(ctx context.Context, userID uuid.UUID) error {
 	)
 }
 
-func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
+func (a *app) SetUpNewUser(ctx context.Context, user *User, confirmationID uuid.UUID) error {
 	// Create Organization
 	organization := &Organization{
 		ID:    uuid.New(),
@@ -26,8 +26,6 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 	// Create User
 	user.ID = uuid.New()
 	user.OrganizationID = organization.ID
-
-	confirmationID := uuid.New()
 
 	// Create initial project
 	project := &Project{
@@ -73,6 +71,9 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 		},
 		// Send email confirmation link
 		func(ctx context.Context) error {
+			if user.EMail == "" {
+				return nil
+			}
 			return a.MailResource.SendMail(user.EMail, subject, body)
 		},
 	)

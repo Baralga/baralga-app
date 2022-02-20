@@ -8,6 +8,7 @@ import (
 	"github.com/baralga/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
@@ -146,7 +147,8 @@ func (a *app) HandleSignUpForm() http.HandlerFunc {
 		}
 
 		user := mapSignUpFormToUser(formModel, a.EncryptPassword(formModel.Password))
-		err = a.SetUpNewUser(r.Context(), &user)
+		confirmationID := uuid.New()
+		err = a.SetUpNewUser(r.Context(), &user, confirmationID)
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
 			return
@@ -348,5 +350,6 @@ func mapSignUpFormToUser(formModel signupFormModel, encryptedPassword string) Us
 		Username: formModel.EMail,
 		EMail:    formModel.EMail,
 		Password: encryptedPassword,
+		Origin:   "baralga",
 	}
 }

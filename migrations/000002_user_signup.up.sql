@@ -34,3 +34,8 @@ FOREIGN KEY (user_id) REFERENCES users (user_id);
 
 ALTER TABLE user_confirmations
 ADD CONSTRAINT pk_user_confirmations PRIMARY KEY (user_confirmation_id);
+
+-- User Origin
+ALTER TABLE users ADD origin VARCHAR(100);
+
+UPDATE users SET origin = 'baralga' WHERE origin is null;

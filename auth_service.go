@@ -35,6 +35,11 @@ func (a *app) Authenticate(ctx context.Context, username, password string) (*Pri
 		return nil, err
 	}
 
+	principal := mapUserToPrincipal(user, roles)
+	return principal, nil
+}
+
+func mapUserToPrincipal(user *User, roles []string) *Principal {
 	principal := &Principal{
 		Name:           user.Name,
 		Username:       user.Username,
@@ -44,7 +49,24 @@ func (a *app) Authenticate(ctx context.Context, username, password string) (*Pri
 	if principal.Name == "" {
 		principal.Name = user.Username
 	}
+	return principal
+}
 
+func (a *app) AuthenticateTrusted(ctx context.Context, username string) (*Principal, error) {
+	user, err := a.UserRepository.FindUserByUsername(ctx, username)
+	if errors.Is(err, ErrUserNotFound) {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	roles, err := a.UserRepository.FindRolesByUserID(ctx, user.OrganizationID, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	principal := mapUserToPrincipal(user, roles)
 	return principal, nil
 }
 

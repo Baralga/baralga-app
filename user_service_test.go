@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/matryer/is"
 )
 
@@ -38,9 +39,10 @@ func TestSetUpNewUser(t *testing.T) {
 		EMail:    "newbie@baralga.com",
 		Password: "myPassword?!§!",
 	}
+	confirmationID := uuid.New()
 
 	// Act
-	err := a.SetUpNewUser(context.Background(), user)
+	err := a.SetUpNewUser(context.Background(), user, confirmationID)
 
 	// Assert
 	is.NoErr(err)

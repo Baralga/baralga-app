@@ -1,15 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/util"
+	"github.com/dghubble/gologin/v2"
+	"github.com/dghubble/gologin/v2/github"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
+	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	githubOAuth2 "golang.org/x/oauth2/github"
 )
 
 type loginFormModel struct {
@@ -69,6 +76,54 @@ func (a *app) HandleLogoutPage() http.HandlerFunc {
 	}
 }
 
+func (a *app) GithubLoginHandler() http.Handler {
+	stateConfig, oauth2Config := a.githubAuthConfig()
+	return github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil))
+}
+
+func (a *app) GithubCallbackHandler(tokenAuth *jwtauth.JWTAuth) http.Handler {
+	stateConfig, oauth2Config := a.githubAuthConfig()
+	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithub(tokenAuth), nil))
+}
+
+func (a *app) IssueCookieForGithub(tokenAuth *jwtauth.JWTAuth) http.Handler {
+	expiryDuration := a.Config.ExpiryDuration()
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		githubUser, err := github.UserFromContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		principal, err := a.AuthenticateTrusted(ctx, fmt.Sprintf("%v", *githubUser.ID))
+		if errors.Is(err, ErrUserNotFound) {
+			user := &User{
+				Username: fmt.Sprintf("%v", *githubUser.ID),
+				Name:     *githubUser.Login,
+				Origin:   "github",
+			}
+			err := a.SetUpNewUser(r.Context(), user, uuid.Nil)
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			principal, err = a.AuthenticateTrusted(ctx, fmt.Sprintf("%v", user.Username))
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+
+		cookie := a.CreateCookie(tokenAuth, expiryDuration, principal)
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	return http.HandlerFunc(fn)
+}
+
 func LoginPage(currentPath string, formModel loginFormModel, errorMessage string) g.Node {
 	return Page(
 		"Sign In",
@@ -98,6 +153,15 @@ func LoginPage(currentPath string, formModel loginFormModel, errorMessage string
 						),
 					),
 					LoginForm(formModel, errorMessage),
+					Div(
+						Class("d-flex justify-content-center align-items-center mt-4 mb-3"),
+						A(
+							Class("btn btn-secondary"),
+							Href("/github/login"),
+							I(Class("bi-github")),
+							g.Text(" Sign in with Github"),
+						),
+					),
 				),
 			),
 		},
@@ -198,4 +262,18 @@ func WebVerifier(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func (a *app) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
+	stateConfig := gologin.DefaultCookieConfig
+	if !a.isProduction() {
+		stateConfig = gologin.DebugOnlyCookieConfig
+	}
+	oauth2Config := &oauth2.Config{
+		ClientID:     a.Config.GithubClientId,
+		ClientSecret: a.Config.GithubClientSecret,
+		RedirectURL:  a.Config.GithubRedirectURL,
+		Endpoint:     githubOAuth2.Endpoint,
+	}
+	return stateConfig, oauth2Config
 }

@@ -43,6 +43,10 @@ type config struct {
 	SMTPPassword   string `default:"SMTPPassword"`
 
 	TermsAndConditionsContent string `default:"Accept all terms and conditions."`
+
+	GithubClientId     string `default:"GithubClientID"`
+	GithubClientSecret string `default:"GithubClientSecret"`
+	GithubRedirectURL  string `default:"http://localhost:8080/github/callback"`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
@@ -229,6 +233,9 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Post("/signup", a.HandleSignUpForm())
 		r.Post("/signup/validate", a.HandleSignUpFormValidate())
 		r.Get("/signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
+
+		r.Handle("/github/login", a.GithubLoginHandler())
+		r.Handle("/github/callback", a.GithubCallbackHandler(tokenAuth))
 	})
 }
 

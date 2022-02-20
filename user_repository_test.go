@@ -82,6 +82,7 @@ func TestUserRepository(t *testing.T) {
 			Username:       "ned.newbie@baralga.com",
 			EMail:          "ned.newbie@baralga.com",
 			OrganizationID: organizationIDSample,
+			Origin:         "baralga",
 		}
 		confirmationID := uuid.New()
 
@@ -116,6 +117,37 @@ func TestUserRepository(t *testing.T) {
 		)
 
 		is.NoErr(err)
+	})
+
+	t.Run("InsertUserWithoutConfirmation", func(t *testing.T) {
+		user := &User{
+			ID:             uuid.New(),
+			Name:           "Minny Manners",
+			Username:       "minny.manners@baralga.com",
+			EMail:          "minny.manners@baralga.com",
+			OrganizationID: organizationIDSample,
+			Origin:         "github",
+		}
+		confirmationID := uuid.Nil
+
+		err := repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				_, err := userRepository.InsertUserWithConfirmationID(
+					ctx,
+					user,
+					confirmationID,
+				)
+				return err
+			},
+		)
+		is.NoErr(err)
+
+		_, err = userRepository.FindUserIDByConfirmationID(
+			context.Background(),
+			confirmationID.String(),
+		)
+		is.True(errors.Is(err, ErrUserNotFound))
 	})
 }
 
