@@ -4,8 +4,10 @@ go 1.17
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/dghubble/gologin/v2 v2.3.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/jwtauth/v5 v5.0.2
+	github.com/go-http-utils/etag v0.0.0-20161124023236-513ea8f21eb1
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/uuid v1.3.0
@@ -21,7 +23,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/snabb/isoweek v1.0.1
 	github.com/testcontainers/testcontainers-go v0.12.0
+	github.com/unrolled/secure v1.0.9
+	github.com/xuri/excelize/v2 v2.5.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	schneider.vip/problem v1.6.0
 )
 
@@ -33,12 +38,10 @@ require (
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/containerd/containerd v1.5.7 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
-	github.com/dghubble/gologin/v2 v2.3.0 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v20.10.11+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/go-http-utils/etag v0.0.0-20161124023236-513ea8f21eb1 // indirect
 	github.com/go-http-utils/fresh v0.0.0-20161124030543-7231e26a4b27 // indirect
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -79,15 +82,12 @@ require (
 	github.com/richardlehane/mscfb v1.0.3 // indirect
 	github.com/richardlehane/msoleps v1.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/unrolled/secure v1.0.9 // indirect
 	github.com/xuri/efp v0.0.0-20210322160811-ab561f5b45e3 // indirect
-	github.com/xuri/excelize/v2 v2.5.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel v1.3.0 // indirect
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
