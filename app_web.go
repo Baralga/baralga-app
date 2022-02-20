@@ -517,7 +517,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			Div(
 				A(
 					hx.Target("#baralga__main_content_modal_content"),
-					hx.Trigger("click, keyup[shiftKey && key == 'P'] from:body"),
+					hx.Trigger("click, keyup[altKey && shiftKey && key == 'P'] from:body"),
 					hx.Swap("outerHTML"),
 					hx.Get("/projects"),
 					Class("btn btn-outline-primary btn-sm ms-1"),
@@ -528,7 +528,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			Div(
 				A(
 					hx.Target("#baralga__main_content_modal_content"),
-					hx.Trigger("click, keyup[shiftKey && key == 'N'] from:body"),
+					hx.Trigger("click, keyup[altKey && shiftKey && key == 'N'] from:body"),
 					hx.Swap("outerHTML"),
 					hx.Get("/activities/new"),
 					Class("btn btn-outline-primary btn-sm ms-1"),

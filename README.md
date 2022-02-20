@@ -10,8 +10,8 @@ Multi user time tracking application with web frontend and API.
 
 | Shortcut                         | Action          |
 | -------------------------------- |:----------------|
-| <kbd>Shift</kbd> + <kbd>n</kbd>  | Add Activity    |
-| <kbd>Shift</kbd> + <kbd>p</kbd>  | Manage Projects |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>n</kbd>  | Add Activity    |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>p</kbd>  | Manage Projects |
 
 #### Report Activities
 
