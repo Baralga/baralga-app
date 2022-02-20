@@ -25,7 +25,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 		if err != nil {
 			formModel := loginFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
 			return
 		}
 
@@ -34,14 +34,14 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
 			return
 		}
 
 		principal, err := a.Authenticate(r.Context(), formModel.EMail, formModel.Password)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, "Login failed. Please check your credentials and try again."))
 			return
 		}
 
@@ -56,7 +56,7 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := loginFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+		util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
 	}
 }
 
@@ -69,7 +69,7 @@ func (a *app) HandleLogoutPage() http.HandlerFunc {
 	}
 }
 
-func LoginPage(currentPath string, formModel loginFormModel) g.Node {
+func LoginPage(currentPath string, formModel loginFormModel, errorMessage string) g.Node {
 	return Page(
 		"Sign In",
 		currentPath,
@@ -97,7 +97,7 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 							),
 						),
 					),
-					LoginForm(formModel, ""),
+					LoginForm(formModel, errorMessage),
 				),
 			),
 		},
@@ -112,7 +112,7 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 		g.If(
 			errorMessage != "",
 			Div(
-				Class("alert alert-danger text-center"),
+				Class("alert alert-warning text-center"),
 				Role("alert"),
 				Span(g.Text(errorMessage)),
 			),
