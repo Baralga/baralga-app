@@ -43,6 +43,8 @@ The backend is configured using the following environment variables:
 | `BARALGA_SMTPFROM` | `smtp.from@baralga.com`      |    From email for your SMTP server |
 | `BARALGA_SMTPUSER` | `smtp.user@baralga.com`      |    User for your SMTP server |
 | `BARALGA_SMTPPASSWORD` | `SMTPPassword`      |    Password for your SMTP server |
+| `BARALGA_TERMSANDCONDITIONSCONTENT` | `Accept all terms and conditions.`      |    Raw html content for terms and conditions. |
+
 
 
 ### Users and Roles

@@ -754,7 +754,7 @@ func Navbar(pageContext *pageContext) g.Node {
 						Role("button"),
 						g.Attr("data-bs-toggle", "dropdown"),
 						I(Class("bi-person-fill")),
-						TitleAttr(pageContext.principal.Username),
+						TitleAttr(pageContext.principal.Name),
 					),
 					Ul(
 						Class("dropdown-menu dropdown-menu-end"),
@@ -764,7 +764,7 @@ func Navbar(pageContext *pageContext) g.Node {
 								hx.Boost(),
 								Class("dropdown-item"),
 								I(Class("bi-box-arrow-right me-2")),
-								TitleAttr(fmt.Sprintf("Sign out %v", pageContext.principal.Username)),
+								TitleAttr(fmt.Sprintf("Sign out %v", pageContext.principal.Name)),
 								g.Text("Sign out"),
 							),
 						),

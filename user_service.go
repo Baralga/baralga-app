@@ -14,7 +14,6 @@ func (a *app) ConfirmUser(ctx context.Context, userID uuid.UUID) error {
 			return a.UserRepository.ConfirmUser(ctx, userID)
 		},
 	)
-
 }
 
 func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
@@ -38,7 +37,7 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 		OrganizationID: organization.ID,
 	}
 
-	// Send Email confirmation link
+	// Send email confirmation link
 	subject := "Confirm your Email Address"
 	body := fmt.Sprintf(
 		`Confirm your e-mail address at %v/signup/confirm/%v to activate your account.`,
@@ -48,6 +47,7 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 
 	return a.RepositoryTxer.InTx(
 		ctx,
+		// Create Organization
 		func(ctx context.Context) error {
 			_, err := a.OrganizationRepository.InsertOrganization(ctx, organization)
 			if err != nil {
@@ -55,6 +55,7 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 			}
 			return nil
 		},
+		// Create User
 		func(ctx context.Context) error {
 			_, err := a.UserRepository.InsertUserWithConfirmationID(ctx, user, confirmationID)
 			if err != nil {
@@ -62,6 +63,7 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 			}
 			return nil
 		},
+		// Create initial project
 		func(ctx context.Context) error {
 			_, err := a.ProjectRepository.InsertProject(ctx, project)
 			if err != nil {
@@ -69,6 +71,7 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User) error {
 			}
 			return nil
 		},
+		// Send email confirmation link
 		func(ctx context.Context) error {
 			return a.MailResource.SendMail(user.EMail, subject, body)
 		},

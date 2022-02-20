@@ -36,9 +36,13 @@ func (a *app) Authenticate(ctx context.Context, username, password string) (*Pri
 	}
 
 	principal := &Principal{
+		Name:           user.Name,
 		Username:       user.Username,
 		OrganizationID: user.OrganizationID,
 		Roles:          roles,
+	}
+	if principal.Name == "" {
+		principal.Name = user.Username
 	}
 
 	return principal, nil

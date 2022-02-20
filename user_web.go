@@ -86,7 +86,7 @@ func (a *app) HandleSignUpFormValidate() http.HandlerFunc {
 		if err != nil {
 			formModel := signupFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, SignupForm(formModel, "", nil))
+			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
@@ -94,19 +94,19 @@ func (a *app) HandleSignUpFormValidate() http.HandlerFunc {
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, SignupForm(formModel, "", nil))
+			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
 		fieldErrors, err := validate(r.Context(), formModel)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, SignupForm(formModel, "", fieldErrors))
+			util.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
 			return
 		}
 
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, SignupForm(formModel, "", fieldErrors))
+		util.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
 	}
 }
 
@@ -114,7 +114,7 @@ func (a *app) HandleSignUpPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := signupFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, SignUpPage(r.URL.Path, formModel))
+		util.RenderHTML(w, a.SignUpPage(r.URL.Path, formModel))
 	}
 }
 
@@ -126,7 +126,7 @@ func (a *app) HandleSignUpForm() http.HandlerFunc {
 		if err != nil {
 			formModel := signupFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, SignupForm(formModel, "", nil))
+			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
@@ -134,14 +134,14 @@ func (a *app) HandleSignUpForm() http.HandlerFunc {
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, SignupForm(formModel, "", nil))
+			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
 		fieldErrors, err := validate(r.Context(), formModel)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, SignupForm(formModel, "", fieldErrors))
+			util.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
 			return
 		}
 
@@ -156,7 +156,7 @@ func (a *app) HandleSignUpForm() http.HandlerFunc {
 	}
 }
 
-func SignUpPage(currentPath string, formModel signupFormModel) g.Node {
+func (a *app) SignUpPage(currentPath string, formModel signupFormModel) g.Node {
 	return Page(
 		"Sign Up",
 		currentPath,
@@ -184,7 +184,7 @@ func SignUpPage(currentPath string, formModel signupFormModel) g.Node {
 							),
 						),
 					),
-					SignupForm(formModel, "", nil),
+					a.SignupForm(formModel, "", nil),
 				),
 			),
 		},
@@ -199,10 +199,9 @@ func SignupSuccess(formModel signupFormModel) g.Node {
 	)
 }
 
-func SignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
+func (a *app) SignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
 	return FormEl(
 		ID("signup_form"),
-		//		Method("POST"),
 		hx.Post("/signup"),
 
 		hx.Target("this"),
@@ -314,7 +313,7 @@ func SignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[
 			),
 			Label(
 				g.Attr("for", "acceptConditions"),
-				g.Text("Accept all terms and conditions."),
+				g.Raw(a.Config.TermsAndConditionsContent),
 			),
 		),
 		Div(

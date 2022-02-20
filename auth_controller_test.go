@@ -80,15 +80,18 @@ func TestHandleLoginWithInvalidDuration(t *testing.T) {
 func TestMapPrincipalFromClaims(t *testing.T) {
 	is := is.New(t)
 
+	name := "Ado Admin"
 	username := "admin"
 
 	claims := make(map[string]interface{})
+	claims["name"] = name
 	claims["username"] = username
 	claims["organizationId"] = organizationIDSample.String()
 	claims["roles"] = "ROLE_ADMIN"
 
 	p := mapPrincipalFromClaims(claims)
 
+	is.Equal(name, p.Name)
 	is.Equal(username, p.Username)
 	is.Equal(organizationIDSample, p.OrganizationID)
 	is.Equal(1, len(p.Roles))

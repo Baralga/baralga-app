@@ -156,18 +156,19 @@ func (r *DbUserRepository) ConfirmUser(ctx context.Context, userID uuid.UUID) er
 func (r *DbUserRepository) FindUserByUsername(ctx context.Context, username string) (*User, error) {
 	row := r.connPool.QueryRow(
 		ctx,
-		`SELECT user_id, password, org_id 
+		`SELECT user_id, name, password, org_id 
 		 FROM users 
 		 WHERE username = $1 AND enabled = 1`, username,
 	)
 
 	var (
 		id             string
+		name           string
 		password       string
 		organizationID string
 	)
 
-	err := row.Scan(&id, &password, &organizationID)
+	err := row.Scan(&id, &name, &password, &organizationID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrUserNotFound
@@ -178,6 +179,7 @@ func (r *DbUserRepository) FindUserByUsername(ctx context.Context, username stri
 
 	user := &User{
 		ID:             uuid.MustParse(id),
+		Name:           name,
 		Username:       username,
 		Password:       password,
 		OrganizationID: uuid.MustParse(organizationID),

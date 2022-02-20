@@ -7,8 +7,6 @@ UPDATE users SET name = 'Uriah User' where username = 'user2';
 
 UPDATE users SET name = username WHERE name is null;
 
-ALTER TABLE users ALTER COLUMN name SET NOT NULL;
-
 
 -- User EMail
 ALTER TABLE users ADD email VARCHAR(100);
@@ -22,8 +20,6 @@ UPDATE users SET username = 'user1@baralga.com' where username = 'user1';
 UPDATE users SET username = 'user2@baralga.com' where username = 'user2';
 
 UPDATE users SET email = username WHERE email is null;
-
-ALTER TABLE users ALTER COLUMN email SET NOT NULL;
 
 
 -- User EMail Confirmation

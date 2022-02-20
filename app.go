@@ -41,6 +41,8 @@ type config struct {
 	SMTPFrom       string `default:"smtp.from@baralga.com"`
 	SMTPUser       string `default:"smtp.user@baralga.com"`
 	SMTPPassword   string `default:"SMTPPassword"`
+
+	TermsAndConditionsContent string `default:"Accept all terms and conditions."`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
