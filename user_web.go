@@ -69,7 +69,7 @@ func (a *app) HandleSignUpConfirm() http.HandlerFunc {
 			return
 		}
 
-		err = a.UserRepository.ConfirmUser(r.Context(), userID)
+		err = a.ConfirmUser(r.Context(), userID)
 		if err != nil {
 			http.Redirect(w, r, "/signup", http.StatusFound)
 			return

@@ -31,6 +31,7 @@ func TestUserRepository(t *testing.T) {
 	}()
 
 	userRepository := NewDbUserRepository(connPool)
+	repositoryTxer := NewDbRepositoryTxer(connPool)
 
 	t.Run("FindExistingUserByUsername", func(t *testing.T) {
 		adminUser, err := userRepository.FindUserByUsername(
@@ -74,20 +75,26 @@ func TestUserRepository(t *testing.T) {
 		is.Equal(len(roles), 0)
 	})
 
-	t.Run("InsertUserWithOrganizationAndConfirmation", func(t *testing.T) {
+	t.Run("InsertUserWithConfirmationID", func(t *testing.T) {
 		user := &User{
 			ID:             uuid.New(),
 			Name:           "Ned Newbie",
 			Username:       "ned.newbie@baralga.com",
 			EMail:          "ned.newbie@baralga.com",
-			OrganizationID: uuid.New(),
+			OrganizationID: organizationIDSample,
 		}
 		confirmationID := uuid.New()
 
-		_, err := userRepository.InsertUserWithOrganizationAndConfirmation(
+		err := repositoryTxer.InTx(
 			context.Background(),
-			user,
-			confirmationID,
+			func(ctx context.Context) error {
+				_, err := userRepository.InsertUserWithConfirmationID(
+					ctx,
+					user,
+					confirmationID,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
@@ -98,10 +105,16 @@ func TestUserRepository(t *testing.T) {
 		is.NoErr(err)
 		is.Equal(user.ID, userIdByConfId)
 
-		err = userRepository.ConfirmUser(
+		err = repositoryTxer.InTx(
 			context.Background(),
-			user.ID,
+			func(ctx context.Context) error {
+				return userRepository.ConfirmUser(
+					ctx,
+					user.ID,
+				)
+			},
 		)
+
 		is.NoErr(err)
 	})
 }
@@ -139,7 +152,7 @@ func (r *InMemUserRepository) FindRolesByUserID(ctx context.Context, organizatio
 	return []string{"ROLE_ADMIN"}, nil
 }
 
-func (r *InMemUserRepository) InsertUserWithOrganizationAndConfirmation(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
+func (r *InMemUserRepository) InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
 	r.users = append(r.users, user)
 	return user, nil
 }

@@ -62,6 +62,7 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ProjectRepository:  NewInMemProjectRepository(),
 		ActivityRepository: repo,
 	}

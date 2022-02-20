@@ -188,7 +188,7 @@ func (a *app) HandleUpdateProject() http.HandlerFunc {
 
 		project.ID = projectID
 
-		projectUpdate, err := a.ProjectRepository.UpdateProject(r.Context(), principal.OrganizationID, project)
+		projectUpdate, err := a.UpdateProject(r.Context(), principal.OrganizationID, project)
 		if errors.Is(err, ErrProjectNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return

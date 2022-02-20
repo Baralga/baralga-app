@@ -9,27 +9,27 @@ import (
 	"net/smtp"
 )
 
-type MailService interface {
+type MailResource interface {
 	SendMail(to, subject, body string) error
 }
 
-// SmtpMailService is a SMTP based mail service
-type SmtpMailService struct {
+// SmtpMailResource is a SMTP based mail service
+type SmtpMailResource struct {
 	SMTPServername string
 	SMTPFrom       string
 	SMTPUser       string
 	SMTPPassword   string
 }
 
-var _ MailService = (*SmtpMailService)(nil)
+var _ MailResource = (*SmtpMailResource)(nil)
 
-// NewSmtpMailService creates a new SMTP based mail service
-func NewSmtpMailService(
+// NewSmtpMailResource creates a new SMTP based mail service
+func NewSmtpMailResource(
 	SMTPServername string,
 	SMTPFrom string,
 	SMTPUser string,
-	SMTPPassword string) *SmtpMailService {
-	return &SmtpMailService{
+	SMTPPassword string) *SmtpMailResource {
+	return &SmtpMailResource{
 		SMTPServername: SMTPServername,
 		SMTPFrom:       SMTPFrom,
 		SMTPUser:       SMTPUser,
@@ -37,7 +37,7 @@ func NewSmtpMailService(
 	}
 }
 
-func (s *SmtpMailService) SendMail(to, subject, body string) error {
+func (s *SmtpMailResource) SendMail(to, subject, body string) error {
 	fromAddress := mail.Address{
 		Name:    "Baralga Time Tracker",
 		Address: s.SMTPFrom,
@@ -46,8 +46,6 @@ func (s *SmtpMailService) SendMail(to, subject, body string) error {
 		Name:    "",
 		Address: to,
 	}
-	//	subj := "TEST: This is the email subject"
-	//	body := "This is an example body.\n With two lines."
 
 	// Setup headers
 	headers := make(map[string]string)

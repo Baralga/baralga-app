@@ -174,12 +174,9 @@ func (r *DbProjectRepository) FindProjectByID(ctx context.Context, organizationI
 }
 
 func (r *DbProjectRepository) InsertProject(ctx context.Context, project *Project) (*Project, error) {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
 
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO projects 
 		   (project_id, title, active, description, org_id) 
@@ -192,15 +189,6 @@ func (r *DbProjectRepository) InsertProject(ctx context.Context, project *Projec
 		project.OrganizationID,
 	)
 	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return nil, errors.Wrap(rb, "rollback error")
-		}
-		return nil, err
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
 		return nil, err
 	}
 
@@ -208,7 +196,9 @@ func (r *DbProjectRepository) InsertProject(ctx context.Context, project *Projec
 }
 
 func (r *DbProjectRepository) UpdateProject(ctx context.Context, organizationID uuid.UUID, project *Project) (*Project, error) {
-	row := r.connPool.QueryRow(ctx,
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
+
+	row := tx.QueryRow(ctx,
 		`UPDATE projects 
 		 SET title = $3, description = $4, active = $5 
 		 WHERE project_id = $1 AND org_id = $2
@@ -231,22 +221,15 @@ func (r *DbProjectRepository) UpdateProject(ctx context.Context, organizationID 
 }
 
 func (r *DbProjectRepository) DeleteProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return err
-	}
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
 
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		ctx,
 		`DELETE FROM activities
 		 WHERE project_id = $1 AND org_id = $2`,
 		projectID, organizationID,
 	)
 	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return errors.Wrap(rb, "rollback error")
-		}
 		return err
 	}
 
@@ -260,11 +243,6 @@ func (r *DbProjectRepository) DeleteProjectByID(ctx context.Context, organizatio
 	var id string
 	err = row.Scan(&id)
 	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return errors.Wrap(rb, "rollback error")
-		}
-
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrProjectNotFound
 		}
@@ -274,11 +252,6 @@ func (r *DbProjectRepository) DeleteProjectByID(ctx context.Context, organizatio
 
 	if id != projectID.String() {
 		return ErrProjectNotFound
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return err
 	}
 
 	return nil

@@ -34,15 +34,17 @@ func TestHandleSignUpPage(t *testing.T) {
 func TestHandleSignUpFormWithSuccessfullSignUp(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
-	mailService := NewInMemMailService()
+	mailService := NewInMemMailResource()
 
 	a := &app{
 		Config: &config{},
 
-		MailService: mailService,
+		MailResource: mailService,
 
-		UserRepository:    NewInMemUserRepository(),
-		ProjectRepository: NewInMemProjectRepository(),
+		RepositoryTxer:         NewInMemRepositoryTxer(),
+		UserRepository:         NewInMemUserRepository(),
+		OrganizationRepository: NewInMemOrganizationRepository(),
+		ProjectRepository:      NewInMemProjectRepository(),
 	}
 
 	data := url.Values{}
@@ -56,6 +58,40 @@ func TestHandleSignUpFormWithSuccessfullSignUp(t *testing.T) {
 	a.HandleSignUpForm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(len(mailService.mails), 1)
+}
+
+func TestHandleSignUpFormWithInvalidData(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config: &config{},
+	}
+
+	data := url.Values{}
+	data["EMail"] = []string{"newbie--no--wmIL"}
+	data["Password"] = []string{"myPassword?!§!"}
+
+	r, _ := http.NewRequest("POST", "/signup", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	a.HandleSignUpForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+}
+
+func TestHandleSignUpFormWithInvalidFormData(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config: &config{},
+	}
+
+	r, _ := http.NewRequest("POST", "/signup", strings.NewReader("Not a form!!"))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	a.HandleSignUpForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 }
 
 func TestHandleSignUpFormValidation(t *testing.T) {
@@ -88,8 +124,9 @@ func TestHandleSignUpConfirmWithExistingConfirmation(t *testing.T) {
 
 	a := &app{
 		Config:         &config{},
+		RepositoryTxer: NewInMemRepositoryTxer(),
 		UserRepository: NewInMemUserRepository(),
-		MailService:    NewInMemMailService(),
+		MailResource:   NewInMemMailResource(),
 	}
 
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/signup/confirm/%v", confirmationIdSample), nil)

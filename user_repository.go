@@ -28,7 +28,7 @@ type Organization struct {
 type UserRepository interface {
 	ConfirmUser(ctx context.Context, userID uuid.UUID) error
 	FindUserIDByConfirmationID(ctx context.Context, confirmationID string) (uuid.UUID, error)
-	InsertUserWithOrganizationAndConfirmation(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error)
+	InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error)
 	FindUserByUsername(ctx context.Context, username string) (*User, error)
 	FindRolesByUserID(ctx context.Context, organizationID, userID uuid.UUID) ([]string, error)
 }
@@ -47,20 +47,7 @@ func NewDbUserRepository(connPool *pgxpool.Pool) *DbUserRepository {
 	}
 }
 
-func (r *DbUserRepository) InsertOrganization(ctx context.Context, tx pgx.Tx, organization *Organization) (*Organization, error) {
-	_, err := tx.Exec(
-		ctx,
-		`INSERT INTO organizations 
-		   (org_id, title) 
-		 VALUES 
-		   ($1, $2)`,
-		organization.ID,
-		organization.Title,
-	)
-	return organization, err
-}
-
-func (r *DbUserRepository) InsertConfirmation(ctx context.Context, tx pgx.Tx, user *User, confirmationID uuid.UUID) (uuid.UUID, error) {
+func (r *DbUserRepository) insertConfirmation(ctx context.Context, tx pgx.Tx, user *User, confirmationID uuid.UUID) (uuid.UUID, error) {
 	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO user_confirmations 
@@ -73,27 +60,10 @@ func (r *DbUserRepository) InsertConfirmation(ctx context.Context, tx pgx.Tx, us
 	return confirmationID, err
 }
 
-func (r *DbUserRepository) InsertUserWithOrganizationAndConfirmation(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (r *DbUserRepository) InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
 
-	organization := &Organization{
-		ID:    user.OrganizationID,
-		Title: user.Name,
-	}
-
-	_, err = r.InsertOrganization(ctx, tx, organization)
-	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return nil, errors.Wrap(rb, "rollback error")
-		}
-		return nil, err
-	}
-
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO users 
 		   (user_id, username, email, name, password, enabled, org_id) 
@@ -108,10 +78,6 @@ func (r *DbUserRepository) InsertUserWithOrganizationAndConfirmation(ctx context
 		user.OrganizationID,
 	)
 	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return nil, errors.Wrap(rb, "rollback error")
-		}
 		return nil, err
 	}
 
@@ -125,23 +91,10 @@ func (r *DbUserRepository) InsertUserWithOrganizationAndConfirmation(ctx context
 		user.OrganizationID,
 	)
 	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return nil, errors.Wrap(rb, "rollback error")
-		}
 		return nil, err
 	}
 
-	_, err = r.InsertConfirmation(ctx, tx, user, confirmationID)
-	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return nil, errors.Wrap(rb, "rollback error")
-		}
-		return nil, err
-	}
-
-	err = tx.Commit(ctx)
+	_, err = r.insertConfirmation(ctx, tx, user, confirmationID)
 	if err != nil {
 		return nil, err
 	}
@@ -174,22 +127,15 @@ func (r *DbUserRepository) FindUserIDByConfirmationID(ctx context.Context, confi
 }
 
 func (r *DbUserRepository) ConfirmUser(ctx context.Context, userID uuid.UUID) error {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return err
-	}
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
 
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		ctx,
 		`DELETE FROM user_confirmations 
 		 WHERE user_id = $1`,
 		userID,
 	)
 	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return errors.Wrap(rb, "rollback error")
-		}
 		return err
 	}
 
@@ -200,15 +146,6 @@ func (r *DbUserRepository) ConfirmUser(ctx context.Context, userID uuid.UUID) er
 		 WHERE user_id = $1`,
 		userID,
 	)
-	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return errors.Wrap(rb, "rollback error")
-		}
-		return err
-	}
-
-	err = tx.Commit(ctx)
 	if err != nil {
 		return err
 	}

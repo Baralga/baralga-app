@@ -57,11 +57,13 @@ type app struct {
 	Conn   *pgx.Conn
 	Config *config
 
-	MailService MailService
+	MailResource MailResource
 
-	UserRepository     UserRepository
-	ProjectRepository  ProjectRepository
-	ActivityRepository ActivityRepository
+	RepositoryTxer         RepositoryTxer
+	UserRepository         UserRepository
+	OrganizationRepository OrganizationRepository
+	ProjectRepository      ProjectRepository
+	ActivityRepository     ActivityRepository
 }
 
 //go:embed migrations
@@ -105,14 +107,16 @@ func (a *app) run() error {
 	}
 	defer connPool.Close()
 
-	a.MailService = NewSmtpMailService(
+	a.MailResource = NewSmtpMailResource(
 		a.Config.SMTPServername,
 		a.Config.SMTPFrom,
 		a.Config.SMTPUser,
 		a.Config.SMTPPassword,
 	)
 
+	a.RepositoryTxer = NewDbRepositoryTxer(connPool)
 	a.UserRepository = NewDbUserRepository(connPool)
+	a.OrganizationRepository = NewDbOrganizationRepository(connPool)
 	a.ProjectRepository = NewDbProjectRepository(connPool)
 	a.ActivityRepository = NewDbActivityRepository(connPool)
 

@@ -225,6 +225,7 @@ func TestHandleCreateActivity(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 
@@ -289,6 +290,7 @@ func TestHandleDeleteActivityAsAdmin(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 
@@ -314,6 +316,7 @@ func TestHandleDeleteActivityAsMatchingUser(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 
@@ -380,6 +383,7 @@ func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 
@@ -404,6 +408,7 @@ func TestHandleUpdateActivity(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 
@@ -482,6 +487,7 @@ func TestHandleUpdateActivityAsUser(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 
@@ -523,6 +529,7 @@ func TestHandleUpdateActivityWithNonMatchingUser(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	a := &app{
 		Config:             &config{},
+		RepositoryTxer:     NewInMemRepositoryTxer(),
 		ActivityRepository: repo,
 	}
 

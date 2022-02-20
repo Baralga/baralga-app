@@ -33,6 +33,7 @@ func TestActivityRepository(t *testing.T) {
 	}()
 
 	activityRepository := NewDbActivityRepository(connPool)
+	repositoryTxer := NewDbRepositoryTxer(connPool)
 
 	t.Run("FindActivitiesByOrganizationId", func(t *testing.T) {
 		filter := &ActivitiesFilter{
@@ -89,9 +90,15 @@ func TestActivityRepository(t *testing.T) {
 			End:            end,
 		}
 
-		_, err := activityRepository.InsertActivity(
+		err := repositoryTxer.InTx(
 			context.Background(),
-			activtiy,
+			func(ctx context.Context) error {
+				_, err := activityRepository.InsertActivity(
+					ctx,
+					activtiy,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
@@ -117,13 +124,24 @@ func TestActivityRepository(t *testing.T) {
 			Username:       "user1",
 		}
 
-		_, err := activityRepository.InsertActivity(
+		err := repositoryTxer.InTx(
 			context.Background(),
-			activtiy,
+			func(ctx context.Context) error {
+				_, err := activityRepository.InsertActivity(
+					ctx,
+					activtiy,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
-		err = activityRepository.DeleteActivityByIDAndUsername(context.Background(), activtiy.OrganizationID, activtiy.ID, "user1")
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				return activityRepository.DeleteActivityByIDAndUsername(ctx, activtiy.OrganizationID, activtiy.ID, "user1")
+			},
+		)
 		is.NoErr(err)
 	})
 
@@ -148,11 +166,17 @@ func TestActivityRepository(t *testing.T) {
 	})
 
 	t.Run("DeleteNonExistingActivityByIDAndUsername", func(t *testing.T) {
-		err := activityRepository.DeleteActivityByIDAndUsername(
+		err = repositoryTxer.InTx(
 			context.Background(),
-			organizationIDSample,
-			uuid.MustParse("f8d8a2ac-3f3e-11ec-9bbc-0242ac130002"),
-			"user1",
+			func(ctx context.Context) error {
+				err := activityRepository.DeleteActivityByIDAndUsername(
+					ctx,
+					organizationIDSample,
+					uuid.MustParse("f8d8a2ac-3f3e-11ec-9bbc-0242ac130002"),
+					"user1",
+				)
+				return err
+			},
 		)
 
 		is.True(errors.Is(err, ErrActivityNotFound))
@@ -172,15 +196,32 @@ func TestActivityRepository(t *testing.T) {
 			Username:       "user1",
 		}
 
-		_, err := activityRepository.InsertActivity(
+		err := repositoryTxer.InTx(
 			context.Background(),
-			activtiy,
+			func(ctx context.Context) error {
+				_, err := activityRepository.InsertActivity(
+					ctx,
+					activtiy,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
 		activtiy.Description = "My updated Description"
 
-		activityUpdate, err := activityRepository.UpdateActivity(context.Background(), organizationIDSample, activtiy)
+		var activityUpdate *Activity
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				a, err := activityRepository.UpdateActivity(ctx, organizationIDSample, activtiy)
+				if err != nil {
+					return err
+				}
+				activityUpdate = a
+				return nil
+			},
+		)
 		is.NoErr(err)
 		is.Equal("My updated Description", activityUpdate.Description)
 	})
@@ -199,15 +240,32 @@ func TestActivityRepository(t *testing.T) {
 			Username:       "user1",
 		}
 
-		_, err := activityRepository.InsertActivity(
+		err := repositoryTxer.InTx(
 			context.Background(),
-			activtiy,
+			func(ctx context.Context) error {
+				_, err := activityRepository.InsertActivity(
+					ctx,
+					activtiy,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
 		activtiy.Description = "My updated Description"
 
-		activityUpdate, err := activityRepository.UpdateActivityByUsername(context.Background(), organizationIDSample, activtiy, "user1")
+		var activityUpdate *Activity
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				a, err := activityRepository.UpdateActivityByUsername(ctx, organizationIDSample, activtiy, "user1")
+				if err != nil {
+					return err
+				}
+				activityUpdate = a
+				return nil
+			},
+		)
 		is.NoErr(err)
 		is.Equal("My updated Description", activityUpdate.Description)
 	})
@@ -226,15 +284,27 @@ func TestActivityRepository(t *testing.T) {
 			Username:       "user1",
 		}
 
-		_, err := activityRepository.InsertActivity(
+		err := repositoryTxer.InTx(
 			context.Background(),
-			activtiy,
+			func(ctx context.Context) error {
+				_, err := activityRepository.InsertActivity(
+					ctx,
+					activtiy,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
 		activtiy.Description = "My updated Description"
 
-		_, err = activityRepository.UpdateActivityByUsername(context.Background(), organizationIDSample, activtiy, "otherUser")
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				_, err := activityRepository.UpdateActivityByUsername(ctx, organizationIDSample, activtiy, "otherUser")
+				return err
+			},
+		)
 		is.True(errors.Is(err, ErrActivityNotFound))
 	})
 }
@@ -250,7 +320,7 @@ func NewInMemActivityRepository() *InMemActivityRepository {
 		activities: []*Activity{
 			{
 				ID:             uuid.MustParse("00000000-0000-0000-2222-000000000001"),
-				ProjectID:      uuid.MustParse("00000000-0000-0000-1111-000000000001"),
+				ProjectID:      projectIDSample,
 				OrganizationID: organizationIDSample,
 				Username:       "user1",
 			},

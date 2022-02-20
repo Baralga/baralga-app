@@ -43,23 +43,78 @@ func (a *app) CreateActivity(ctx context.Context, principal *Principal, activity
 	activity.ID = uuid.New()
 	activity.OrganizationID = principal.OrganizationID
 	activity.Username = principal.Username
-	return a.ActivityRepository.InsertActivity(ctx, activity)
+
+	var newActivity *Activity
+	err := a.RepositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			a, err := a.ActivityRepository.InsertActivity(ctx, activity)
+			if err != nil {
+				return err
+			}
+			newActivity = a
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newActivity, nil
 }
 
 // DeleteActivityByID deletes an activity
 func (a *app) DeleteActivityByID(ctx context.Context, principal *Principal, activityID uuid.UUID) error {
 	if principal.HasRole("ROLE_ADMIN") {
-		return a.ActivityRepository.DeleteActivityByID(ctx, principal.OrganizationID, activityID)
+		return a.RepositoryTxer.InTx(
+			ctx,
+			func(ctx context.Context) error {
+				return a.ActivityRepository.DeleteActivityByID(ctx, principal.OrganizationID, activityID)
+			},
+		)
 	}
-	return a.ActivityRepository.DeleteActivityByIDAndUsername(ctx, principal.OrganizationID, activityID, principal.Username)
+	return a.RepositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			return a.ActivityRepository.DeleteActivityByIDAndUsername(ctx, principal.OrganizationID, activityID, principal.Username)
+		},
+	)
 }
 
 // UpdateActivity updates an activity
 func (a *app) UpdateActivity(ctx context.Context, principal *Principal, activity *Activity) (*Activity, error) {
+	var activityUpdate *Activity
 	if principal.HasRole("ROLE_ADMIN") {
-		return a.ActivityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
+		err := a.RepositoryTxer.InTx(
+			ctx,
+			func(ctx context.Context) error {
+				a, err := a.ActivityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
+				if err != nil {
+					return err
+				}
+				activityUpdate = a
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		return activityUpdate, nil
 	}
-	return a.ActivityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+	err := a.RepositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			a, err := a.ActivityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+			if err != nil {
+				return err
+			}
+			activityUpdate = a
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return activityUpdate, nil
 }
 
 func (a *app) WriteAsCSV(activities []*Activity, projects []*Project, w io.Writer) error {

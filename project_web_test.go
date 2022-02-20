@@ -91,6 +91,7 @@ func TestHandleCreateProjectWithValidProject(t *testing.T) {
 	repo := NewInMemProjectRepository()
 	a := &app{
 		Config:            &config{},
+		RepositoryTxer:    NewInMemRepositoryTxer(),
 		ProjectRepository: repo,
 	}
 

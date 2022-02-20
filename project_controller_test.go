@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -137,11 +138,11 @@ func TestHandleGetProject(t *testing.T) {
 		ProjectRepository: NewInMemProjectRepository(),
 	}
 
-	r, _ := http.NewRequest("GET", "/api/projects/00000000-0000-0000-1111-000000000001", nil)
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/api/projects/%v", projectIDSample), nil)
 	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
 
 	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
+	rctx.URLParams.Add("project-id", projectIDSample.String())
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleGetProject()(httpRec, r)
@@ -150,7 +151,7 @@ func TestHandleGetProject(t *testing.T) {
 	projectModel := &projectModel{}
 	err := json.NewDecoder(httpRec.Body).Decode(projectModel)
 	is.NoErr(err)
-	is.Equal("00000000-0000-0000-1111-000000000001", projectModel.ID)
+	is.Equal(projectIDSample.String(), projectModel.ID)
 }
 
 func TestHandleGetNonExistingProject(t *testing.T) {
@@ -179,6 +180,7 @@ func TestHandleUpdateProject(t *testing.T) {
 
 	a := &app{
 		Config:            &config{},
+		RepositoryTxer:    NewInMemRepositoryTxer(),
 		ProjectRepository: NewInMemProjectRepository(),
 	}
 
@@ -190,13 +192,13 @@ func TestHandleUpdateProject(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("PATCH", "/api/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
+	r, _ := http.NewRequest("PATCH", fmt.Sprintf("/api/projects/%v", projectIDSample), strings.NewReader(body))
 	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
 	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
+	rctx.URLParams.Add("project-id", projectIDSample.String())
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleUpdateProject()(httpRec, r)
@@ -271,6 +273,7 @@ func TestHandleUpdateNonExistingProject(t *testing.T) {
 
 	a := &app{
 		Config:            &config{},
+		RepositoryTxer:    NewInMemRepositoryTxer(),
 		ProjectRepository: NewInMemProjectRepository(),
 	}
 
@@ -358,6 +361,7 @@ func TestHandleCreateProject(t *testing.T) {
 	a := &app{
 		Config:            &config{},
 		ProjectRepository: repo,
+		RepositoryTxer:    NewInMemRepositoryTxer(),
 	}
 
 	countBefore := len(repo.projects)
@@ -457,16 +461,17 @@ func TestHandleDeleteProjectAsAdmin(t *testing.T) {
 	a := &app{
 		Config:            &config{},
 		ProjectRepository: repo,
+		RepositoryTxer:    NewInMemRepositoryTxer(),
 	}
 
-	r, _ := http.NewRequest("DELETE", "/api/projects/00000000-0000-0000-1111-000000000001", nil)
+	r, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/projects/%v", projectIDSample), nil)
 	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
 		Username: "admin",
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
 
 	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
+	rctx.URLParams.Add("project-id", projectIDSample.String())
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	a.HandleDeleteProject()(httpRec, r)
