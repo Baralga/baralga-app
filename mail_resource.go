@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
+	"strings"
 )
 
 type MailResource interface {
@@ -67,42 +68,56 @@ func (s *SmtpMailResource) SendMail(to, subject, body string) error {
 
 	auth := smtp.PlainAuth("", s.SMTPUser, s.SMTPPassword, host)
 
-	// TLS config
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         host,
+	useTls := strings.Contains(servername, "465")
+	var client *smtp.Client
+	if useTls {
+		// TLS config
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         host,
+		}
+
+		// Here is the key, you need to call tls.Dial instead of smtp.Dial
+		// for smtp servers running on 465 that require an ssl connection
+		// from the very beginning (no starttls)
+		conn, err := tls.Dial("tcp", servername, tlsconfig)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		c, err := smtp.NewClient(conn, host)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		client = c
+	} else {
+		c, err := smtp.Dial(servername)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		client = c
 	}
 
-	// Here is the key, you need to call tls.Dial instead of smtp.Dial
-	// for smtp servers running on 465 that require an ssl connection
-	// from the very beginning (no starttls)
-	conn, err := tls.Dial("tcp", servername, tlsconfig)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	c, err := smtp.NewClient(conn, host)
-	defer c.Quit()
-	if err != nil {
-		log.Panic(err)
-	}
+	defer client.Quit()
 
 	// Auth
-	if err = c.Auth(auth); err != nil {
+	if err := client.Auth(auth); err != nil {
 		return err
 	}
 
 	// To && From
-	if err = c.Mail(fromAddress.Address); err != nil {
+	if err := client.Mail(fromAddress.Address); err != nil {
 		return err
 	}
 
-	if err = c.Rcpt(toAddress.Address); err != nil {
+	if err := client.Rcpt(toAddress.Address); err != nil {
 		return err
 	}
 
 	// Data
-	w, err := c.Data()
+	w, err := client.Data()
 	if err != nil {
 		return err
 	}
