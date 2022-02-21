@@ -50,7 +50,7 @@ func (a *app) UpdateProject(ctx context.Context, organizationID uuid.UUID, proje
 func (a *app) DeleteProjectByID(ctx context.Context, principal *Principal, projectID uuid.UUID) error {
 	return a.RepositoryTxer.InTx(
 		ctx,
-		func(ctxWithTx context.Context) error {
+		func(ctx context.Context) error {
 			return a.ProjectRepository.DeleteProjectByID(ctx, principal.OrganizationID, projectID)
 		},
 	)
