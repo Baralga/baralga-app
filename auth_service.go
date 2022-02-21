@@ -81,7 +81,7 @@ func (a *app) CreateCookie(tokenAuth *jwtauth.JWTAuth, expiryDuration time.Durat
 		Value:    tokenString,
 		Expires:  time.Now().Add(expiryDuration),
 		SameSite: http.SameSiteLaxMode,
-		Secure:   true,
+		Secure:   a.isProduction(),
 		Path:     "/",
 	}
 }
@@ -92,7 +92,7 @@ func (a *app) DeleteCookie() http.Cookie {
 		Value:    "",
 		Expires:  time.Now(),
 		SameSite: http.SameSiteLaxMode,
-		Secure:   true,
+		Secure:   a.isProduction(),
 		Path:     "/",
 	}
 }
