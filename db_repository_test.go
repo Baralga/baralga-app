@@ -14,6 +14,7 @@ var (
 	organizationIDSample uuid.UUID
 	projectIDSample      uuid.UUID
 	userIDAdminSample    uuid.UUID
+	confirmationIDError  uuid.UUID
 	confirmationIdSample uuid.UUID
 )
 
@@ -21,6 +22,7 @@ func init() {
 	organizationIDSample = uuid.MustParse("4ed0c11d-3d6a-41c1-9873-558e86084591")
 	projectIDSample = uuid.MustParse("f4b1087c-8fbb-4c8d-bbb7-ab4d46da16ea")
 	userIDAdminSample = uuid.MustParse("eeeeeb80-33f3-4d3f-befe-58694d2ac841")
+	confirmationIDError = uuid.MustParse("4303e5b2-8124-4d9c-aea1-91aae2be562f")
 	confirmationIdSample = uuid.MustParse("eeeeeb80-33f3-4d3f-befe-58694d2ac841")
 }
 

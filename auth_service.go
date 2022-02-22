@@ -86,7 +86,7 @@ func (a *app) CreateCookie(tokenAuth *jwtauth.JWTAuth, expiryDuration time.Durat
 	}
 }
 
-func (a *app) DeleteCookie() http.Cookie {
+func (a *app) CreateExpiredCookie() http.Cookie {
 	return http.Cookie{
 		Name:     "jwt",
 		Value:    "",

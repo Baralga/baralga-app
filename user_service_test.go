@@ -51,3 +51,38 @@ func TestSetUpNewUser(t *testing.T) {
 	is.Equal(len(userRepository.users), userCount+1)
 	is.Equal(len(projectRepository.projects), projectCount+1)
 }
+
+func TestSetUpNewUserWithUserRepositoryError(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	mailResource := NewInMemMailResource()
+	mailCount := len(mailResource.mails)
+
+	userRepository := NewInMemUserRepository()
+	organizationRepository := NewInMemOrganizationRepository()
+	projectRepository := NewInMemProjectRepository()
+
+	a := &app{
+		Config: &config{},
+
+		MailResource: mailResource,
+
+		RepositoryTxer:         NewInMemRepositoryTxer(),
+		UserRepository:         userRepository,
+		OrganizationRepository: organizationRepository,
+		ProjectRepository:      projectRepository,
+	}
+
+	user := &User{
+		Name:     "Norah Newbie",
+		EMail:    "newbie@baralga.com",
+		Password: "myPassword?!§!",
+	}
+
+	// Act
+	err := a.SetUpNewUser(context.Background(), user, confirmationIDError)
+
+	// Assert
+	is.True(err != nil)
+	is.Equal(len(mailResource.mails), mailCount)
+}

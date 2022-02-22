@@ -96,10 +96,6 @@ func newApp() (*app, error) {
 		Config: &c,
 	}
 
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(gziphandler.GzipHandler)
-
 	app.routes()
 	app.healthcheck()
 
@@ -152,6 +148,10 @@ func (a *app) healthcheck() {
 
 func (a *app) routes() {
 	tokenAuth := jwtauth.New("HS256", []byte(a.Config.JWTSecret), nil)
+
+	a.Router.Use(middleware.Logger)
+	a.Router.Use(middleware.Recoverer)
+	a.Router.Use(gziphandler.GzipHandler)
 
 	a.Router.Mount("/api", a.apiRouter(tokenAuth))
 	a.webRouter(tokenAuth)

@@ -185,6 +185,9 @@ func (r *InMemUserRepository) FindRolesByUserID(ctx context.Context, organizatio
 }
 
 func (r *InMemUserRepository) InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
+	if confirmationID == confirmationIDError {
+		return nil, errors.New("error for tests")
+	}
 	r.users = append(r.users, user)
 	return user, nil
 }
