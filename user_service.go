@@ -36,9 +36,9 @@ func (a *app) SetUpNewUser(ctx context.Context, user *User, confirmationID uuid.
 	}
 
 	// Send email confirmation link
-	subject := "Confirm your Email Address"
+	subject := "Confirm your Email address"
 	body := fmt.Sprintf(
-		`Confirm your e-mail address at %v/signup/confirm/%v to activate your account.`,
+		`Confirm your Email address at %v/signup/confirm/%v to activate your account.`,
 		a.Config.Webroot,
 		confirmationID,
 	)
