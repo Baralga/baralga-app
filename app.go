@@ -29,12 +29,24 @@ import (
 
 type config struct {
 	BindPort string `default:"8080"`
+	Webroot  string `default:"http://localhost:8080"`
 	Db       string `default:"postgres://postgres:postgres@localhost:5432/baralga"`
 	Env      string `default:"dev"`
 
 	JWTSecret  string `default:"secret"`
 	JWTExpiry  string `default:"24h"`
 	CSRFSecret string `default:"CSRFsecret"`
+
+	SMTPServername string `default:"smtp.server:465"`
+	SMTPFrom       string `default:"smtp.from@baralga.com"`
+	SMTPUser       string `default:"smtp.user@baralga.com"`
+	SMTPPassword   string `default:"SMTPPassword"`
+
+	TermsAndConditionsContent string `default:"Accept all terms and conditions."`
+
+	GithubClientId     string `default:"GithubClientID"`
+	GithubClientSecret string `default:"GithubClientSecret"`
+	GithubRedirectURL  string `default:"http://localhost:8080/github/callback"`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
@@ -51,9 +63,13 @@ type app struct {
 	Conn   *pgx.Conn
 	Config *config
 
-	UserRepository     UserRepository
-	ProjectRepository  ProjectRepository
-	ActivityRepository ActivityRepository
+	MailResource MailResource
+
+	RepositoryTxer         RepositoryTxer
+	UserRepository         UserRepository
+	OrganizationRepository OrganizationRepository
+	ProjectRepository      ProjectRepository
+	ActivityRepository     ActivityRepository
 }
 
 //go:embed migrations
@@ -80,10 +96,6 @@ func newApp() (*app, error) {
 		Config: &c,
 	}
 
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(gziphandler.GzipHandler)
-
 	app.routes()
 	app.healthcheck()
 
@@ -97,7 +109,16 @@ func (a *app) run() error {
 	}
 	defer connPool.Close()
 
+	a.MailResource = NewSmtpMailResource(
+		a.Config.SMTPServername,
+		a.Config.SMTPFrom,
+		a.Config.SMTPUser,
+		a.Config.SMTPPassword,
+	)
+
+	a.RepositoryTxer = NewDbRepositoryTxer(connPool)
 	a.UserRepository = NewDbUserRepository(connPool)
+	a.OrganizationRepository = NewDbOrganizationRepository(connPool)
 	a.ProjectRepository = NewDbProjectRepository(connPool)
 	a.ActivityRepository = NewDbActivityRepository(connPool)
 
@@ -127,6 +148,10 @@ func (a *app) healthcheck() {
 
 func (a *app) routes() {
 	tokenAuth := jwtauth.New("HS256", []byte(a.Config.JWTSecret), nil)
+
+	a.Router.Use(middleware.Logger)
+	a.Router.Use(middleware.Recoverer)
+	a.Router.Use(gziphandler.GzipHandler)
 
 	a.Router.Mount("/api", a.apiRouter(tokenAuth))
 	a.webRouter(tokenAuth)
@@ -205,6 +230,12 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Get("/login", a.HandleLoginPage())
 		r.Post("/login", a.HandleLoginForm(tokenAuth))
 		r.Get("/signup", a.HandleSignUpPage())
+		r.Post("/signup", a.HandleSignUpForm())
+		r.Post("/signup/validate", a.HandleSignUpFormValidate())
+		r.Get("/signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
+
+		r.Handle("/github/login", a.GithubLoginHandler())
+		r.Handle("/github/callback", a.GithubCallbackHandler(tokenAuth))
 	})
 }
 

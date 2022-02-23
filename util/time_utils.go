@@ -11,7 +11,7 @@ import (
 const (
 	dateFormat         = "2006-01-02"
 	dateFormatDE       = "02.01.2006"
-	dateFormatDEShort  = "02.01."
+	dateFormatDEShort  = "2.1."
 	dateTimeFormat     = "2006-01-02T15:04:05.999999999"
 	dateTimeFormatForm = "02.01.2006 15:04"
 	timeFormat         = "15:04"

@@ -32,6 +32,7 @@ func TestProjectRepository(t *testing.T) {
 	}()
 
 	projectRepository := NewDbProjectRepository(connPool)
+	repositoryTxer := NewDbRepositoryTxer(connPool)
 
 	t.Run("FindProjects", func(t *testing.T) {
 		projectsPage, err := projectRepository.FindProjects(
@@ -68,17 +69,35 @@ func TestProjectRepository(t *testing.T) {
 			Description:    "My Description",
 		}
 
-		_, err := projectRepository.InsertProject(
+		err = repositoryTxer.InTx(
 			context.Background(),
-			project,
+			func(ctx context.Context) error {
+				_, err := projectRepository.InsertProject(
+					ctx,
+					project,
+				)
+				return err
+			},
 		)
 		is.NoErr(err)
 
 		project.Description = "My updated Description"
 
-		activityUpdate, err := projectRepository.UpdateProject(context.Background(), organizationIDSample, project)
+		var projectUpdate *Project
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				p, err := projectRepository.UpdateProject(ctx, organizationIDSample, project)
+				if err != nil {
+					return err
+				}
+				projectUpdate = p
+				return nil
+			},
+		)
+
 		is.NoErr(err)
-		is.Equal("My updated Description", activityUpdate.Description)
+		is.Equal("My updated Description", projectUpdate.Description)
 	})
 }
 
@@ -104,6 +123,7 @@ func TestProjectRepositoryDeleteProject(t *testing.T) {
 	}()
 
 	projectRepository := NewDbProjectRepository(connPool)
+	repositoryTxer := NewDbRepositoryTxer(connPool)
 
 	t.Run("FindProjectByID", func(t *testing.T) {
 		project, err := projectRepository.FindProjectByID(
@@ -127,20 +147,29 @@ func TestProjectRepositoryDeleteProject(t *testing.T) {
 	})
 
 	t.Run("DeleteNonExistingProject", func(t *testing.T) {
-		err := projectRepository.DeleteProjectByID(
+		err = repositoryTxer.InTx(
 			context.Background(),
-			organizationIDSample,
-			uuid.MustParse("f8d8a2ac-3f3e-11ec-9bbc-0242ac130002"),
+			func(ctx context.Context) error {
+				return projectRepository.DeleteProjectByID(
+					ctx,
+					organizationIDSample,
+					uuid.MustParse("f8d8a2ac-3f3e-11ec-9bbc-0242ac130002"),
+				)
+			},
 		)
-
 		is.True(errors.Is(err, ErrProjectNotFound))
 	})
 
 	t.Run("DeleteExistingProject", func(t *testing.T) {
-		err := projectRepository.DeleteProjectByID(
+		err = repositoryTxer.InTx(
 			context.Background(),
-			organizationIDSample,
-			projectIDSample,
+			func(ctx context.Context) error {
+				return projectRepository.DeleteProjectByID(
+					ctx,
+					organizationIDSample,
+					projectIDSample,
+				)
+			},
 		)
 
 		is.NoErr(err)
@@ -157,7 +186,7 @@ func NewInMemProjectRepository() *InMemProjectRepository {
 	return &InMemProjectRepository{
 		projects: []*Project{
 			{
-				ID:             uuid.MustParse("00000000-0000-0000-1111-000000000001"),
+				ID:             projectIDSample,
 				Title:          "My Project",
 				OrganizationID: organizationIDSample,
 			},

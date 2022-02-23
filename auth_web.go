@@ -1,25 +1,28 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/util"
+	"github.com/dghubble/gologin/v2"
+	"github.com/dghubble/gologin/v2/github"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
+	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	githubOAuth2 "golang.org/x/oauth2/github"
 )
 
 type loginFormModel struct {
 	CSRFToken string
-	Username  string
+	EMail     string
 	Password  string
-}
-
-type signupFormModel struct {
-	CSRFToken string
 }
 
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
@@ -29,7 +32,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 		if err != nil {
 			formModel := loginFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
 			return
 		}
 
@@ -38,14 +41,14 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
 			return
 		}
 
-		principal, err := a.Authenticate(r.Context(), formModel.Username, formModel.Password)
+		principal, err := a.Authenticate(r.Context(), formModel.EMail, formModel.Password)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, "Login failed. Please check your credentials and try again."))
 			return
 		}
 
@@ -60,28 +63,68 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := loginFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, LoginPage(r.URL.Path, formModel))
+		util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
 	}
 }
 
 func (a *app) HandleLogoutPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie := a.DeleteCookie()
+		cookie := a.CreateExpiredCookie()
 		http.SetCookie(w, &cookie)
 
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 }
 
-func (a *app) HandleSignUpPage() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		formModel := signupFormModel{}
-		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, SignUpPage(r.URL.Path, formModel))
-	}
+func (a *app) GithubLoginHandler() http.Handler {
+	stateConfig, oauth2Config := a.githubAuthConfig()
+	return github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil))
 }
 
-func LoginPage(currentPath string, formModel loginFormModel) g.Node {
+func (a *app) GithubCallbackHandler(tokenAuth *jwtauth.JWTAuth) http.Handler {
+	stateConfig, oauth2Config := a.githubAuthConfig()
+	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithub(tokenAuth), nil))
+}
+
+func (a *app) IssueCookieForGithub(tokenAuth *jwtauth.JWTAuth) http.Handler {
+	expiryDuration := a.Config.ExpiryDuration()
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		githubUser, err := github.UserFromContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		principal, err := a.AuthenticateTrusted(ctx, fmt.Sprintf("%v", *githubUser.ID))
+		if errors.Is(err, ErrUserNotFound) {
+			user := &User{
+				Username: fmt.Sprintf("%v", *githubUser.ID),
+				Name:     *githubUser.Login,
+				Origin:   "github",
+			}
+			err := a.SetUpNewUser(r.Context(), user, uuid.Nil)
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			principal, err = a.AuthenticateTrusted(ctx, fmt.Sprintf("%v", user.Username))
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+
+		cookie := a.CreateCookie(tokenAuth, expiryDuration, principal)
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	return http.HandlerFunc(fn)
+}
+
+func LoginPage(currentPath string, formModel loginFormModel, errorMessage string) g.Node {
 	return Page(
 		"Sign In",
 		currentPath,
@@ -91,7 +134,7 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 				Div(
 					Class("container"),
 					Div(
-						Class("d-flex justify-content-center align-items-center mt-2 mb-2"),
+						Class("d-flex justify-content-center align-items-center mt-2 mb-3"),
 						Img(
 							Alt("Baralga"),
 							Class("img-responsive"),
@@ -109,23 +152,15 @@ func LoginPage(currentPath string, formModel loginFormModel) g.Node {
 							),
 						),
 					),
-					LoginForm(formModel, ""),
-				),
-			),
-		},
-	)
-}
-
-func SignUpPage(currentPath string, formModel signupFormModel) g.Node {
-	return Page(
-		"Sign Up",
-		currentPath,
-		[]g.Node{
-			Section(
-				Class("full-center"),
-				Div(Class("container"),
-					H2(
-						g.Text("Sign Up is coming soon, stay tuned ..."),
+					LoginForm(formModel, errorMessage),
+					Div(
+						Class("d-flex justify-content-center align-items-center mt-4 mb-3"),
+						A(
+							Class("btn btn-secondary"),
+							Href("/github/login"),
+							I(Class("bi-github")),
+							g.Text(" Sign in with Github"),
+						),
 					),
 				),
 			),
@@ -141,7 +176,7 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 		g.If(
 			errorMessage != "",
 			Div(
-				Class("alert alert-danger text-center"),
+				Class("alert alert-warning text-center"),
 				Role("alert"),
 				Span(g.Text(errorMessage)),
 			),
@@ -154,16 +189,16 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 		Div(
 			Class("form-floating mb-3"),
 			Input(
-				ID("username"),
+				ID("email"),
 				Type("text"),
-				Name("Username"),
+				Name("EMail"),
 				Class("form-control"),
 				g.Attr("placeholder", "john.doe"),
-				Value(formModel.Username),
+				Value(formModel.EMail),
 			),
 			Label(
-				g.Attr("for", "username"),
-				g.Text("Username"),
+				g.Attr("for", "email"),
+				g.Text("E-Mail"),
 			),
 		),
 		Div(
@@ -201,6 +236,7 @@ func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
 				Class("col-4 text-center"),
 				A(
 					Href("/signup"),
+					hx.Boost(),
 					Class("link-secondary"),
 					g.Text("Sign up here"),
 				),
@@ -226,4 +262,18 @@ func WebVerifier(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func (a *app) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
+	stateConfig := gologin.DefaultCookieConfig
+	if !a.isProduction() {
+		stateConfig = gologin.DebugOnlyCookieConfig
+	}
+	oauth2Config := &oauth2.Config{
+		ClientID:     a.Config.GithubClientId,
+		ClientSecret: a.Config.GithubClientSecret,
+		RedirectURL:  a.Config.GithubRedirectURL,
+		Endpoint:     githubOAuth2.Endpoint,
+	}
+	return stateConfig, oauth2Config
 }

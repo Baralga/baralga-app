@@ -66,6 +66,7 @@ func (a *app) JWTPrincipalHandler() func(next http.Handler) http.Handler {
 
 func mapPrincipalToClaims(principal *Principal) map[string]interface{} {
 	return map[string]interface{}{
+		"name":           principal.Name,
 		"username":       principal.Username,
 		"organizationId": principal.OrganizationID.String(),
 		"roles":          strings.Join(principal.Roles, ","),
@@ -74,6 +75,7 @@ func mapPrincipalToClaims(principal *Principal) map[string]interface{} {
 
 func mapPrincipalFromClaims(claims map[string]interface{}) *Principal {
 	return &Principal{
+		Name:           claims["name"].(string),
 		Username:       claims["username"].(string),
 		OrganizationID: uuid.MustParse(claims["organizationId"].(string)),
 		Roles:          strings.Split(claims["roles"].(string), ","),

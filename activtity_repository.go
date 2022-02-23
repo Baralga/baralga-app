@@ -197,7 +197,9 @@ func (r *DbActivityRepository) DeleteActivityByID(ctx context.Context, organizat
 }
 
 func (r *DbActivityRepository) DeleteActivityByIDAndUsername(ctx context.Context, organizationID, activityID uuid.UUID, username string) error {
-	row := r.connPool.QueryRow(ctx,
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
+
+	row := tx.QueryRow(ctx,
 		`DELETE 
          FROM activities 
 	     WHERE activity_id = $1 AND org_id = $2 AND username = $3
@@ -222,7 +224,9 @@ func (r *DbActivityRepository) DeleteActivityByIDAndUsername(ctx context.Context
 }
 
 func (r *DbActivityRepository) UpdateActivity(ctx context.Context, organizationID uuid.UUID, activity *Activity) (*Activity, error) {
-	row := r.connPool.QueryRow(ctx,
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
+
+	row := tx.QueryRow(ctx,
 		`UPDATE activities 
 		 SET start_time = $3, end_time = $4, description = $5, project_id = $6 
 		 WHERE activity_id = $1 AND org_id = $2
@@ -245,7 +249,9 @@ func (r *DbActivityRepository) UpdateActivity(ctx context.Context, organizationI
 }
 
 func (r *DbActivityRepository) UpdateActivityByUsername(ctx context.Context, organizationID uuid.UUID, activity *Activity, username string) (*Activity, error) {
-	row := r.connPool.QueryRow(ctx,
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
+
+	row := tx.QueryRow(ctx,
 		`UPDATE activities 
 		 SET start_time = $4, end_time = $5, description = $6, project_id = $7 
 		 WHERE activity_id = $1 AND org_id = $2 AND username = $3
@@ -268,12 +274,9 @@ func (r *DbActivityRepository) UpdateActivityByUsername(ctx context.Context, org
 }
 
 func (r *DbActivityRepository) InsertActivity(ctx context.Context, activity *Activity) (*Activity, error) {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
 
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO activities 
 		   (activity_id, start_time, end_time, description, project_id, org_id, username) 
@@ -287,15 +290,6 @@ func (r *DbActivityRepository) InsertActivity(ctx context.Context, activity *Act
 		activity.OrganizationID,
 		activity.Username,
 	)
-	if err != nil {
-		rb := tx.Rollback(ctx)
-		if rb != nil {
-			return nil, errors.Wrap(rb, "rollback error")
-		}
-		return nil, err
-	}
-
-	err = tx.Commit(ctx)
 	if err != nil {
 		return nil, err
 	}

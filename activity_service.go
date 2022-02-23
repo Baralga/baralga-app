@@ -43,23 +43,78 @@ func (a *app) CreateActivity(ctx context.Context, principal *Principal, activity
 	activity.ID = uuid.New()
 	activity.OrganizationID = principal.OrganizationID
 	activity.Username = principal.Username
-	return a.ActivityRepository.InsertActivity(ctx, activity)
+
+	var newActivity *Activity
+	err := a.RepositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			a, err := a.ActivityRepository.InsertActivity(ctx, activity)
+			if err != nil {
+				return err
+			}
+			newActivity = a
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newActivity, nil
 }
 
 // DeleteActivityByID deletes an activity
 func (a *app) DeleteActivityByID(ctx context.Context, principal *Principal, activityID uuid.UUID) error {
 	if principal.HasRole("ROLE_ADMIN") {
-		return a.ActivityRepository.DeleteActivityByID(ctx, principal.OrganizationID, activityID)
+		return a.RepositoryTxer.InTx(
+			ctx,
+			func(ctx context.Context) error {
+				return a.ActivityRepository.DeleteActivityByID(ctx, principal.OrganizationID, activityID)
+			},
+		)
 	}
-	return a.ActivityRepository.DeleteActivityByIDAndUsername(ctx, principal.OrganizationID, activityID, principal.Username)
+	return a.RepositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			return a.ActivityRepository.DeleteActivityByIDAndUsername(ctx, principal.OrganizationID, activityID, principal.Username)
+		},
+	)
 }
 
 // UpdateActivity updates an activity
 func (a *app) UpdateActivity(ctx context.Context, principal *Principal, activity *Activity) (*Activity, error) {
+	var activityUpdate *Activity
 	if principal.HasRole("ROLE_ADMIN") {
-		return a.ActivityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
+		err := a.RepositoryTxer.InTx(
+			ctx,
+			func(ctx context.Context) error {
+				a, err := a.ActivityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
+				if err != nil {
+					return err
+				}
+				activityUpdate = a
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		return activityUpdate, nil
 	}
-	return a.ActivityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+	err := a.RepositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			a, err := a.ActivityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+			if err != nil {
+				return err
+			}
+			activityUpdate = a
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return activityUpdate, nil
 }
 
 func (a *app) WriteAsCSV(activities []*Activity, projects []*Project, w io.Writer) error {
@@ -111,12 +166,12 @@ func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Wri
 	f.SetActiveSheet(0)
 	f.SetSheetName("Sheet1", "Activities")
 
-	f.SetCellValue("Activities", "A1", "Project")
-	f.SetCellValue("Activities", "B1", "Date")
-	f.SetCellValue("Activities", "C1", "Start")
-	f.SetCellValue("Activities", "D1", "End")
-	f.SetCellValue("Activities", "E1", "Hours")
-	f.SetCellValue("Activities", "F1", "Description")
+	_ = f.SetCellValue("Activities", "A1", "Project")
+	_ = f.SetCellValue("Activities", "B1", "Date")
+	_ = f.SetCellValue("Activities", "C1", "Start")
+	_ = f.SetCellValue("Activities", "D1", "End")
+	_ = f.SetCellValue("Activities", "E1", "Hours")
+	_ = f.SetCellValue("Activities", "F1", "Description")
 
 	style, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
@@ -131,7 +186,7 @@ func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Wri
 	styleDuration, _ := f.NewStyle(&excelize.Style{
 		NumFmt: 4,
 	})
-	f.SetCellStyle("Activities", "A1", "F1", style)
+	_ = f.SetCellStyle("Activities", "A1", "F1", style)
 
 	descriptionStyle, _ := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
@@ -144,17 +199,16 @@ func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Wri
 
 		duration, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", activity.DurationDecimal()), 64)
 
-		f.SetCellValue("Activities", fmt.Sprintf("A%v", idx), projectsById[activity.ProjectID].Title)
-		f.SetCellValue("Activities", fmt.Sprintf("B%v", idx), activity.Start.Format("2006-01-02"))
-		f.SetCellValue("Activities", fmt.Sprintf("C%v", idx), activity.Start.Format("15:04"))
-		f.SetCellValue("Activities", fmt.Sprintf("D%v", idx), activity.End.Format("15:04"))
+		_ = f.SetCellValue("Activities", fmt.Sprintf("A%v", idx), projectsById[activity.ProjectID].Title)
+		_ = f.SetCellValue("Activities", fmt.Sprintf("B%v", idx), activity.Start.Format("2006-01-02"))
+		_ = f.SetCellValue("Activities", fmt.Sprintf("C%v", idx), activity.Start.Format("15:04"))
+		_ = f.SetCellValue("Activities", fmt.Sprintf("D%v", idx), activity.End.Format("15:04"))
 
-		f.SetCellValue("Activities", fmt.Sprintf("E%v", idx), duration)
-		f.SetCellStyle("Activities", fmt.Sprintf("E%v", idx), fmt.Sprintf("E%v", idx), styleDuration)
+		_ = f.SetCellValue("Activities", fmt.Sprintf("E%v", idx), duration)
+		_ = f.SetCellStyle("Activities", fmt.Sprintf("E%v", idx), fmt.Sprintf("E%v", idx), styleDuration)
 
-		f.SetCellValue("Activities", fmt.Sprintf("F%v", idx), activity.Description)
-		f.SetCellStyle("Activities", fmt.Sprintf("F%v", idx), fmt.Sprintf("F%v", idx), descriptionStyle)
-
+		_ = f.SetCellValue("Activities", fmt.Sprintf("F%v", idx), activity.Description)
+		_ = f.SetCellStyle("Activities", fmt.Sprintf("F%v", idx), fmt.Sprintf("F%v", idx), descriptionStyle)
 	}
 
 	return f.Write(w)

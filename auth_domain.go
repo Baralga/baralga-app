@@ -7,6 +7,7 @@ type contextKey int
 const contextKeyPrincipal contextKey = 0
 
 type Principal struct {
+	Name           string
 	Username       string
 	OrganizationID uuid.UUID
 	Roles          []string

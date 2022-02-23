@@ -10,10 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "env": {
-                "BARALGA_JWTSECRET": "my***secret",
-                "PORT": "8080"
-            }
+            "envFile": "${workspaceFolder}/.env",
         }
     ]
 }
