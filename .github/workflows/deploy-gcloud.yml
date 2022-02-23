@@ -35,6 +35,7 @@ jobs:
           BARALGA_GITHUBCLIENTID: ${{ secrets.BARALGA_GITHUBCLIENTID }}
           BARALGA_GITHUBCLIENTSECRET: ${{ secrets.BARALGA_GITHUBCLIENTSECRET }}
           BARALGA_GITHUBREDIRECTURL: ${{ secrets.BARALGA_GITHUBREDIRECTURL }}
+          BARALGA_WEBROOT: ${{ secrets.BARALGA_WEBROOT }}
       - name: Deploy
         uses: actions-hub/gcloud@master
         env:
