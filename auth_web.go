@@ -8,6 +8,7 @@ import (
 	"github.com/baralga/util"
 	"github.com/dghubble/gologin/v2"
 	"github.com/dghubble/gologin/v2/github"
+	gologinOauth2 "github.com/dghubble/gologin/v2/oauth2"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
@@ -83,7 +84,15 @@ func (a *app) GithubLoginHandler() http.Handler {
 
 func (a *app) GithubCallbackHandler(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	stateConfig, oauth2Config := a.githubAuthConfig()
-	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithub(tokenAuth), nil))
+	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithub(tokenAuth), HandleTokenFailure()))
+}
+
+func HandleTokenFailure() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		t, err := gologinOauth2.TokenFromContext(r.Context())
+		http.Error(w, fmt.Sprintf("%v \n %v", t, err), http.StatusInternalServerError)
+	}
+	return http.HandlerFunc(fn)
 }
 
 func (a *app) IssueCookieForGithub(tokenAuth *jwtauth.JWTAuth) http.Handler {
