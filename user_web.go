@@ -334,7 +334,7 @@ func (a *app) SignupForm(formModel signupFormModel, errorMessage string, fieldEr
 				A(
 					Href("/login"),
 					Class("link-secondary"),
-					g.Text("Login here."),
+					g.Text("Sign in here."),
 				),
 			),
 			Div(

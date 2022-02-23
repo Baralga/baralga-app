@@ -89,8 +89,8 @@ func (a *app) GithubCallbackHandler(tokenAuth *jwtauth.JWTAuth) http.Handler {
 
 func HandleTokenFailure() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		t, err := gologinOauth2.TokenFromContext(r.Context())
-		http.Error(w, fmt.Sprintf("%v \n %v", t, err), http.StatusInternalServerError)
+		_, err := gologinOauth2.TokenFromContext(r.Context())
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 	}
 	return http.HandlerFunc(fn)
 }
