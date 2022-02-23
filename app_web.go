@@ -93,7 +93,7 @@ func (a *app) HandleWebManifest() http.HandlerFunc {
 	`)
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/manifest+json")
-		w.Write(manifest)
+		_, _ = w.Write(manifest)
 	}
 }
 

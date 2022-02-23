@@ -72,7 +72,7 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 
 		err := r.ParseForm()
 		if err != nil {
-			a.renderProjectsView(
+			_ = a.renderProjectsView(
 				w,
 				r,
 				principal,
@@ -85,7 +85,7 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 		var formModel projectFormModel
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
-			a.renderProjectsView(
+			_ = a.renderProjectsView(
 				w,
 				r,
 				principal,
@@ -97,7 +97,7 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 
 		err = validator.Struct(formModel)
 		if err != nil {
-			a.renderProjectsView(
+			_ = a.renderProjectsView(
 				w,
 				r,
 				principal,
@@ -121,7 +121,6 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 			isProduction,
 			projectFormModel{},
 		)
-
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
 			return

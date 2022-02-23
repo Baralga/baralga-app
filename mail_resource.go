@@ -100,7 +100,9 @@ func (s *SmtpMailResource) SendMail(to, subject, body string) error {
 		client = c
 	}
 
-	defer client.Quit()
+	defer func() {
+		_ = client.Quit()
+	}()
 
 	// Auth
 	if err := client.Auth(auth); err != nil {
