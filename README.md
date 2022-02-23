@@ -46,7 +46,7 @@ The backend is configured using the following environment variables:
 | `BARALGA_TERMSANDCONDITIONSCONTENT` | `Accept all terms and conditions.`      |    Raw html content for terms and conditions. |
 | `BARALGA_GITHUBCLIENTID` | `GithubClientID`      |    OAuth Client ID for Github. |
 | `BARALGA_GITHUBCLIENTSECRET` | `GithubClientSecret`      |    OAuth Client Secret for Github. |
-| `BARALGA_GITHUBCLIENTREDIRECTURL` | `http://localhost:8080/github/callback`      |    OAuth Redirect URL for Github. |
+| `BARALGA_GITHUBREDIRECTURL` | `http://localhost:8080/github/callback`      |    OAuth Redirect URL for Github. |
 
 ### Users and Roles
 
