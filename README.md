@@ -43,7 +43,7 @@ The backend is configured using the following environment variables:
 | `BARALGA_SMTPFROM` | `smtp.from@baralga.com`      |    From email for your SMTP server |
 | `BARALGA_SMTPUSER` | `smtp.user@baralga.com`      |    User for your SMTP server |
 | `BARALGA_SMTPPASSWORD` | `SMTPPassword`      |    Password for your SMTP server |
-| `BARALGA_TERMSANDCONDITIONSCONTENT` | `Accept all terms and conditions.`      |    Raw html content for terms and conditions. |
+| `BARALGA_DATAPROTECTIONURL` | `#`      |   URL to data protection rules. |
 | `BARALGA_GITHUBCLIENTID` | `GithubClientID`      |    OAuth Client ID for Github. |
 | `BARALGA_GITHUBCLIENTSECRET` | `GithubClientSecret`      |    OAuth Client Secret for Github. |
 | `BARALGA_GITHUBREDIRECTURL` | `http://localhost:8080/github/callback`      |    OAuth Redirect URL for Github. |

@@ -42,7 +42,7 @@ type config struct {
 	SMTPUser       string `default:"smtp.user@baralga.com"`
 	SMTPPassword   string `default:"SMTPPassword"`
 
-	TermsAndConditionsContent string `default:"Accept all terms and conditions."`
+	DataProtectionURL string `default:"#"`
 
 	GithubClientId     string `default:"GithubClientID"`
 	GithubClientSecret string `default:"GithubClientSecret"`

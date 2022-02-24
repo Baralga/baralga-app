@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	hx "github.com/baralga/htmx"
@@ -315,7 +316,12 @@ func (a *app) SignupForm(formModel signupFormModel, errorMessage string, fieldEr
 			),
 			Label(
 				g.Attr("for", "acceptConditions"),
-				g.Raw(a.Config.TermsAndConditionsContent),
+				g.Raw(
+					fmt.Sprintf("Ich bin mit den <a href=\"%v\">Datenschutzbestimmungen</a> einverstanden. I accept the <a href=\"%v\">data protection rules</a>.",
+						a.Config.DataProtectionURL,
+						a.Config.DataProtectionURL,
+					),
+				),
 			),
 		),
 		Div(
