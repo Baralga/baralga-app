@@ -14,15 +14,7 @@ import (
 
 // ReadActivitiesWithProjects reads activities with their associated projects
 func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Principal, filter *ActivityFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
-	activitiesFilter := &ActivitiesFilter{
-		Start:          filter.Start(),
-		End:            filter.End(),
-		OrganizationID: principal.OrganizationID,
-	}
-
-	if !principal.HasRole("ROLE_ADMIN") {
-		activitiesFilter.Username = principal.Username
-	}
+	activitiesFilter := toFilter(principal, filter)
 
 	activitiesPage, err := a.ActivityRepository.FindActivities(ctx, activitiesFilter, pageParams)
 	if err != nil {
@@ -36,6 +28,23 @@ func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Princip
 	}
 
 	return activitiesPage, projects, err
+}
+
+func (a *app) TimeReports(ctx context.Context, principal *Principal, filter *ActivityFilter, aggregateBy string) ([]*ActivityTimeReportItem, error) {
+	activitiesFilter := toFilter(principal, filter)
+
+	switch {
+	case aggregateBy == "week":
+		return a.ActivityRepository.TimeReportByWeek(ctx, activitiesFilter)
+	case aggregateBy == "month":
+		return a.ActivityRepository.TimeReportByMonth(ctx, activitiesFilter)
+	case aggregateBy == "quarter":
+		return a.ActivityRepository.TimeReportByQuarter(ctx, activitiesFilter)
+	case aggregateBy == "day":
+		return a.ActivityRepository.TimeReportByDay(ctx, activitiesFilter)
+	default:
+		return a.ActivityRepository.TimeReportByDay(ctx, activitiesFilter)
+	}
 }
 
 // CreateActivity creates a new activity
@@ -212,6 +221,20 @@ func (a *app) WriteAsExcel(activities []*Activity, projects []*Project, w io.Wri
 	}
 
 	return f.Write(w)
+}
+
+func toFilter(principal *Principal, filter *ActivityFilter) *ActivitiesFilter {
+	activitiesFilter := &ActivitiesFilter{
+		Start:          filter.Start(),
+		End:            filter.End(),
+		OrganizationID: principal.OrganizationID,
+	}
+
+	if !principal.HasRole("ROLE_ADMIN") {
+		activitiesFilter.Username = principal.Username
+	}
+
+	return activitiesFilter
 }
 
 func distinctProjectIds(activitiesPage *ActivitiesPaged) []uuid.UUID {

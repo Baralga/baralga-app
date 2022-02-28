@@ -27,6 +27,33 @@ type ActivityFilter struct {
 	end      time.Time
 }
 
+type ActivityTimeReportItem struct {
+	Year                   int
+	Quarter                int
+	Month                  int
+	Week                   int
+	Day                    int
+	DurationInMinutesTotal int
+}
+
+// DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
+func (i *ActivityTimeReportItem) DurationFormatted() string {
+	return FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
+}
+
+// AsTime returns the report item as time.Time
+func (i *ActivityTimeReportItem) AsTime() time.Time {
+	t, _ := time.Parse("2006-1-2", fmt.Sprintf("%v-%v-%v", i.Year, i.Month, i.Day))
+	return t
+}
+
+type ActivtyTimeReports struct {
+	ByDay     []*ActivityTimeReportItem
+	ByWeek    []*ActivityTimeReportItem
+	ByMonth   []*ActivityTimeReportItem
+	ByQuarter []*ActivityTimeReportItem
+}
+
 // Timespans for activity filter
 const (
 	TimespanYear    string = "year"
@@ -131,7 +158,7 @@ func (f *ActivityFilter) String() string {
 	case TimespanMonth:
 		return f.Start().Format("2006-01")
 	case TimespanQuarter:
-		q := int(math.Ceil(float64(f.Start().Month()) / 3))
+		q := util.Quarter(f.Start())
 		return fmt.Sprintf("%v-%v", f.Start().Format("2006"), q)
 	case TimespanYear:
 		return f.Start().Format("2006")

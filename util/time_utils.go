@@ -61,6 +61,10 @@ func ParseDate(date string) (*time.Time, error) {
 	return &t, nil
 }
 
+func Quarter(time time.Time) int {
+	return int(math.Ceil(float64(time.Month()) / 3))
+}
+
 func CompleteTimeValue(time string) string {
 	completedTime := time
 

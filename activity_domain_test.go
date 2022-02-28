@@ -7,6 +7,24 @@ import (
 	"github.com/matryer/is"
 )
 
+func TestActivityTimeReportItemAsTime(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	reportItem := &ActivityTimeReportItem{
+		Year:  2022,
+		Month: 9,
+		Day:   3,
+	}
+
+	// Act
+	time := reportItem.AsTime()
+
+	// Assert
+	is.Equal(time.Year(), reportItem.Year)
+	is.Equal(int(time.Month()), reportItem.Month)
+	is.Equal(time.Day(), reportItem.Day)
+}
+
 func TestActivityDurationHours(t *testing.T) {
 	is := is.New(t)
 

@@ -28,6 +28,10 @@ type ActivitiesFilter struct {
 }
 
 type ActivityRepository interface {
+	TimeReportByDay(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
+	TimeReportByWeek(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
+	TimeReportByMonth(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
+	TimeReportByQuarter(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
 	FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error)
 	InsertActivity(ctx context.Context, activity *Activity) (*Activity, error)
 	FindActivityByID(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID) (*Activity, error)
@@ -49,6 +53,206 @@ func NewDbActivityRepository(connPool *pgxpool.Pool) *DbActivityRepository {
 	return &DbActivityRepository{
 		connPool: connPool,
 	}
+}
+
+func (r *DbActivityRepository) TimeReportByDay(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
+	filterSql := ""
+
+	if filter.Username != "" {
+		params = append(params, filter.Username)
+		filterSql = " AND username = $4"
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT year, quarter, month, week, day, sum(duration_minutes_total) as duration_minutes_total  
+		 FROM activities_agg
+	     WHERE org_id = $1 AND $2 <= start_time AND start_time < $3 %s
+		 GROUP BY year, quarter, month, week, day
+         ORDER BY (year, quarter, month, week, day) desc`,
+		filterSql,
+	)
+
+	rows, err := r.connPool.Query(ctx, sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []*ActivityTimeReportItem
+	for rows.Next() {
+		var (
+			year              int
+			quarter           int
+			month             int
+			week              int
+			day               int
+			durationInMinutes int
+		)
+
+		err = rows.Scan(&year, &quarter, &month, &week, &day, &durationInMinutes)
+		if err != nil {
+			return nil, err
+		}
+
+		activity := &ActivityTimeReportItem{
+			Year:                   year,
+			Quarter:                quarter,
+			Month:                  month,
+			Week:                   week,
+			Day:                    day,
+			DurationInMinutesTotal: durationInMinutes,
+		}
+		activities = append(activities, activity)
+	}
+
+	return activities, nil
+}
+
+func (r *DbActivityRepository) TimeReportByWeek(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
+	filterSql := ""
+
+	if filter.Username != "" {
+		params = append(params, filter.Username)
+		filterSql = " AND username = $4"
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT year, week, sum(duration_minutes_total) as duration_minutes_total  
+		 FROM activities_agg
+	     WHERE org_id = $1 AND $2 <= start_time AND start_time < $3 %s
+		 GROUP BY year, week
+         ORDER BY (year, week) desc`,
+		filterSql,
+	)
+
+	rows, err := r.connPool.Query(ctx, sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []*ActivityTimeReportItem
+	for rows.Next() {
+		var (
+			year              int
+			week              int
+			durationInMinutes int
+		)
+
+		err = rows.Scan(&year, &week, &durationInMinutes)
+		if err != nil {
+			return nil, err
+		}
+
+		activity := &ActivityTimeReportItem{
+			Year:                   year,
+			Week:                   week,
+			DurationInMinutesTotal: durationInMinutes,
+		}
+		activities = append(activities, activity)
+	}
+
+	return activities, nil
+}
+
+func (r *DbActivityRepository) TimeReportByMonth(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
+	filterSql := ""
+
+	if filter.Username != "" {
+		params = append(params, filter.Username)
+		filterSql = " AND username = $4"
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT year, month, sum(duration_minutes_total) as duration_minutes_total  
+		 FROM activities_agg
+	     WHERE org_id = $1 AND $2 <= start_time AND start_time < $3 %s
+		 GROUP BY year, month
+         ORDER BY (year, month) desc`,
+		filterSql,
+	)
+
+	rows, err := r.connPool.Query(ctx, sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []*ActivityTimeReportItem
+	for rows.Next() {
+		var (
+			year              int
+			month             int
+			durationInMinutes int
+		)
+
+		err = rows.Scan(&year, &month, &durationInMinutes)
+		if err != nil {
+			return nil, err
+		}
+
+		activity := &ActivityTimeReportItem{
+			Day:                    1,
+			Year:                   year,
+			Month:                  month,
+			DurationInMinutesTotal: durationInMinutes,
+		}
+		activities = append(activities, activity)
+	}
+
+	return activities, nil
+}
+
+func (r *DbActivityRepository) TimeReportByQuarter(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
+	filterSql := ""
+
+	if filter.Username != "" {
+		params = append(params, filter.Username)
+		filterSql = " AND username = $4"
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT year, quarter, sum(duration_minutes_total) as duration_minutes_total  
+		 FROM activities_agg
+	     WHERE org_id = $1 AND $2 <= start_time AND start_time < $3 %s
+		 GROUP BY year, quarter
+         ORDER BY (year, quarter) desc`,
+		filterSql,
+	)
+
+	rows, err := r.connPool.Query(ctx, sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []*ActivityTimeReportItem
+	for rows.Next() {
+		var (
+			year              int
+			quarter           int
+			durationInMinutes int
+		)
+
+		err = rows.Scan(&year, &quarter, &durationInMinutes)
+		if err != nil {
+			return nil, err
+		}
+
+		activity := &ActivityTimeReportItem{
+			Day:                    1,
+			Year:                   year,
+			Quarter:                quarter,
+			DurationInMinutesTotal: durationInMinutes,
+		}
+		activities = append(activities, activity)
+	}
+
+	return activities, nil
 }
 
 func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error) {

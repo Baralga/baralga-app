@@ -87,5 +87,4 @@ BARALGA_SMTPPASSWORD=mysmtp***secret
 ```
 
 ## TODO
-* Add sign up support
 * Add password forgot support

@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/baralga/paged"
+	"github.com/baralga/util"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/matryer/is"
 )
 
@@ -25,6 +28,7 @@ func TestActivityRepository(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
 	defer func() {
 		err := dbContainer.Terminate(ctx)
 		if err != nil {
@@ -309,6 +313,104 @@ func TestActivityRepository(t *testing.T) {
 	})
 }
 
+func TestActivityRepositoryReports(t *testing.T) {
+	// skip in short mode
+	if testing.Short() {
+		return
+	}
+
+	is := is.New(t)
+
+	// Setup database
+	ctx := context.Background()
+	dbContainer, connPool, err := setupDatabase(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = insertSampleActivitiesForReports(ctx, connPool)
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer func() {
+		err := dbContainer.Terminate(ctx)
+		if err != nil {
+			t.Log(err)
+		}
+	}()
+
+	activityRepository := NewDbActivityRepository(connPool)
+
+	start, _ := time.Parse(time.RFC3339, "2022-01-01T10:00:00.000Z")
+	end, _ := time.Parse(time.RFC3339, "2023-01-01T11:00:00.000Z")
+	filter := &ActivitiesFilter{
+		Start:          start,
+		End:            end,
+		OrganizationID: organizationIDSample,
+	}
+
+	t.Run("TimeReportByDay", func(t *testing.T) {
+		// Arrange
+
+		// Act
+		reportItems, err := activityRepository.TimeReportByDay(
+			context.Background(),
+			filter,
+		)
+
+		// Assert
+		is.NoErr(err)
+		is.Equal(len(reportItems), 4)
+		is.Equal(120, reportItems[3].DurationInMinutesTotal)
+	})
+
+	t.Run("TimeReportByWeek", func(t *testing.T) {
+		// Arrange
+
+		// Act
+		reportItems, err := activityRepository.TimeReportByWeek(
+			context.Background(),
+			filter,
+		)
+
+		// Assert
+		is.NoErr(err)
+		is.Equal(len(reportItems), 4)
+		is.Equal(120, reportItems[3].DurationInMinutesTotal)
+	})
+
+	t.Run("TimeReportByMonth", func(t *testing.T) {
+		// Arrange
+
+		// Act
+		reportItems, err := activityRepository.TimeReportByMonth(
+			context.Background(),
+			filter,
+		)
+
+		// Assert
+		is.NoErr(err)
+		is.Equal(len(reportItems), 3)
+		is.Equal(180, reportItems[2].DurationInMinutesTotal)
+	})
+
+	t.Run("TimeReportByQuarter", func(t *testing.T) {
+		// Arrange
+
+		// Act
+		reportItems, err := activityRepository.TimeReportByQuarter(
+			context.Background(),
+			filter,
+		)
+
+		// Assert
+		is.NoErr(err)
+		is.Equal(len(reportItems), 2)
+		is.Equal(240, reportItems[1].DurationInMinutesTotal)
+	})
+}
+
 type InMemActivityRepository struct {
 	activities []*Activity
 }
@@ -326,6 +428,63 @@ func NewInMemActivityRepository() *InMemActivityRepository {
 			},
 		},
 	}
+}
+
+func (r *InMemActivityRepository) TimeReportByDay(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	var reportItems []*ActivityTimeReportItem
+	for _, a := range r.activities {
+		_, w := a.Start.ISOWeek()
+		reportItem := &ActivityTimeReportItem{
+			Year:                   a.Start.Year(),
+			Month:                  int(a.Start.Month()),
+			Quarter:                util.Quarter(a.Start),
+			Week:                   w,
+			Day:                    a.Start.Day(),
+			DurationInMinutesTotal: 60,
+		}
+		reportItems = append(reportItems, reportItem)
+	}
+	return reportItems, nil
+}
+
+func (r *InMemActivityRepository) TimeReportByWeek(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	var reportItems []*ActivityTimeReportItem
+	for _, a := range r.activities {
+		_, w := a.Start.ISOWeek()
+		reportItem := &ActivityTimeReportItem{
+			Year:                   a.Start.Year(),
+			Week:                   w,
+			DurationInMinutesTotal: 60,
+		}
+		reportItems = append(reportItems, reportItem)
+	}
+	return reportItems, nil
+}
+
+func (r *InMemActivityRepository) TimeReportByMonth(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	var reportItems []*ActivityTimeReportItem
+	for _, a := range r.activities {
+		reportItem := &ActivityTimeReportItem{
+			Year:                   a.Start.Year(),
+			Month:                  int(a.Start.Month()),
+			DurationInMinutesTotal: 60,
+		}
+		reportItems = append(reportItems, reportItem)
+	}
+	return reportItems, nil
+}
+
+func (r *InMemActivityRepository) TimeReportByQuarter(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
+	var reportItems []*ActivityTimeReportItem
+	for _, a := range r.activities {
+		reportItem := &ActivityTimeReportItem{
+			Year:                   a.Start.Year(),
+			Quarter:                util.Quarter(a.Start),
+			DurationInMinutesTotal: 60,
+		}
+		reportItems = append(reportItems, reportItem)
+	}
+	return reportItems, nil
 }
 
 func (r *InMemActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error) {
@@ -393,4 +552,87 @@ func (r *InMemActivityRepository) UpdateActivityByUsername(ctx context.Context, 
 		}
 	}
 	return nil, ErrActivityNotFound
+}
+
+func insertSampleActivitiesForReports(ctx context.Context, connPool *pgxpool.Pool) error {
+	_, err := connPool.Exec(
+		ctx,
+		fmt.Sprintf(
+			`INSERT INTO activities 
+			(activity_id, start_time, end_time, description, project_id, org_id, username) 
+			VALUES 
+			('%v', '2022-01-10 14:00:00-00', '2022-01-10 15:00:00-00', 'My Desc', '%v', '%v', 'admin')`,
+			uuid.New().String(),
+			projectIDSample,
+			organizationIDSample,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = connPool.Exec(
+		ctx,
+		fmt.Sprintf(
+			`INSERT INTO activities 
+			(activity_id, start_time, end_time, description, project_id, org_id, username) 
+			VALUES 
+			('%v', '2022-01-10 15:00:00-00', '2022-01-10 16:00:00-00', 'My Desc', '%v', '%v', 'admin')`,
+			uuid.New().String(),
+			projectIDSample,
+			organizationIDSample,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = connPool.Exec(
+		ctx,
+		fmt.Sprintf(
+			`INSERT INTO activities 
+			(activity_id, start_time, end_time, description, project_id, org_id, username) 
+			VALUES 
+			('%v', '2022-01-17 14:00:00-00', '2022-01-17 15:00:00-00', 'My Desc', '%v', '%v', 'admin')`,
+			uuid.New().String(),
+			projectIDSample,
+			organizationIDSample,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = connPool.Exec(
+		ctx,
+		fmt.Sprintf(
+			`INSERT INTO activities 
+			(activity_id, start_time, end_time, description, project_id, org_id, username) 
+			VALUES 
+			('%v', '2022-02-10 15:00:00-00', '2022-02-10 16:00:00-00', 'My Desc', '%v', '%v', 'admin')`,
+			uuid.New().String(),
+			projectIDSample,
+			organizationIDSample,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = connPool.Exec(
+		ctx,
+		fmt.Sprintf(
+			`INSERT INTO activities 
+			(activity_id, start_time, end_time, description, project_id, org_id, username) 
+			VALUES 
+			('%v', '2022-04-10 15:00:00-00', '2022-04-10 16:00:00-00', 'My Desc', '%v', '%v', 'admin')`,
+			uuid.New().String(),
+			projectIDSample,
+			organizationIDSample,
+		),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }

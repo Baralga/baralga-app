@@ -10,6 +10,14 @@ func Boost() g.Node {
 	return g.Attr("hx-boost", "true")
 }
 
+func PushURLTrue() g.Node {
+	return g.Attr("hx-push-url", "true")
+}
+
+func PushURL(url string) g.Node {
+	return g.Attr("hx-push-url", url)
+}
+
 func Post(action string) g.Node {
 	return g.Attr("hx-post", action)
 }
