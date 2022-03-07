@@ -394,7 +394,7 @@ func reportByDayView(timeReports []*ActivityTimeReportItem) g.Node {
 				reportItem := timeReports[i]
 				return Tr(
 					Td(
-						g.Text(util.FormatDateDE(reportItem.AsTime())),
+						g.Text(reportItem.AsTime().Format("02.01.2006 Monday")),
 					),
 					Td(
 						Class("text-end"),
