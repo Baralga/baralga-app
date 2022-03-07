@@ -334,9 +334,18 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 						Class("d-flex justify-content-between mb-2"),
 						hx.Target(fmt.Sprintf("#%v", activityCardID)),
 						TitleAttr(activity.Description),
-						Span(g.Text(util.FormatTime(activity.Start)+" - "+util.FormatTime(activity.End))),
-						Span(g.Text(projectsById[activity.ProjectID].Title)),
-						Span(g.Text(activity.DurationFormatted())),
+						Span(
+							Class("flex-fill"),
+							g.Text(util.FormatTime(activity.Start)+" - "+util.FormatTime(activity.End)),
+						),
+						Span(
+							Class("flex-fill"),
+							g.Text(projectsById[activity.ProjectID].Title),
+						),
+						Span(
+							Class("flex-fill text-end pe-3"),
+							g.Text(activity.DurationFormatted()),
+						),
 						Div(
 							A(
 								hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
