@@ -84,7 +84,13 @@ BARALGA_JWTSECRET=my***secret
 BARALGA_SMTPSERVERNAME=mysmtp.host.com:465
 BARALGA_SMTPUSER=baralga@mydomail.com
 BARALGA_SMTPPASSWORD=mysmtp***secret
+BARALGA_DATAPROTECTIONURL=https://localhost:8080/dataprotection/
+BARALGA_GITHUBCLIENTID=my***clientid
+BARALGA_GITHUBCLIENTSECRET=my***secret
+BARALGA_GITHUBREDIRECTURL=https://localhost:8080/github/callback
 ```
 
 ## TODO
+* archive project
+* report hours by project
 * Add password forgot support

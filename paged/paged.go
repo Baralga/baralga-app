@@ -1,7 +1,9 @@
 package paged
 
 import (
+	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -17,6 +19,24 @@ type PageParams struct {
 	Size int
 }
 
+// PageParamsFromQuery read the paging parameters from the url query params
+func PageParamsFromQuery(queryParams url.Values, size int) PageParams {
+	page := 0
+
+	// read page from query params
+	if len(queryParams["p"]) > 0 {
+		p, err := strconv.Atoi(queryParams["p"][0])
+		if err == nil {
+			page = p
+		}
+	}
+
+	return PageParams{
+		Size: size,
+		Page: page,
+	}
+}
+
 func (p *PageParams) Offset() int {
 	return p.Page * p.Size
 }
@@ -26,6 +46,7 @@ func (p *PageParams) PageOfTotal(total int) *Page {
 		Size:          p.Size,
 		Number:        p.Page,
 		TotalElements: total,
+		TotalPages:    int(math.Ceil(float64(total) / float64(p.Size))),
 	}
 }
 

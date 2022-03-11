@@ -20,10 +20,11 @@ func (a *app) HandleReportPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
 		pageContext := &pageContext{
-			ctx:         r.Context(),
-			principal:   principal,
-			currentPath: r.URL.Path,
-			title:       "Report Activities",
+			ctx:          r.Context(),
+			principal:    principal,
+			currentPath:  r.URL.Path,
+			currentQuery: r.URL.Query(),
+			title:        "Report Activities",
 		}
 
 		queryParams := r.URL.Query()
@@ -55,19 +56,18 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 	nextFilter := filter.Next()
 
 	var reportGeneralView, reportTimeView g.Node
+	var err error
 	if view.main == "general" {
-		v, err := a.reportGeneralView(pageContext, filter)
+		reportGeneralView, err = a.reportGeneralView(pageContext, filter, view)
 		if err != nil {
 			return nil, err
 		}
-		reportGeneralView = v
 	}
 	if view.main == "time" {
-		v, err := a.reportTimeView(pageContext, view, filter)
+		reportTimeView, err = a.reportTimeView(pageContext, view, filter)
 		if err != nil {
 			return nil, err
 		}
-		reportTimeView = v
 	}
 
 	return Div(
@@ -512,13 +512,10 @@ func reportByQuarterView(timeReports []*ActivityTimeReportItem) g.Node {
 	)
 }
 
-func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter) (g.Node, error) {
-	pageParams := &paged.PageParams{
-		Page: 0,
-		Size: 500,
-	}
+func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter, view *reportView) (g.Node, error) {
+	pageParams := paged.PageParamsFromQuery(pageContext.currentQuery, 50)
 
-	activitiesPage, projects, err := a.ReadActivitiesWithProjects(pageContext.ctx, pageContext.principal, filter, pageParams)
+	activitiesPage, projects, err := a.ReadActivitiesWithProjects(pageContext.ctx, pageContext.principal, filter, &pageParams)
 	if err != nil {
 		return nil, err
 	}
@@ -662,6 +659,114 @@ func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter
 				),
 			),
 		),
+		g.If(
+			activitiesPage.Page.TotalPages > 1,
+			Nav(
+				Class("d-flex justify-content-center"),
+				Ul(
+					Class("pagination"),
+					Li(
+						Class("page-item"),
+						g.If(
+							activitiesPage.Page.Number > 0,
+							A(
+								Class("page-link"),
+								Href(""),
+
+								hx.Get(reportHrefForPage(filter, view, activitiesPage.Page.Number-1)),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+
+								g.Raw("&laquo;"),
+							),
+						),
+						g.If(
+							activitiesPage.Page.Number <= 0,
+							Span(
+								Class("page-link active"),
+								g.Raw("&laquo;"),
+							),
+						),
+					),
+					g.Group(g.Map(activitiesPage.Page.TotalPages, func(pageIndex int) g.Node {
+						return Li(
+							g.If(
+								pageIndex == activitiesPage.Page.Number,
+								g.Group([]g.Node{
+									Class("page-item active"),
+									Span(
+										Class("page-link"),
+										g.Textf("%v", pageIndex+1),
+									),
+								}),
+							),
+							g.If(
+								!(pageIndex == activitiesPage.Page.Number),
+								g.Group([]g.Node{
+									Class("page-item"),
+									A(
+										Class("page-link"),
+										Href(""),
+
+										hx.Get(reportHrefForPage(filter, view, pageIndex)),
+										hx.PushURLTrue(),
+										hx.Target("#baralga__report_content"),
+										hx.Swap("outerHTML"),
+
+										g.Textf("%v", pageIndex+1),
+									),
+								}),
+							),
+						)
+					})),
+					Li(
+						Class("page-item"),
+						g.If(
+							activitiesPage.Page.TotalPages-1 > activitiesPage.Page.Number,
+							A(
+								Class("page-link"),
+								Href(""),
+
+								hx.Get(reportHrefForPage(filter, view, activitiesPage.Page.Number+1)),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+
+								g.Raw("&raquo;"),
+							),
+						),
+						g.If(
+							!(activitiesPage.Page.TotalPages-1 > activitiesPage.Page.Number),
+							Span(
+								Class("page-link active"),
+								g.Raw("&raquo;"),
+							),
+						),
+					),
+				),
+			),
+		/**
+					<nav aria-label="Page navigation example">
+		  <ul class="pagination">
+		    <li class="page-item">
+		      <a class="page-link" href="#" aria-label="Previous">
+		        <span aria-hidden="true">&laquo;</span>
+		      </a>
+		    </li>
+		    <li class="page-item"><a class="page-link" href="#">1</a></li>
+		    <li class="page-item"><a class="page-link" href="#">2</a></li>
+		    <li class="page-item"><a class="page-link" href="#">3</a></li>
+		    <li class="page-item">
+		      <a class="page-link" href="#" aria-label="Next">
+		        <span aria-hidden="true">&raquo;</span>
+		      </a>
+		    </li>
+		  </ul>
+		</nav>
+		*/
+		//H2(g.Text("BAM!!!")),
+		),
 	}), nil
 }
 
@@ -679,6 +784,10 @@ func (v *reportView) asParam() string {
 
 func reportHrefForView(filter *ActivityFilter, viewMain, viewSub string) string {
 	return reportHref(filter, &reportView{main: viewMain, sub: viewSub})
+}
+
+func reportHrefForPage(filter *ActivityFilter, view *reportView, page int) string {
+	return fmt.Sprintf("%v&p=%v", reportHref(filter, view), page)
 }
 
 func reportHref(filter *ActivityFilter, view *reportView) string {

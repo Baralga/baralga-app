@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"time"
 
@@ -19,10 +20,11 @@ import (
 )
 
 type pageContext struct {
-	ctx         context.Context
-	principal   *Principal
-	title       string
-	currentPath string
+	ctx          context.Context
+	principal    *Principal
+	title        string
+	currentPath  string
+	currentQuery url.Values
 }
 
 func (a *app) HandleWebManifest() http.HandlerFunc {
