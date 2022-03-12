@@ -213,6 +213,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Get("/reports", a.HandleReportPage())
 		r.Get("/projects", a.HandleProjectsPage())
 		r.Post("/projects/new", a.HandleProjectForm())
+		r.Get("/projects/{project-id}/archive", a.HandleArchiveProject())
 		r.Get("/activities/new", a.HandleActivityAddPage())
 		r.Post("/activities/validate-start-time", a.HandleStartTimeValidation())
 		r.Post("/activities/validate-end-time", a.HandleEndTimeValidation())

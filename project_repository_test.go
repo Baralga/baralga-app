@@ -99,6 +99,44 @@ func TestProjectRepository(t *testing.T) {
 		is.NoErr(err)
 		is.Equal("My updated Description", projectUpdate.Description)
 	})
+
+	t.Run("ArchiveProject", func(t *testing.T) {
+		// Arrange
+		project := &Project{
+			ID:             uuid.New(),
+			Title:          "My Title",
+			OrganizationID: organizationIDSample,
+			Description:    "My Description",
+			Active:         true,
+		}
+
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				_, err := projectRepository.InsertProject(
+					ctx,
+					project,
+				)
+				return err
+			},
+		)
+		is.NoErr(err)
+
+		// Act
+		err = repositoryTxer.InTx(
+			context.Background(),
+			func(ctx context.Context) error {
+				err := projectRepository.ArchiveProjectByID(ctx, organizationIDSample, project.ID)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		)
+
+		// Assert
+		is.NoErr(err)
+	})
 }
 
 func TestProjectRepositoryDeleteProject(t *testing.T) {
@@ -236,6 +274,16 @@ func (r *InMemProjectRepository) DeleteProjectByID(ctx context.Context, organiza
 	for i, a := range r.projects {
 		if a.ID == projectID {
 			r.projects = append(r.projects[:i], r.projects[i+1:]...)
+			return nil
+		}
+	}
+	return ErrProjectNotFound
+}
+
+func (r *InMemProjectRepository) ArchiveProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error {
+	for i, a := range r.projects {
+		if a.ID == projectID {
+			r.projects[i].Active = false
 			return nil
 		}
 	}

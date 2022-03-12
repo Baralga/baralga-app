@@ -24,6 +24,7 @@ type ProjectRepository interface {
 	FindProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) (*Project, error)
 	InsertProject(ctx context.Context, project *Project) (*Project, error)
 	UpdateProject(ctx context.Context, organizationID uuid.UUID, project *Project) (*Project, error)
+	ArchiveProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error
 	DeleteProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error
 }
 
@@ -46,7 +47,7 @@ func (r *DbProjectRepository) FindProjects(ctx context.Context, organizationID u
 		ctx,
 		`SELECT project_id as id, title, description, active 
 		 FROM projects 
-		 WHERE org_id = $1 
+		 WHERE org_id = $1 AND active = true
 		 ORDER BY title ASC 
 		 LIMIT $2 OFFSET $3`,
 		organizationID, pageParams.Size, pageParams.Offset(),
@@ -83,7 +84,7 @@ func (r *DbProjectRepository) FindProjects(ctx context.Context, organizationID u
 		ctx,
 		`SELECT count(*) as total 
 		 FROM projects 
-		 WHERE org_id = $1`,
+		 WHERE org_id = $1 AND active = true`,
 		organizationID,
 	)
 	var total int
@@ -242,6 +243,33 @@ func (r *DbProjectRepository) DeleteProjectByID(ctx context.Context, organizatio
 
 	var id string
 	err = row.Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrProjectNotFound
+		}
+
+		return err
+	}
+
+	if id != projectID.String() {
+		return ErrProjectNotFound
+	}
+
+	return nil
+}
+
+func (r *DbProjectRepository) ArchiveProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error {
+	tx := ctx.Value(contextKeyTx).(pgx.Tx)
+
+	row := tx.QueryRow(ctx,
+		`UPDATE projects 
+		 SET active = false 
+		 WHERE project_id = $1 AND org_id = $2
+		 RETURNING project_id`,
+		projectID, organizationID)
+
+	var id string
+	err := row.Scan(&id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrProjectNotFound

@@ -91,6 +91,5 @@ BARALGA_GITHUBREDIRECTURL=https://localhost:8080/github/callback
 ```
 
 ## TODO
-* archive project
 * report hours by project
 * Add password forgot support

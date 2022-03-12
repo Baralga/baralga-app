@@ -47,6 +47,23 @@ func (a *app) UpdateProject(ctx context.Context, organizationID uuid.UUID, proje
 	return projectUpdated, nil
 }
 
+func (a *app) ArchiveProject(ctx context.Context, organizationID, projectID uuid.UUID) error {
+	err := a.RepositoryTxer.InTx(
+		context.Background(),
+		func(ctx context.Context) error {
+			err := a.ProjectRepository.ArchiveProjectByID(ctx, organizationID, projectID)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (a *app) DeleteProjectByID(ctx context.Context, principal *Principal, projectID uuid.UUID) error {
 	return a.RepositoryTxer.InTx(
 		ctx,

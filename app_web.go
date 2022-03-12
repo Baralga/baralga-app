@@ -106,11 +106,11 @@ func (a *app) HandleIndexPage() http.HandlerFunc {
 		formModel := activityTrackFormModel{Action: "start"}
 		formModel.CSRFToken = csrf.Token(r)
 
-		util.RenderHTML(w, IndexPage(pageContext, formModel, filter, activitiesPage, projects))
+		util.RenderHTML(w, IndexPage(pageContext, formModel, filter, activitiesPage, projectsOfActivities, projects))
 	}
 }
 
-func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filter *ActivityFilter, activitiesPage *ActivitiesPaged, projects *ProjectsPaged) g.Node {
+func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filter *ActivityFilter, activitiesPage *ActivitiesPaged, projectsOfActivities []*Project, projects *ProjectsPaged) g.Node {
 	return Page(
 		"Track Activities",
 		pageContext.currentPath,
@@ -130,7 +130,7 @@ func IndexPage(pageContext *pageContext, formModel activityTrackFormModel, filte
 						hx.Trigger("baralga__activities-changed from:body"),
 						hx.Get("/"),
 
-						ActivitiesInWeekView(filter, activitiesPage, projects.Projects),
+						ActivitiesInWeekView(filter, activitiesPage, projectsOfActivities),
 					),
 					Div(Class("col-lg-4 col-sm-12 order-1 order-lg-2 mt-lg-4 mt-2"),
 						TrackPanel(projects.Projects, formModel),

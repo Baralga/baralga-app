@@ -7,11 +7,15 @@ import (
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/paged"
 	"github.com/baralga/util"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
+	"github.com/pkg/errors"
+	"schneider.vip/problem"
 )
 
 type projectFormModel struct {
@@ -114,6 +118,7 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("HX-Trigger", "baralga__projects-changed")
 		err = a.renderProjectsView(
 			w,
 			r,
@@ -121,6 +126,36 @@ func (a *app) HandleProjectForm() http.HandlerFunc {
 			isProduction,
 			projectFormModel{},
 		)
+		if err != nil {
+			util.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+	}
+}
+
+// HandleArchiveProject archives a project
+func (a *app) HandleArchiveProject() http.HandlerFunc {
+	isProduction := a.isProduction()
+	return func(w http.ResponseWriter, r *http.Request) {
+		projectIDParam := chi.URLParam(r, "project-id")
+		principal := r.Context().Value(contextKeyPrincipal).(*Principal)
+
+		projectID, err := uuid.Parse(projectIDParam)
+		if err != nil {
+			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
+			return
+		}
+
+		if !principal.HasRole("ROLE_ADMIN") {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		err = a.ArchiveProject(r.Context(), principal.OrganizationID, projectID)
+		if errors.Is(err, ErrProjectNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			util.RenderProblemHTML(w, isProduction, err)
 			return
@@ -218,6 +253,15 @@ func ProjectsView(principal *Principal, formModel projectFormModel, projects *Pr
 											I(Class("bi-trash2")),
 										),
 									),
+									g.If(
+										principal.HasRole("ROLE_ADMIN"),
+										A(
+											hx.Confirm(fmt.Sprintf("Do you really want to archive project %v?", project.Title)),
+											hx.Get(fmt.Sprintf("/projects/%v/archive", project.ID)),
+											Class("btn btn-outline-secondary btn-sm ms-1"),
+											I(Class("bi-archive")),
+										),
+									),
 								),
 							),
 						),
@@ -235,8 +279,6 @@ func ProjectForm(formModel projectFormModel, errorMessage string) g.Node {
 		hx.Post("/projects/new"),
 		hx.Target("#baralga__main_content_modal_content"),
 		hx.Swap("outerHTML"),
-
-		//hx.Swap("innerHTML"),
 
 		Input(
 			Type("hidden"),
@@ -269,6 +311,7 @@ func ProjectForm(formModel projectFormModel, errorMessage string) g.Node {
 
 func mapFormToProject(projectFormModel projectFormModel) Project {
 	return Project{
-		Title: projectFormModel.Title,
+		Title:  projectFormModel.Title,
+		Active: true,
 	}
 }

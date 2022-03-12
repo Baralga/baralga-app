@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/matryer/is"
 )
 
@@ -165,4 +167,51 @@ func TestHandleCreateProjectWithInvalidProject(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "<form"))
+}
+
+func TestHandleArchiveProjectAsAdmin(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemProjectRepository()
+	a := &app{
+		Config:            &config{},
+		ProjectRepository: repo,
+		RepositoryTxer:    NewInMemRepositoryTxer(),
+	}
+
+	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%v/archive", projectIDSample), nil)
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", projectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleArchiveProject()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+}
+
+func TestHandleArchiveProjectAsUser(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemProjectRepository()
+	a := &app{
+		Config:            &config{},
+		ProjectRepository: repo,
+	}
+
+	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%v/archive", projectIDSample), nil)
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{
+		Roles: []string{"ROLE_USER"},
+	}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", projectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleArchiveProject()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 }
