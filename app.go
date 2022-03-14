@@ -207,7 +207,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		cookieName = "__Insecure-csrf"
 	}
 
-	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName(cookieName), csrf.FieldName("CSRFToken"), csrf.Secure(false))
+	CSRF := csrf.Protect([]byte(a.Config.CSRFSecret), csrf.CookieName(cookieName), csrf.FieldName("CSRFToken"), csrf.Secure(a.isProduction()))
 	a.Router.Group(func(r chi.Router) {
 		r.Use(WebVerifier(tokenAuth))
 		r.Use(a.JWTPrincipalHandler())
