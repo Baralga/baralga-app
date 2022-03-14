@@ -628,6 +628,7 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 					Button(
 						Type("submit"),
 						Class("btn btn-primary btn-lg"),
+						Alt("Start tracking"),
 						StyleAttr("width: 100%"),
 						I(Class("bi-play")),
 					),
@@ -637,6 +638,7 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 						Type("submit"),
 						Class("btn btn-danger btn-lg bg-danger progress-bar progress-bar-striped progress-bar-animated"),
 						StyleAttr("width: 100%"),
+						Alt("Stop tracking"),
 						I(Class("bi-stop")),
 					),
 				),
