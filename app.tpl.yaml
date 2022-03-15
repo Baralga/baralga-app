@@ -4,8 +4,10 @@ service: default
 handlers:
 - url: /api/*
   script: auto
-
-max_concurrent_requests: 40
+  
+automatic_scaling:
+  max_concurrent_requests: 40
+  max_instances: 3
 
 env_variables:
   BARALGA_ENV: "production"
@@ -21,3 +23,4 @@ env_variables:
   BARALGA_GITHUBCLIENTID: "{{ .BARALGA_GITHUBCLIENTID }}"
   BARALGA_GITHUBCLIENTSECRET: "{{ .BARALGA_GITHUBCLIENTSECRET }}"
   BARALGA_GITHUBREDIRECTURL: "{{ .BARALGA_GITHUBREDIRECTURL }}"
+  BARALGA_DBMAXCONNS: "{{ .BARALGA_DBMAXCONNS }}"
