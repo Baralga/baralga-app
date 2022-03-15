@@ -5,6 +5,8 @@ handlers:
 - url: /api/*
   script: auto
 
+max_concurrent_requests: 40
+
 env_variables:
   BARALGA_ENV: "production"
   BARALGA_DB: "{{ .BARALGA_DB }}"
