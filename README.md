@@ -34,6 +34,7 @@ The backend is configured using the following environment variables:
 | Environment Variable  | Default Value                        | Description  |
 | --------------------- |:------------------------------------| :--------|
 | `BARALGA_DB`      | `postgres://postgres:postgres@localhost:5432/baralga`| PostgreSQL Connection string for database |
+| `BARALGA_DBMAXCONNS`      | `3`| Maximum number of database connections in pool. |
 | `PORT` | `8080`      |    http server port |
 | `BARALGA_WEBROOT` | `http://localhost:8080`      |    Web server root |
 | `BARALGA_JWTSECRET` | `secret`      |    Random secret for JWT generation |

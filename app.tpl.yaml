@@ -6,8 +6,8 @@ handlers:
   script: auto
   
 automatic_scaling:
-  max_concurrent_requests: 40
-  max_instances: 3
+  max_concurrent_requests: 70
+  max_instances: 2
 
 env_variables:
   BARALGA_ENV: "production"

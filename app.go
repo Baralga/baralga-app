@@ -28,10 +28,11 @@ import (
 )
 
 type config struct {
-	BindPort string `default:"8080"`
-	Webroot  string `default:"http://localhost:8080"`
-	Db       string `default:"postgres://postgres:postgres@localhost:5432/baralga"`
-	Env      string `default:"dev"`
+	BindPort   string `default:"8080"`
+	Webroot    string `default:"http://localhost:8080"`
+	Db         string `default:"postgres://postgres:postgres@localhost:5432/baralga"`
+	DbMaxConns int32  `default:"3"`
+	Env        string `default:"dev"`
 
 	JWTSecret  string `default:"secret"`
 	JWTExpiry  string `default:"24h"`
@@ -103,7 +104,7 @@ func newApp() (*app, error) {
 }
 
 func (a *app) run() error {
-	connPool, err := connect(a.Config.Db)
+	connPool, err := connect(a.Config.Db, a.Config.DbMaxConns)
 	if err != nil {
 		return err
 	}
@@ -275,13 +276,21 @@ func migrateDb(dbURL string) error {
 	return nil
 }
 
-func connect(dbURL string) (*pgxpool.Pool, error) {
+func connect(dbURL string, maxConns int32) (*pgxpool.Pool, error) {
 	err := migrateDb(dbURL)
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := pgxpool.Connect(context.Background(), dbURL)
+	pgxConfig, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+
+	pgxConfig.LazyConnect = true
+	pgxConfig.MaxConns = maxConns
+
+	conn, err := pgxpool.ConnectConfig(context.Background(), pgxConfig)
 	if err != nil {
 		return nil, err
 	}
