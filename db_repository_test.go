@@ -66,7 +66,7 @@ func setupDatabase(ctx context.Context) (testcontainers.Container, *pgxpool.Pool
 
 	dbURI := fmt.Sprintf("postgres://postgres:postgres@%v:%v/baralga", host, port.Port())
 
-	connPool, err := connect(dbURI)
+	connPool, err := connect(dbURI, 1)
 	if err != nil {
 		return nil, nil, err
 	}
