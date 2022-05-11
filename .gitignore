@@ -4,5 +4,6 @@ build
 app.yaml
 tmp
 dist
+__debug_bin
 
 .env
