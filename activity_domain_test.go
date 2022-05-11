@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -205,4 +206,20 @@ func TestActivityFilterSting(t *testing.T) {
 		}
 		is.Equal(f.String(), "2021-11-12")
 	})
+}
+
+func TestActivityFilterHome(t *testing.T) {
+	is := is.New(t)
+
+	start, _ := time.Parse(time.RFC3339, "2021-11-12T11:00:00.000Z")
+	f := &ActivityFilter{
+		start:    start,
+		Timespan: TimespanYear,
+	}
+
+	t.Run("String with year filter", func(t *testing.T) {
+		homeFilter := f.Home()
+		is.Equal(homeFilter.String(), fmt.Sprintf("%v", time.Now().Year()))
+	})
+
 }

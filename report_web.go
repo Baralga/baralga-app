@@ -53,6 +53,7 @@ func (a *app) HandleReportPage() http.HandlerFunc {
 
 func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *ActivityFilter) (g.Node, error) {
 	previousFilter := filter.Previous()
+	homeFilter := filter.Home()
 	nextFilter := filter.Next()
 
 	var reportGeneralView, reportTimeView g.Node
@@ -135,13 +136,13 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 						I(Class("bi-arrow-left")),
 					),
 					A(
-						hx.Get(reportHref(filter, view)),
+						hx.Get(reportHref(homeFilter, view)),
 						hx.PushURLTrue(),
 						hx.Target("#baralga__report_content"),
 						hx.Trigger("click, keyup[shiftKey && key == 'ArrowDown'] from:body"),
 						hx.Swap("outerHTML"),
 
-						TitleAttr(fmt.Sprintf("Show current actvities from %v", filter.String())),
+						TitleAttr(fmt.Sprintf("Show current actvities from %v", homeFilter.String())),
 						Class("btn btn-outline-primary"),
 						I(Class("bi-house-fill")),
 					),

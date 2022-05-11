@@ -89,6 +89,13 @@ func (f *ActivityFilter) End() time.Time {
 	}
 }
 
+func (f *ActivityFilter) Home() *ActivityFilter {
+	return &ActivityFilter{
+		Timespan: f.Timespan,
+		start:    time.Now(),
+	}
+}
+
 func (f *ActivityFilter) Next() *ActivityFilter {
 	nextFilter := &ActivityFilter{
 		Timespan: f.Timespan,
