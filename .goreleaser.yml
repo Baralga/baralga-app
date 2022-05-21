@@ -43,3 +43,20 @@ docker_manifests:
   image_templates:
   - ghcr.io/baralga/baralga-app:{{ .Version }}-amd64
   - ghcr.io/baralga/baralga-app:{{ .Version }}-arm64v8
+changelog:
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
+  filters:
+    # Commit messages matching the regexp listed here will be removed from the changelog
+    exclude:
+      - '^docs:'
+      - '^misc:'
+      - typo
+      - (?i)foo
