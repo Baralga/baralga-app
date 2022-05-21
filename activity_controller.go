@@ -343,8 +343,20 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		timespan = params["t"][0]
 	}
 
+	sortOrder := ""
+	sortBy := ""
+	if len(params["sort"]) != 0 {
+		sortParam := strings.Split(params["sort"][0], ":")
+		if len(sortParam) == 2 && IsValidActivitySortField(sortParam[0]) && IsValidSortOrder(sortParam[1]) {
+			sortBy = sortParam[0]
+			sortOrder = sortParam[1]
+		}
+	}
+
 	filter := &ActivityFilter{
-		Timespan: timespan,
+		Timespan:  timespan,
+		sortBy:    sortBy,
+		sortOrder: sortOrder,
 	}
 
 	if timespan == TimespanCustom && len(params["start"]) == 0 && len(params["end"]) == 0 {

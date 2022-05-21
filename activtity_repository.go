@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/baralga/paged"
@@ -23,6 +24,8 @@ type ActivitiesPaged struct {
 type ActivitiesFilter struct {
 	Start          time.Time
 	End            time.Time
+	SortBy         string
+	SortOrder      string
 	Username       string
 	OrganizationID uuid.UUID
 }
@@ -317,13 +320,25 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 		filterSql = " AND username = $6"
 	}
 
+	sortBy := "start"
+	if filter.SortBy != "" {
+		sortBy = strings.ToLower(filter.SortBy)
+	}
+
+	sortOrder := "DESC"
+	if filter.SortOrder != "" {
+		sortOrder = strings.ToUpper(filter.SortOrder)
+	}
+
 	sql := fmt.Sprintf(
-		`SELECT activity_id as id, description, start_time, end_time, username, org_id, project_id 
+		`SELECT activity_id as id, description, start_time as start, end_time as end, username, org_id, project_id as project
          FROM activities 
 	     WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3
-	     ORDER by start_time DESC 
+	     ORDER by %s %s 
 	     LIMIT $4 OFFSET $5`,
 		filterSql,
+		sortBy,
+		sortOrder,
 	)
 
 	rows, err := r.connPool.Query(ctx, sql, params...)

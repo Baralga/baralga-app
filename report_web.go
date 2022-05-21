@@ -613,8 +613,26 @@ func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter
 				Class("table table-borderless table-striped"),
 				THead(
 					Tr(
-						Th(g.Text("Project")),
-						Th(g.Text("Date")),
+						Th(
+							A(
+								hx.Get(reportHref(filter.WithSortToggle("project"), view)),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+
+								g.Text("Project"),
+							),
+						),
+						Th(
+							A(
+								hx.Get(reportHref(filter.WithSortToggle("start"), view)),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+
+								g.Text("Date"),
+							),
+						),
 						Th(
 							Class("text-end"),
 							g.Text("Duration"),
@@ -670,8 +688,26 @@ func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter
 				Class("table table-borderless table-striped"),
 				THead(
 					Tr(
-						Th(g.Text("Project")),
-						Th(g.Text("Date")),
+						Th(
+							A(
+								hx.Get(reportHref(filter.WithSortToggle("project"), view)),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+
+								g.Text("Project"),
+							),
+						),
+						Th(
+							A(
+								hx.Get(reportHref(filter.WithSortToggle("start"), view)),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+
+								g.Text("Date"),
+							),
+						),
 						Th(g.Text("Start")),
 						Th(g.Text("End")),
 						Th(
@@ -837,7 +873,13 @@ func reportHrefForPage(filter *ActivityFilter, view *reportView, page int) strin
 }
 
 func reportHref(filter *ActivityFilter, view *reportView) string {
-	return fmt.Sprintf("/reports?t=%v&v=%v&c=%v", filter.Timespan, filter.String(), view.asParam())
+	reportHref := fmt.Sprintf("/reports?t=%v&v=%v&c=%v", filter.Timespan, filter.String(), view.asParam())
+
+	if filter.sortBy != "" && filter.sortOrder != "" {
+		reportHref += fmt.Sprintf("&sort=%v", fmt.Sprintf("%v:%v", filter.sortBy, filter.sortOrder))
+	}
+
+	return reportHref
 }
 
 func (a *app) ReportPage(pageContext *pageContext, reportView g.Node) g.Node {

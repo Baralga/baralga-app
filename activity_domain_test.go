@@ -223,3 +223,53 @@ func TestActivityFilterHome(t *testing.T) {
 	})
 
 }
+
+func TestIsValidSortOrder(t *testing.T) {
+	is := is.New(t)
+
+	t.Run("sort order 'asc' is valid", func(t *testing.T) {
+		isValidSortOrder := IsValidSortOrder("asc")
+		is.True(isValidSortOrder)
+	})
+
+	t.Run("sort order 'desc' is valid", func(t *testing.T) {
+		isValidSortOrder := IsValidSortOrder("desc")
+		is.True(isValidSortOrder)
+	})
+
+	t.Run("sort order 'ASc' is valid", func(t *testing.T) {
+		isValidSortOrder := IsValidSortOrder("ASc")
+		is.True(isValidSortOrder)
+	})
+
+	t.Run("sort order 'invalid-order' is not valid", func(t *testing.T) {
+		isValidSortOrder := IsValidSortOrder("invalid-order")
+		is.True(!isValidSortOrder)
+	})
+
+}
+
+func TestIsValidActivitySortField(t *testing.T) {
+	is := is.New(t)
+
+	t.Run("sort field 'project' is valid", func(t *testing.T) {
+		isValidSortField := IsValidActivitySortField("project")
+		is.True(isValidSortField)
+	})
+
+	t.Run("sort field 'start' is valid", func(t *testing.T) {
+		isValidSortField := IsValidActivitySortField("start")
+		is.True(isValidSortField)
+	})
+
+	t.Run("sort field 'PROjeCT' is valid", func(t *testing.T) {
+		isValidSortField := IsValidActivitySortField("PROjeCT")
+		is.True(isValidSortField)
+	})
+
+	t.Run("sort field 'invalid-field' is not valid", func(t *testing.T) {
+		isValidSortField := IsValidActivitySortField("invalid-order")
+		is.True(!isValidSortField)
+	})
+
+}

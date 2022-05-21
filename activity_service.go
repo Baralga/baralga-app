@@ -232,6 +232,8 @@ func toFilter(principal *Principal, filter *ActivityFilter) *ActivitiesFilter {
 	activitiesFilter := &ActivitiesFilter{
 		Start:          filter.Start(),
 		End:            filter.End(),
+		SortBy:         filter.sortBy,
+		SortOrder:      filter.sortOrder,
 		OrganizationID: principal.OrganizationID,
 	}
 

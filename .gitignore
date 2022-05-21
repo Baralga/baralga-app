@@ -7,3 +7,4 @@ dist
 __debug_bin
 
 .env
+.vscode/*.log

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/baralga/util"
@@ -22,9 +23,38 @@ type Activity struct {
 
 // ActivityFilter reprensents a filter for activities
 type ActivityFilter struct {
-	Timespan string
-	start    time.Time
-	end      time.Time
+	Timespan  string
+	sortBy    string
+	sortOrder string
+	start     time.Time
+	end       time.Time
+}
+
+const (
+	SortOrderAsc  string = "asc"
+	SortOrderDesc string = "desc"
+)
+
+func IsValidActivitySortField(f string) bool {
+	switch strings.ToLower(f) {
+	case "project":
+		return true
+	case "start":
+		return true
+	default:
+		return false
+	}
+}
+
+func IsValidSortOrder(f string) bool {
+	switch strings.ToLower(f) {
+	case SortOrderAsc:
+		return true
+	case SortOrderDesc:
+		return true
+	default:
+		return false
+	}
 }
 
 type ActivityTimeReportItem struct {
@@ -154,6 +184,23 @@ func (f *ActivityFilter) Previous() *ActivityFilter {
 	}
 
 	return previousFilter
+}
+
+func (f *ActivityFilter) WithSortToggle(sortBy string) *ActivityFilter {
+	filterWithSort := &ActivityFilter{
+		Timespan: f.Timespan,
+		sortBy:   sortBy,
+		start:    f.start,
+		end:      f.end,
+	}
+
+	if f.sortOrder == "desc" {
+		filterWithSort.sortOrder = "asc"
+	} else {
+		filterWithSort.sortOrder = "desc"
+	}
+
+	return filterWithSort
 }
 
 // End returns the filter's display name

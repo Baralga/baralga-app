@@ -635,6 +635,19 @@ func TestFilterFromQueryParams(t *testing.T) {
 		is.Equal(time.Now().Year(), filter.Start().Year())
 	})
 
+	t.Run("year filter without value and sort order", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("t", "year")
+		params.Add("sort", "project:asc")
+
+		filter, err := filterFromQueryParams(params)
+
+		is.NoErr(err)
+		is.Equal(time.Now().Year(), filter.Start().Year())
+		is.Equal("project", filter.sortBy)
+		is.Equal(SortOrderAsc, filter.sortOrder)
+	})
+
 	t.Run("year filter from query params", func(t *testing.T) {
 		params := make(url.Values)
 		params.Add("t", "year")

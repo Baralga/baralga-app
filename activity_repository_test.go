@@ -60,6 +60,29 @@ func TestActivityRepository(t *testing.T) {
 		is.True(activityiesPage != nil)
 	})
 
+	t.Run("FindActivitiesByOrganizationId and sort by field 'project' ascending", func(t *testing.T) {
+		filter := &ActivitiesFilter{
+			Start:          time.Now().AddDate(-1, 0, 0),
+			End:            time.Now(),
+			OrganizationID: organizationIDSample,
+			SortBy:         "project",
+			SortOrder:      "asc",
+		}
+		activityiesPage, err := activityRepository.FindActivities(
+			context.Background(),
+			filter,
+			&paged.PageParams{
+				Page: 0,
+				Size: 50,
+			},
+		)
+
+		is.NoErr(err)
+		is.Equal(len(activityiesPage.Activities), 1)
+		is.Equal(activityiesPage.Page.TotalElements, 1)
+		is.True(activityiesPage != nil)
+	})
+
 	t.Run("FindActivitiesByOrganizationIdAndUsername", func(t *testing.T) {
 		filter := &ActivitiesFilter{
 			Start:          time.Now().AddDate(-1, 0, 0),
