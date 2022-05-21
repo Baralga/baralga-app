@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   build-code:
-    uses: build.yml
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
   deploy:
     needs: build-code
     name: Deploy to GCP
