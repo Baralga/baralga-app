@@ -147,3 +147,12 @@ func TestCompleteTimeValue(t *testing.T) {
 		is.Equal(time, "xxx")
 	})
 }
+
+func TestQuarter(t *testing.T) {
+	is := is.New(t)
+
+	time, _ := ParseDateTime("2020-11-01T16:46:28.2328113")
+
+	quarter := Quarter(*time)
+	is.Equal(quarter, 4)
+}
