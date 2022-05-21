@@ -409,6 +409,21 @@ func TestActivityRepositoryReports(t *testing.T) {
 		is.Equal(len(reportItems), 2)
 		is.Equal(240, reportItems[1].DurationInMinutesTotal)
 	})
+
+	t.Run("ProjectReport", func(t *testing.T) {
+		// Arrange
+
+		// Act
+		reportItems, err := activityRepository.ProjectReport(
+			context.Background(),
+			filter,
+		)
+
+		// Assert
+		is.NoErr(err)
+		is.Equal(len(reportItems), 1)
+		is.Equal(300, reportItems[0].DurationInMinutesTotal)
+	})
 }
 
 type InMemActivityRepository struct {
@@ -480,6 +495,19 @@ func (r *InMemActivityRepository) TimeReportByQuarter(ctx context.Context, filte
 		reportItem := &ActivityTimeReportItem{
 			Year:                   a.Start.Year(),
 			Quarter:                util.Quarter(a.Start),
+			DurationInMinutesTotal: 60,
+		}
+		reportItems = append(reportItems, reportItem)
+	}
+	return reportItems, nil
+}
+
+func (r *InMemActivityRepository) ProjectReport(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityProjectReportItem, error) {
+	var reportItems []*ActivityProjectReportItem
+	for _, a := range r.activities {
+		reportItem := &ActivityProjectReportItem{
+			ProjectID:              a.ProjectID,
+			ProjectTitle:           "My Project",
 			DurationInMinutesTotal: 60,
 		}
 		reportItems = append(reportItems, reportItem)

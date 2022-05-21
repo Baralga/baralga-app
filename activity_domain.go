@@ -41,6 +41,17 @@ func (i *ActivityTimeReportItem) DurationFormatted() string {
 	return FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
 }
 
+type ActivityProjectReportItem struct {
+	ProjectID              uuid.UUID
+	ProjectTitle           string
+	DurationInMinutesTotal int
+}
+
+// DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
+func (i *ActivityProjectReportItem) DurationFormatted() string {
+	return FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
+}
+
 // AsTime returns the report item as time.Time
 func (i *ActivityTimeReportItem) AsTime() time.Time {
 	t, _ := time.Parse("2006-1-2", fmt.Sprintf("%v-%v-%v", i.Year, i.Month, i.Day))

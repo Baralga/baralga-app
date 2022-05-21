@@ -91,6 +91,5 @@ BARALGA_GITHUBCLIENTSECRET=my***secret
 BARALGA_GITHUBREDIRECTURL=https://localhost:8080/github/callback
 ```
 
-## TODO
-* report hours by project
+## Open Topics
 * Add password forgot support

@@ -47,6 +47,11 @@ func (a *app) TimeReports(ctx context.Context, principal *Principal, filter *Act
 	}
 }
 
+func (a *app) ProjectReports(ctx context.Context, principal *Principal, filter *ActivityFilter) ([]*ActivityProjectReportItem, error) {
+	activitiesFilter := toFilter(principal, filter)
+	return a.ActivityRepository.ProjectReport(ctx, activitiesFilter)
+}
+
 // CreateActivity creates a new activity
 func (a *app) CreateActivity(ctx context.Context, principal *Principal, activity *Activity) (*Activity, error) {
 	activity.ID = uuid.New()

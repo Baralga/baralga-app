@@ -56,7 +56,7 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 	homeFilter := filter.Home()
 	nextFilter := filter.Next()
 
-	var reportGeneralView, reportTimeView g.Node
+	var reportGeneralView, reportTimeView, reportProjectView g.Node
 	var err error
 	if view.main == "general" {
 		reportGeneralView, err = a.reportGeneralView(pageContext, filter, view)
@@ -66,6 +66,12 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 	}
 	if view.main == "time" {
 		reportTimeView, err = a.reportTimeView(pageContext, view, filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if view.main == "project" {
+		reportProjectView, err = a.reportProjectView(pageContext, view, filter)
 		if err != nil {
 			return nil, err
 		}
@@ -226,6 +232,23 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 						g.Text("Time"),
 						Class("nav-link"),
 					),
+					A(
+						g.If(view.main == "project",
+							Class("nav-link active"),
+						),
+						g.If(view.main != "project",
+							g.Group([]g.Node{
+								Class("btn nav-link"),
+								hx.Get(reportHrefForView(filter, "project", "d")),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+							}),
+						),
+						I(Class("bi-clock me-2")),
+						g.Text("Project"),
+						Class("nav-link"),
+					),
 				),
 			),
 		),
@@ -234,6 +257,9 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 		),
 		g.If(view.main == "time",
 			reportTimeView,
+		),
+		g.If(view.main == "project",
+			reportProjectView,
 		),
 	), nil
 }
@@ -281,98 +307,143 @@ func (a *app) reportTimeView(pageContext *pageContext, view *reportView, filter 
 		return nil, err
 	}
 
+	if len(timeReports) == 0 {
+		return Div(
+			Class("alert alert-info"),
+			Role("alert"),
+			g.Text(fmt.Sprintf("No activities found in %v.", filter.String())),
+		), nil
+
+	}
 	return g.Group([]g.Node{
-		g.If(
-			len(timeReports) == 0,
+		Nav(
 			Div(
-				Class("alert alert-info"),
-				Role("alert"),
-				g.Text(fmt.Sprintf("No activities found in %v.", filter.String())),
+				Class("nav nav-tabs"),
+				A(
+					g.If(view.sub == "d",
+						Class("nav-link active"),
+					),
+					g.If(view.sub != "d",
+						g.Group([]g.Node{
+							Class("nav-link"),
+							hx.Get(reportHrefForView(filter, "time", "d")),
+							hx.PushURLTrue(),
+							hx.Target("#baralga__report_content"),
+							hx.Swap("outerHTML"),
+						}),
+					),
+					Type("button"),
+					g.Text("By Day"),
+				),
+				g.If(showWeekView,
+					A(
+						g.If(view.sub == "w",
+							Class("nav-link active"),
+						),
+						g.If(view.sub != "w",
+							g.Group([]g.Node{
+								Class("nav-link"),
+								hx.Get(reportHrefForView(filter, "time", "w")),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+							}),
+						),
+						Type("button"),
+						g.Text("By Week"),
+					),
+				),
+				g.If(showMonthView,
+					A(
+						g.If(view.sub == "m",
+							Class("nav-link active"),
+						),
+						g.If(view.sub != "m",
+							g.Group([]g.Node{
+								Class("nav-link"),
+								hx.Get(reportHrefForView(filter, "time", "m")),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+							}),
+						),
+						Type("button"),
+						g.Text("By Month"),
+					),
+				),
+				g.If(showQuarterView,
+					A(
+						g.If(view.sub == "q",
+							Class("nav-link active"),
+						),
+						g.If(view.sub != "q",
+							g.Group([]g.Node{
+								Class("nav-link"),
+								hx.Get(reportHrefForView(filter, "time", "q")),
+								hx.PushURLTrue(),
+								hx.Target("#baralga__report_content"),
+								hx.Swap("outerHTML"),
+							}),
+						),
+						Type("button"),
+						g.Text("By Quarter"),
+					),
+				),
 			),
 		),
-		g.If(
-			len(timeReports) != 0,
-			g.Group([]g.Node{
-				Nav(
-					Div(
-						Class("nav nav-tabs"),
-						A(
-							g.If(view.sub == "d",
-								Class("nav-link active"),
-							),
-							g.If(view.sub != "d",
-								g.Group([]g.Node{
-									Class("nav-link"),
-									hx.Get(reportHrefForView(filter, "time", "d")),
-									hx.PushURLTrue(),
-									hx.Target("#baralga__report_content"),
-									hx.Swap("outerHTML"),
-								}),
-							),
-							Type("button"),
-							g.Text("By Day"),
-						),
-						g.If(showWeekView,
-							A(
-								g.If(view.sub == "w",
-									Class("nav-link active"),
-								),
-								g.If(view.sub != "w",
-									g.Group([]g.Node{
-										Class("nav-link"),
-										hx.Get(reportHrefForView(filter, "time", "w")),
-										hx.PushURLTrue(),
-										hx.Target("#baralga__report_content"),
-										hx.Swap("outerHTML"),
-									}),
-								),
-								Type("button"),
-								g.Text("By Week"),
-							),
-						),
-						g.If(showMonthView,
-							A(
-								g.If(view.sub == "m",
-									Class("nav-link active"),
-								),
-								g.If(view.sub != "m",
-									g.Group([]g.Node{
-										Class("nav-link"),
-										hx.Get(reportHrefForView(filter, "time", "m")),
-										hx.PushURLTrue(),
-										hx.Target("#baralga__report_content"),
-										hx.Swap("outerHTML"),
-									}),
-								),
-								Type("button"),
-								g.Text("By Month"),
-							),
-						),
-						g.If(showQuarterView,
-							A(
-								g.If(view.sub == "q",
-									Class("nav-link active"),
-								),
-								g.If(view.sub != "q",
-									g.Group([]g.Node{
-										Class("nav-link"),
-										hx.Get(reportHrefForView(filter, "time", "q")),
-										hx.PushURLTrue(),
-										hx.Target("#baralga__report_content"),
-										hx.Swap("outerHTML"),
-									}),
-								),
-								Type("button"),
-								g.Text("By Quarter"),
-							),
+		Div(
+			Class("tab-content"),
+			reportView,
+		),
+	}), nil
+}
+
+func (a *app) reportProjectView(pageContext *pageContext, view *reportView, filter *ActivityFilter) (g.Node, error) {
+	projectReports, err := a.ProjectReports(pageContext.ctx, pageContext.principal, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(projectReports) == 0 {
+		return Div(
+			Class("alert alert-info"),
+			Role("alert"),
+			g.Text(fmt.Sprintf("No activities found in %v.", filter.String())),
+		), nil
+	}
+
+	return g.Group([]g.Node{
+		Div(
+			Class("table-responsive"),
+			Table(
+				ID("project-report"),
+				Class("table table-borderless table-striped"),
+				THead(
+					Tr(
+						Th(g.Text("Project")),
+						Th(
+							Class("text-end"),
+							g.Text("Duration"),
 						),
 					),
 				),
-				Div(
-					Class("tab-content"),
-					reportView,
+				TBody(
+					g.Group(g.Map(len(projectReports), func(i int) g.Node {
+						activity := projectReports[i]
+						return Tr(
+							hx.Target("this"),
+							hx.Swap("outerHTML"),
+
+							Td(g.Text(activity.ProjectTitle)),
+							Td(
+								Class("text-end"),
+								g.Text(activity.DurationFormatted()),
+							),
+						)
+					}),
+					),
 				),
-			}),
+			),
 		),
 	}), nil
 }
@@ -527,135 +598,129 @@ func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter
 		projectsById[project.ID] = project
 	}
 
+	if len(activitiesPage.Activities) == 0 {
+		return Div(
+			Class("alert alert-info"),
+			Role("alert"),
+			g.Text(fmt.Sprintf("No activities found in %v.", filter.String())),
+		), nil
+	}
+
 	return g.Group([]g.Node{
-		g.If(
-			len(activitiesPage.Activities) == 0,
-			Div(
-				Class("alert alert-info"),
-				Role("alert"),
-				g.Text(fmt.Sprintf("No activities found in %v.", filter.String())),
-			),
-		),
-		g.If(
-			len(activitiesPage.Activities) != 0,
-			Div(
-				Class("table-responsive-sm d-lg-none"),
-				Table(
-					Class("table table-borderless table-striped"),
-					THead(
-						Tr(
-							Th(g.Text("Project")),
-							Th(g.Text("Date")),
-							Th(
-								Class("text-end"),
-								g.Text("Duration"),
-							),
-							Th(),
+		Div(
+			Class("table-responsive-sm d-lg-none"),
+			Table(
+				Class("table table-borderless table-striped"),
+				THead(
+					Tr(
+						Th(g.Text("Project")),
+						Th(g.Text("Date")),
+						Th(
+							Class("text-end"),
+							g.Text("Duration"),
 						),
+						Th(),
 					),
-					TBody(
-						g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
-							activity := activitiesPage.Activities[i]
-							return Tr(
-								hx.Target("this"),
-								hx.Swap("outerHTML"),
+				),
+				TBody(
+					g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
+						activity := activitiesPage.Activities[i]
+						return Tr(
+							hx.Target("this"),
+							hx.Swap("outerHTML"),
 
-								Td(g.Text(projectsById[activity.ProjectID].Title)),
-								Td(g.Text(util.FormatDateDEShort(activity.Start))),
-								Td(
-									Class("text-end"),
-									g.Text(activity.DurationFormatted()),
+							Td(g.Text(projectsById[activity.ProjectID].Title)),
+							Td(g.Text(util.FormatDateDEShort(activity.Start))),
+							Td(
+								Class("text-end"),
+								g.Text(activity.DurationFormatted()),
+							),
+							Td(
+								Class("text-end"),
+								A(
+									hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+									hx.Target("#baralga__main_content_modal_content"),
+									hx.Swap("outerHTML"),
+
+									Class("btn btn-outline-secondary btn-sm"),
+									I(Class("bi-pen")),
 								),
-								Td(
-									Class("text-end"),
-									A(
-										hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-										hx.Target("#baralga__main_content_modal_content"),
-										hx.Swap("outerHTML"),
-
-										Class("btn btn-outline-secondary btn-sm"),
-										I(Class("bi-pen")),
-									),
-									A(
-										hx.Confirm(
-											fmt.Sprintf(
-												"Do you really want to delete the activity from %v on %v?",
-												util.FormatTime(activity.Start),
-												activity.Start.Format("Monday"),
-											),
+								A(
+									hx.Confirm(
+										fmt.Sprintf(
+											"Do you really want to delete the activity from %v on %v?",
+											util.FormatTime(activity.Start),
+											activity.Start.Format("Monday"),
 										),
-										hx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
-										Class("btn btn-outline-secondary btn-sm ms-1"),
-										I(Class("bi-trash2")),
 									),
+									hx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
+									Class("btn btn-outline-secondary btn-sm ms-1"),
+									I(Class("bi-trash2")),
 								),
-							)
-						}),
-						),
+							),
+						)
+					}),
 					),
 				),
 			),
 		),
-		g.If(
-			len(activitiesPage.Activities) != 0,
-			Div(
-				Class("table-responsive-lg d-none d-lg-block"),
-				Table(
-					Class("table table-borderless table-striped"),
-					THead(
-						Tr(
-							Th(g.Text("Project")),
-							Th(g.Text("Date")),
-							Th(g.Text("Start")),
-							Th(g.Text("End")),
-							Th(
-								Class("text-end"),
-								g.Text("Duration"),
-							),
-							Th(),
+		Div(
+			Class("table-responsive-lg d-none d-lg-block"),
+			Table(
+				Class("table table-borderless table-striped"),
+				THead(
+					Tr(
+						Th(g.Text("Project")),
+						Th(g.Text("Date")),
+						Th(g.Text("Start")),
+						Th(g.Text("End")),
+						Th(
+							Class("text-end"),
+							g.Text("Duration"),
 						),
+						Th(),
 					),
-					TBody(
-						g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
-							activity := activitiesPage.Activities[i]
-							return Tr(
-								hx.Target("this"),
-								hx.Swap("outerHTML"),
+				),
+				TBody(
+					g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
+						activity := activitiesPage.Activities[i]
+						return Tr(
+							hx.Target("this"),
+							hx.Swap("outerHTML"),
 
-								Td(g.Text(projectsById[activity.ProjectID].Title)),
-								Td(g.Text(util.FormatDateDE(activity.Start))),
-								Td(g.Text(util.FormatTime(activity.Start))),
-								Td(g.Text(util.FormatTime(activity.End))),
-								Td(
-									Class("text-end"),
-									g.Text(activity.DurationFormatted()),
+							Td(g.Text(projectsById[activity.ProjectID].Title)),
+							Td(g.Text(util.FormatDateDE(activity.Start))),
+							Td(g.Text(util.FormatTime(activity.Start))),
+							Td(g.Text(util.FormatTime(activity.End))),
+							Td(
+								Class("text-end"),
+								g.Text(activity.DurationFormatted()),
+							),
+							Td(
+								Class("text-end"),
+								A(
+									hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+									hx.Target("#baralga__main_content_modal_content"),
+									hx.Swap("outerHTML"),
+
+									Class("btn btn-outline-secondary btn-sm"),
+									I(Class("bi-pen")),
 								),
-								Td(
-									Class("text-end"),
-									A(
-										hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-										hx.Target("#baralga__main_content_modal_content"),
-										hx.Swap("outerHTML"),
-
-										Class("btn btn-outline-secondary btn-sm"),
-										I(Class("bi-pen")),
-									),
-									A(
-										hx.Confirm(
-											fmt.Sprintf(
-												"Do you really want to delete the activity from %v on %v?",
-												util.FormatTime(activity.Start),
-												activity.Start.Format("Monday"),
-											),
+								A(
+									hx.Confirm(
+										fmt.Sprintf(
+											"Do you really want to delete the activity from %v on %v?",
+											util.FormatTime(activity.Start),
+											activity.Start.Format("Monday"),
 										),
-										hx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
-										Class("btn btn-outline-secondary btn-sm ms-1"),
-										I(Class("bi-trash2")),
 									),
+									hx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
+									Class("btn btn-outline-secondary btn-sm ms-1"),
+									I(Class("bi-trash2")),
 								),
-							)
-						}),
-						),
+							),
+						)
+					}),
 					),
 				),
 			),
@@ -747,8 +812,9 @@ func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter
 					),
 				),
 			),
+		),
 		/**
-					<nav aria-label="Page navigation example">
+		<nav aria-label="Page navigation example">
 		  <ul class="pagination">
 		    <li class="page-item">
 		      <a class="page-link" href="#" aria-label="Previous">
@@ -767,7 +833,6 @@ func (a *app) reportGeneralView(pageContext *pageContext, filter *ActivityFilter
 		</nav>
 		*/
 		//H2(g.Text("BAM!!!")),
-		),
 	}), nil
 }
 

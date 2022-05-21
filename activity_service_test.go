@@ -199,6 +199,57 @@ func TestTimeReportsByQuarter(t *testing.T) {
 	is.Equal(q2.DurationInMinutesTotal, 60)
 }
 
+func TestProjectReports(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	activityRepository := NewInMemActivityRepository()
+	a := &app{
+		ActivityRepository: activityRepository,
+	}
+
+	projectId1 := uuid.New()
+	start1, _ := time.Parse(time.RFC3339, "2021-01-01T10:00:00.000Z")
+	end1, _ := time.Parse(time.RFC3339, "2021-01-01T11:00:00.000Z")
+
+	projectId2 := uuid.New()
+	start2, _ := time.Parse(time.RFC3339, "2021-01-08T10:00:00.000Z")
+	end2, _ := time.Parse(time.RFC3339, "2021-01-08T11:00:00.000Z")
+
+	activityRepository.activities = []*Activity{
+		{
+			ProjectID: projectId1,
+			Start:     start1,
+			End:       end1,
+		},
+		{
+			ProjectID: projectId2,
+			Start:     start2,
+			End:       end2,
+		},
+	}
+
+	principal := &Principal{}
+	filter := &ActivityFilter{}
+
+	// Act
+	projectReports, err := a.ProjectReports(context.Background(), principal, filter)
+
+	// Assert
+	is.NoErr(err)
+	is.Equal(len(projectReports), 2)
+
+	reportItem1 := projectReports[0]
+	is.Equal(reportItem1.ProjectID, projectId1)
+	is.Equal(reportItem1.ProjectTitle, "My Project")
+	is.Equal(reportItem1.DurationInMinutesTotal, 60)
+
+	reportItem2 := projectReports[1]
+	is.Equal(reportItem2.ProjectID, projectId2)
+	is.Equal(reportItem2.ProjectTitle, "My Project")
+	is.Equal(reportItem2.DurationInMinutesTotal, 60)
+}
+
 func TestWriteAsCSV(t *testing.T) {
 	is := is.New(t)
 

@@ -119,6 +119,28 @@ func TestHandleReportPageWithTimeByQuarter(t *testing.T) {
 	is.True(strings.Contains(htmlBody, "id=\"time-report-by-quarter\""))
 }
 
+func TestHandleReportPageWithProject(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config:             &config{},
+		ProjectRepository:  NewInMemProjectRepository(),
+		ActivityRepository: NewInMemActivityRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", "/reports?c=project&t=year", nil)
+	r.Header.Add("HX-Request", "true")
+	r.Header.Add("HX-Target", "baralga__report_content")
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleReportPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "id=\"project-report\""))
+}
+
 func TestReportViewFromQueryParams(t *testing.T) {
 	is := is.New(t)
 

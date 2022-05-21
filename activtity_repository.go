@@ -32,6 +32,7 @@ type ActivityRepository interface {
 	TimeReportByWeek(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
 	TimeReportByMonth(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
 	TimeReportByQuarter(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
+	ProjectReport(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityProjectReportItem, error)
 	FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error)
 	InsertActivity(ctx context.Context, activity *Activity) (*Activity, error)
 	FindActivityByID(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID) (*Activity, error)
@@ -247,6 +248,58 @@ func (r *DbActivityRepository) TimeReportByQuarter(ctx context.Context, filter *
 			Day:                    1,
 			Year:                   year,
 			Quarter:                quarter,
+			DurationInMinutesTotal: durationInMinutes,
+		}
+		activities = append(activities, activity)
+	}
+
+	return activities, nil
+}
+
+func (r *DbActivityRepository) ProjectReport(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityProjectReportItem, error) {
+	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
+	filterSql := ""
+
+	if filter.Username != "" {
+		params = append(params, filter.Username)
+		filterSql = " AND username = $4"
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT ag.project_id, projects.title as title, ag.duration_minutes_total FROM 
+		  (SELECT project_id, sum(duration_minutes_total) as duration_minutes_total  
+		   FROM activities_agg
+	       WHERE org_id = $1 AND $2 <= start_time AND start_time < $3 %s
+		   GROUP BY project_id
+		  ) ag
+		INNER JOIN projects
+		ON projects.project_id = ag.project_id
+		ORDER BY (title) asc`,
+		filterSql,
+	)
+
+	rows, err := r.connPool.Query(ctx, sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []*ActivityProjectReportItem
+	for rows.Next() {
+		var (
+			projectID         uuid.UUID
+			projectTitle      string
+			durationInMinutes int
+		)
+
+		err = rows.Scan(&projectID, &projectTitle, &durationInMinutes)
+		if err != nil {
+			return nil, err
+		}
+
+		activity := &ActivityProjectReportItem{
+			ProjectID:              projectID,
+			ProjectTitle:           projectTitle,
 			DurationInMinutesTotal: durationInMinutes,
 		}
 		activities = append(activities, activity)
