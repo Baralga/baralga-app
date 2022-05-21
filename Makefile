@@ -35,3 +35,6 @@ docker.postgres:
 
 app.yaml: app.tpl.yaml ./ci-util/generate-gcloud-app.go
 	go run ci-util/generate-gcloud-app.go
+
+release.test:
+	goreleaser release --snapshot --rm-dist

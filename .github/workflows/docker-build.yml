@@ -29,6 +29,6 @@ jobs:
         with:
           version: latest
           workdir: .
-          args: release --snapshot --rm-dist
+          args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
