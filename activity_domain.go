@@ -58,13 +58,6 @@ func (i *ActivityTimeReportItem) AsTime() time.Time {
 	return t
 }
 
-type ActivtyTimeReports struct {
-	ByDay     []*ActivityTimeReportItem
-	ByWeek    []*ActivityTimeReportItem
-	ByMonth   []*ActivityTimeReportItem
-	ByQuarter []*ActivityTimeReportItem
-}
-
 // Timespans for activity filter
 const (
 	TimespanYear    string = "year"
