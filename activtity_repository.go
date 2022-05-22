@@ -36,7 +36,7 @@ type ActivityRepository interface {
 	TimeReportByMonth(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
 	TimeReportByQuarter(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error)
 	ProjectReport(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityProjectReportItem, error)
-	FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error)
+	FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error)
 	InsertActivity(ctx context.Context, activity *Activity) (*Activity, error)
 	FindActivityByID(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID) (*Activity, error)
 	DeleteActivityByID(ctx context.Context, organizationID, activityID uuid.UUID) error
@@ -311,7 +311,7 @@ func (r *DbActivityRepository) ProjectReport(ctx context.Context, filter *Activi
 	return activities, nil
 }
 
-func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error) {
+func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End, pageParams.Size, pageParams.Offset()}
 	filterSql := ""
 
@@ -331,10 +331,14 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT activity_id as id, description, start_time as start, end_time as end, username, org_id, project_id as project
-         FROM activities 
-	     WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3
-	     ORDER by %s %s 
+		`SELECT a.*, projects.title as project FROM
+		   (SELECT activity_id as id, description, start_time as start, end_time as end, username, org_id, project_id
+			FROM activities 
+			WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3
+		   ) a
+         INNER JOIN projects
+	     ON projects.project_id = a.project_id
+		 ORDER by %s %s 
 	     LIMIT $4 OFFSET $5`,
 		filterSql,
 		sortBy,
@@ -343,11 +347,12 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 
 	rows, err := r.connPool.Query(ctx, sql, params...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
 	var activities []*Activity
+	projectsById := make(map[uuid.UUID]*Project)
 	for rows.Next() {
 		var (
 			id             string
@@ -357,12 +362,15 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 			username       string
 			organizationID string
 			projectID      string
+			projectTitle   string
 		)
 
-		err = rows.Scan(&id, &description, &startTime, &endTime, &username, &organizationID, &projectID)
+		err = rows.Scan(&id, &description, &startTime, &endTime, &username, &organizationID, &projectID, &projectTitle)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+
+		projectUUID := uuid.MustParse(projectID)
 
 		activity := &Activity{
 			ID:             uuid.MustParse(id),
@@ -371,9 +379,24 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 			End:            endTime,
 			Username:       username,
 			OrganizationID: uuid.MustParse(organizationID),
-			ProjectID:      uuid.MustParse(projectID),
+			ProjectID:      projectUUID,
 		}
 		activities = append(activities, activity)
+
+		if _, ok := projectsById[projectUUID]; !ok {
+			project := &Project{
+				ID:             projectUUID,
+				OrganizationID: uuid.MustParse(organizationID),
+				Title:          projectTitle,
+			}
+			projectsById[projectUUID] = project
+		}
+
+	}
+
+	projects := make([]*Project, 0, len(projectsById))
+	for _, project := range projectsById {
+		projects = append(projects, project)
 	}
 
 	countParams := []interface{}{filter.OrganizationID, filter.Start, filter.End}
@@ -393,7 +416,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	var total int
 	err = row.Scan(&total)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	actvtivitiesPaged := &ActivitiesPaged{
@@ -401,7 +424,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 		Page:       pageParams.PageOfTotal(total),
 	}
 
-	return actvtivitiesPaged, nil
+	return actvtivitiesPaged, projects, nil
 }
 
 func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID, organizationID uuid.UUID) (*Activity, error) {

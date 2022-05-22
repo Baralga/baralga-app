@@ -45,7 +45,7 @@ func TestActivityRepository(t *testing.T) {
 			End:            time.Now(),
 			OrganizationID: organizationIDSample,
 		}
-		activityiesPage, err := activityRepository.FindActivities(
+		activityiesPage, projects, err := activityRepository.FindActivities(
 			context.Background(),
 			filter,
 			&paged.PageParams{
@@ -56,6 +56,7 @@ func TestActivityRepository(t *testing.T) {
 
 		is.NoErr(err)
 		is.Equal(len(activityiesPage.Activities), 1)
+		is.Equal(len(projects), 1)
 		is.Equal(activityiesPage.Page.TotalElements, 1)
 		is.True(activityiesPage != nil)
 	})
@@ -68,7 +69,7 @@ func TestActivityRepository(t *testing.T) {
 			SortBy:         "project",
 			SortOrder:      "asc",
 		}
-		activityiesPage, err := activityRepository.FindActivities(
+		activityiesPage, projects, err := activityRepository.FindActivities(
 			context.Background(),
 			filter,
 			&paged.PageParams{
@@ -79,6 +80,7 @@ func TestActivityRepository(t *testing.T) {
 
 		is.NoErr(err)
 		is.Equal(len(activityiesPage.Activities), 1)
+		is.Equal(len(projects), 1)
 		is.Equal(activityiesPage.Page.TotalElements, 1)
 		is.True(activityiesPage != nil)
 	})
@@ -90,7 +92,7 @@ func TestActivityRepository(t *testing.T) {
 			Username:       "admin",
 			OrganizationID: organizationIDSample,
 		}
-		activityiesPage, err := activityRepository.FindActivities(
+		activityiesPage, projects, err := activityRepository.FindActivities(
 			context.Background(),
 			filter,
 			&paged.PageParams{
@@ -101,6 +103,7 @@ func TestActivityRepository(t *testing.T) {
 
 		is.NoErr(err)
 		is.Equal(len(activityiesPage.Activities), 1)
+		is.Equal(len(projects), 1)
 		is.Equal(activityiesPage.Page.TotalElements, 1)
 		is.True(activityiesPage != nil)
 	})
@@ -538,7 +541,7 @@ func (r *InMemActivityRepository) ProjectReport(ctx context.Context, filter *Act
 	return reportItems, nil
 }
 
-func (r *InMemActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, error) {
+func (r *InMemActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	activitiesPage := &ActivitiesPaged{
 		Activities: r.activities,
 		Page: &paged.Page{
@@ -548,7 +551,15 @@ func (r *InMemActivityRepository) FindActivities(ctx context.Context, filter *Ac
 			TotalPages:    1,
 		},
 	}
-	return activitiesPage, nil
+	projects := []*Project{
+		{
+			ID:             projectIDSample,
+			Title:          "My Project",
+			OrganizationID: organizationIDSample,
+		},
+	}
+
+	return activitiesPage, projects, nil
 }
 
 func (r *InMemActivityRepository) FindActivityByID(ctx context.Context, activityID, organizationID uuid.UUID) (*Activity, error) {

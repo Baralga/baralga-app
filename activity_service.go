@@ -16,13 +16,7 @@ import (
 func (a *app) ReadActivitiesWithProjects(ctx context.Context, principal *Principal, filter *ActivityFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	activitiesFilter := toFilter(principal, filter)
 
-	activitiesPage, err := a.ActivityRepository.FindActivities(ctx, activitiesFilter, pageParams)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	projectIDs := distinctProjectIds(activitiesPage)
-	projects, err := a.ProjectRepository.FindProjectsByIDs(ctx, principal.OrganizationID, projectIDs)
+	activitiesPage, projects, err := a.ActivityRepository.FindActivities(ctx, activitiesFilter, pageParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -242,21 +236,4 @@ func toFilter(principal *Principal, filter *ActivityFilter) *ActivitiesFilter {
 	}
 
 	return activitiesFilter
-}
-
-func distinctProjectIds(activitiesPage *ActivitiesPaged) []uuid.UUID {
-	pIDs := make(map[uuid.UUID]bool)
-
-	for _, activity := range activitiesPage.Activities {
-		pIDs[activity.ProjectID] = true
-	}
-
-	projectIDs := make([]uuid.UUID, len(pIDs))
-	i := 0
-	for projectID := range pIDs {
-		projectIDs[i] = projectID
-		i++
-	}
-
-	return projectIDs
 }
