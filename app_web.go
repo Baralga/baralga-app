@@ -420,7 +420,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 
 func Navbar(pageContext *pageContext) g.Node {
 	return Nav(
-		Class("container-xxl flex-wrap flex-md-nowrap navbar navbar-expand-lg navbar-light bg-dark"),
+		Class("container-xxl flex-wrap flex-md-nowrap navbar navbar-expand-lg navbar-dark bg-dark"),
 		hx.Boost(),
 		A(
 			Class("navbar-brand p-0 me-2"), Href("/"),
