@@ -118,3 +118,37 @@ func TestHandleLoginFormWithInvalidBodyData(t *testing.T) {
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "Sign In # Baralga"))
 }
+
+func TestLoginParamsFromQueryParams(t *testing.T) {
+	is := is.New(t)
+
+	t.Run("login params without any query params", func(t *testing.T) {
+		params := make(url.Values)
+
+		filter := loginParamsFromQueryParams(params)
+
+		is.Equal(filter.errorMessage, "")
+		is.Equal(filter.infoMessage, "")
+	})
+
+	t.Run("login params with info query param 'confirm_successfull'", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("info", "confirm_successfull")
+
+		filter := loginParamsFromQueryParams(params)
+
+		is.Equal(filter.errorMessage, "")
+		is.Equal(filter.infoMessage, "You've been confirmed, so happy time tracking!")
+	})
+
+	t.Run("login params with invalid info query param '-not-valid-'", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("info", "-not-valid-")
+
+		filter := loginParamsFromQueryParams(params)
+
+		is.Equal(filter.errorMessage, "")
+		is.Equal(filter.infoMessage, "")
+	})
+
+}

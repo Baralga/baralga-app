@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/util"
@@ -26,6 +27,11 @@ type loginFormModel struct {
 	Password  string
 }
 
+type loginParams struct {
+	errorMessage string
+	infoMessage  string
+}
+
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 	expiryDuration := a.Config.ExpiryDuration()
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +39,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 		if err != nil {
 			formModel := loginFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, &loginParams{}))
 			return
 		}
 
@@ -42,14 +48,17 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, &loginParams{}))
 			return
 		}
 
 		principal, err := a.Authenticate(r.Context(), formModel.EMail, formModel.Password)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, "Login failed. Please check your credentials and try again."))
+			loginParams := &loginParams{
+				errorMessage: "Login failed. Please check your credentials and try again.",
+			}
+			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, loginParams))
 			return
 		}
 
@@ -62,10 +71,20 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 
 func (a *app) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		loginParams := loginParamsFromQueryParams(r.URL.Query())
+
 		formModel := loginFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, LoginPage(r.URL.Path, formModel, ""))
+		util.RenderHTML(w, LoginPage(r.URL.Path, formModel, loginParams))
 	}
+}
+
+func loginParamsFromQueryParams(params url.Values) *loginParams {
+	loginParams := &loginParams{}
+	if len(params["info"]) == 1 && params["info"][0] == "confirm_successfull" {
+		loginParams.infoMessage = "You've been confirmed, so happy time tracking!"
+	}
+	return loginParams
 }
 
 func (a *app) HandleLogoutPage() http.HandlerFunc {
@@ -133,7 +152,7 @@ func (a *app) IssueCookieForGithub(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func LoginPage(currentPath string, formModel loginFormModel, errorMessage string) g.Node {
+func LoginPage(currentPath string, formModel loginFormModel, loginParams *loginParams) g.Node {
 	return Page(
 		"Sign In",
 		currentPath,
@@ -161,7 +180,7 @@ func LoginPage(currentPath string, formModel loginFormModel, errorMessage string
 							),
 						),
 					),
-					LoginForm(formModel, errorMessage),
+					LoginForm(formModel, loginParams),
 					Div(
 						Class("d-flex justify-content-center align-items-center mt-4 mb-3"),
 						A(
@@ -177,17 +196,25 @@ func LoginPage(currentPath string, formModel loginFormModel, errorMessage string
 	)
 }
 
-func LoginForm(formModel loginFormModel, errorMessage string) g.Node {
+func LoginForm(formModel loginFormModel, loginParams *loginParams) g.Node {
 	return FormEl(
 		ID("login_form"),
 		Action("/login"),
 		Method("POST"),
 		g.If(
-			errorMessage != "",
+			loginParams.errorMessage != "",
 			Div(
 				Class("alert alert-warning text-center"),
 				Role("alert"),
-				Span(g.Text(errorMessage)),
+				Span(g.Text(loginParams.errorMessage)),
+			),
+		),
+		g.If(
+			loginParams.infoMessage != "",
+			Div(
+				Class("alert alert-success text-center"),
+				Role("alert"),
+				Span(g.Text(loginParams.infoMessage)),
 			),
 		),
 		Input(

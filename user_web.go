@@ -77,7 +77,7 @@ func (a *app) HandleSignUpConfirm() http.HandlerFunc {
 			return
 		}
 
-		http.Redirect(w, r, "/login", http.StatusFound)
+		http.Redirect(w, r, "/login?info=confirm_successfull", http.StatusFound)
 	}
 }
 

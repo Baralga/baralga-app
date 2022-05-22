@@ -141,7 +141,7 @@ func TestHandleSignUpConfirmWithExistingConfirmation(t *testing.T) {
 
 	l, err := httpRec.Result().Location()
 	is.NoErr(err)
-	is.Equal(l.String(), "/login")
+	is.Equal(l.String(), "/login?info=confirm_successfull")
 }
 
 func TestHandleSignUpConfirmWithoutConfirmation(t *testing.T) {
