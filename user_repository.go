@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -52,11 +53,12 @@ func (r *DbUserRepository) insertConfirmation(ctx context.Context, tx pgx.Tx, us
 	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO user_confirmations 
-		   (user_confirmation_id, user_id) 
+		   (user_confirmation_id, user_id, created_at) 
 		 VALUES 
-		   ($1, $2)`,
+		   ($1, $2, $3)`,
 		confirmationID,
 		user.ID,
+		time.Now(),
 	)
 	return confirmationID, err
 }
