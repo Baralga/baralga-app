@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	hx "github.com/baralga/htmx"
 	"github.com/baralga/util"
@@ -25,11 +26,13 @@ type loginFormModel struct {
 	CSRFToken string
 	EMail     string
 	Password  string
+	Redirect  string
 }
 
 type loginParams struct {
 	errorMessage string
 	infoMessage  string
+	redirect     string
 }
 
 func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
@@ -65,6 +68,11 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 		cookie := a.CreateCookie(tokenAuth, expiryDuration, principal)
 		http.SetCookie(w, &cookie)
 
+		if formModel.Redirect != "" {
+			http.Redirect(w, r, formModel.Redirect, http.StatusFound)
+			return
+		}
+
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 }
@@ -73,7 +81,9 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		loginParams := loginParamsFromQueryParams(r.URL.Query())
 
-		formModel := loginFormModel{}
+		formModel := loginFormModel{
+			Redirect: loginParams.redirect,
+		}
 		formModel.CSRFToken = csrf.Token(r)
 		util.RenderHTML(w, LoginPage(r.URL.Path, formModel, loginParams))
 	}
@@ -83,6 +93,9 @@ func loginParamsFromQueryParams(params url.Values) *loginParams {
 	loginParams := &loginParams{}
 	if len(params["info"]) == 1 && params["info"][0] == "confirm_successfull" {
 		loginParams.infoMessage = "You've been confirmed, so happy time tracking!"
+	}
+	if len(params["redirect"]) == 1 && strings.HasPrefix(params["redirect"][0], "/") {
+		loginParams.redirect = params["redirect"][0]
 	}
 	return loginParams
 }
@@ -222,6 +235,14 @@ func LoginForm(formModel loginFormModel, loginParams *loginParams) g.Node {
 			Name("CSRFToken"),
 			Value(formModel.CSRFToken),
 		),
+		g.If(
+			formModel.Redirect != "",
+			Input(
+				Type("hidden"),
+				Name("Redirect"),
+				Value(formModel.Redirect),
+			),
+		),
 		Div(
 			Class("form-floating mb-3"),
 			Input(
@@ -286,10 +307,15 @@ func WebVerifier(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := jwtauth.VerifyRequest(ja, r, jwtauth.TokenFromCookie)
 			if err != nil {
-				w.Header().Set("HX-Redirect", "/login")
+				loginUri := "/login"
 
+				if r.RequestURI != "/" {
+					loginUri = fmt.Sprintf("/login?redirect=%v", url.QueryEscape(r.RequestURI))
+				}
+
+				w.Header().Set("HX-Redirect", loginUri)
 				if !hx.IsHXRequest(r) {
-					http.Redirect(w, r, "/login", http.StatusFound)
+					http.Redirect(w, r, loginUri, http.StatusFound)
 				}
 				return
 			}

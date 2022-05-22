@@ -47,6 +47,30 @@ func TestHandleLoginFormWithSuccessfullLogin(t *testing.T) {
 
 	a.HandleLoginForm(tokenAuth)(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusFound)
+	is.Equal(httpRec.Header()["Location"][0], "/")
+}
+
+func TestHandleLoginFormWithSuccessfullLoginAndRedirect(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config:         &config{},
+		UserRepository: NewInMemUserRepository(),
+	}
+	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
+
+	data := url.Values{}
+	data["EMail"] = []string{"admin@baralga.com"}
+	data["Password"] = []string{"adm1n"}
+	data["Redirect"] = []string{"/report"}
+
+	r, _ := http.NewRequest("POST", "/login", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	a.HandleLoginForm(tokenAuth)(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusFound)
+	is.Equal(httpRec.Header()["Location"][0], "/report")
 }
 
 func TestHandleLoginFormWithInvalidLogin(t *testing.T) {
@@ -151,4 +175,25 @@ func TestLoginParamsFromQueryParams(t *testing.T) {
 		is.Equal(filter.infoMessage, "")
 	})
 
+	t.Run("login params with invalid redirect", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("redirect", "https://malicious-site.de")
+
+		filter := loginParamsFromQueryParams(params)
+
+		is.Equal(filter.errorMessage, "")
+		is.Equal(filter.infoMessage, "")
+		is.Equal(filter.redirect, "")
+	})
+
+	t.Run("login params with valid redirect", func(t *testing.T) {
+		params := make(url.Values)
+		params.Add("redirect", "/reports")
+
+		filter := loginParamsFromQueryParams(params)
+
+		is.Equal(filter.errorMessage, "")
+		is.Equal(filter.infoMessage, "")
+		is.Equal(filter.redirect, "/reports")
+	})
 }
