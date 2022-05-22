@@ -45,9 +45,13 @@ type config struct {
 
 	DataProtectionURL string `default:"#"`
 
-	GithubClientId     string `default:"GithubClientID"`
-	GithubClientSecret string `default:"GithubClientSecret"`
+	GithubClientId     string `default:""`
+	GithubClientSecret string `default:""`
 	GithubRedirectURL  string `default:"http://localhost:8080/github/callback"`
+
+	GoogleClientId     string `default:""`
+	GoogleClientSecret string `default:""`
+	GoogleRedirectURL  string `default:"http://localhost:8080/google/callback"`
 }
 
 func (c *config) ExpiryDuration() time.Duration {
@@ -243,6 +247,9 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 
 		r.Handle("/github/login", a.GithubLoginHandler())
 		r.Handle("/github/callback", a.GithubCallbackHandler(tokenAuth))
+
+		r.Handle("/google/login", a.GoogleLoginHandler())
+		r.Handle("/google/callback", a.GoogleCallbackHandler(tokenAuth))
 	})
 }
 

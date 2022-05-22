@@ -45,9 +45,12 @@ The backend is configured using the following environment variables:
 | `BARALGA_SMTPUSER` | `smtp.user@baralga.com`      |    User for your SMTP server |
 | `BARALGA_SMTPPASSWORD` | `SMTPPassword`      |    Password for your SMTP server |
 | `BARALGA_DATAPROTECTIONURL` | `#`      |   URL to data protection rules. |
-| `BARALGA_GITHUBCLIENTID` | `GithubClientID`      |    OAuth Client ID for Github. |
-| `BARALGA_GITHUBCLIENTSECRET` | `GithubClientSecret`      |    OAuth Client Secret for Github. |
+| `BARALGA_GITHUBCLIENTID` | ``      |    OAuth Client ID for Github. |
+| `BARALGA_GITHUBCLIENTSECRET` | ``      |    OAuth Client Secret for Github. |
 | `BARALGA_GITHUBREDIRECTURL` | `http://localhost:8080/github/callback`      |    OAuth Redirect URL for Github. |
+| `BARALGA_GOOGLECLIENTID` | ``      |    OAuth Client ID for Google. |
+| `BARALGA_GOOGLECLIENTSECRET` | ``      |    OAuth Client Secret for Google. |
+| `BARALGA_GOOGLEREDIRECTURL` | `http://localhost:8080/google/callback`      |    OAuth Redirect URL for Google. |
 
 ### Users and Roles
 
@@ -90,6 +93,3 @@ BARALGA_GITHUBCLIENTID=my***clientid
 BARALGA_GITHUBCLIENTSECRET=my***secret
 BARALGA_GITHUBREDIRECTURL=https://localhost:8080/github/callback
 ```
-
-## Open Topics
-* Add password forgot support

@@ -10,6 +10,7 @@ import (
 	"github.com/baralga/util"
 	"github.com/dghubble/gologin/v2"
 	"github.com/dghubble/gologin/v2/github"
+	"github.com/dghubble/gologin/v2/google"
 	gologinOauth2 "github.com/dghubble/gologin/v2/oauth2"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	githubOAuth2 "golang.org/x/oauth2/github"
+	googleOAuth2 "golang.org/x/oauth2/google"
 )
 
 type loginFormModel struct {
@@ -42,7 +44,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 		if err != nil {
 			formModel := loginFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, &loginParams{}))
+			util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, &loginParams{}))
 			return
 		}
 
@@ -51,7 +53,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, &loginParams{}))
+			util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, &loginParams{}))
 			return
 		}
 
@@ -61,7 +63,7 @@ func (a *app) HandleLoginForm(tokenAuth *jwtauth.JWTAuth) http.HandlerFunc {
 			loginParams := &loginParams{
 				errorMessage: "Login failed. Please check your credentials and try again.",
 			}
-			util.RenderHTML(w, LoginPage(r.URL.Path, formModel, loginParams))
+			util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, loginParams))
 			return
 		}
 
@@ -85,7 +87,7 @@ func (a *app) HandleLoginPage() http.HandlerFunc {
 			Redirect: loginParams.redirect,
 		}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, LoginPage(r.URL.Path, formModel, loginParams))
+		util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, loginParams))
 	}
 }
 
@@ -117,6 +119,16 @@ func (a *app) GithubLoginHandler() http.Handler {
 func (a *app) GithubCallbackHandler(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	stateConfig, oauth2Config := a.githubAuthConfig()
 	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithub(tokenAuth), HandleTokenFailure()))
+}
+
+func (a *app) GoogleLoginHandler() http.Handler {
+	stateConfig, oauth2Config := a.googleAuthConfig()
+	return github.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))
+}
+
+func (a *app) GoogleCallbackHandler(tokenAuth *jwtauth.JWTAuth) http.Handler {
+	stateConfig, oauth2Config := a.googleAuthConfig()
+	return github.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, a.IssueCookieForGoogle(tokenAuth), HandleTokenFailure()))
 }
 
 func HandleTokenFailure() http.Handler {
@@ -165,7 +177,46 @@ func (a *app) IssueCookieForGithub(tokenAuth *jwtauth.JWTAuth) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func LoginPage(currentPath string, formModel loginFormModel, loginParams *loginParams) g.Node {
+func (a *app) IssueCookieForGoogle(tokenAuth *jwtauth.JWTAuth) http.Handler {
+	expiryDuration := a.Config.ExpiryDuration()
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		googleUser, err := google.UserFromContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		principal, err := a.AuthenticateTrusted(ctx, fmt.Sprintf("%v", googleUser.Id))
+		if errors.Is(err, ErrUserNotFound) {
+			user := &User{
+				Username: fmt.Sprintf("%v", googleUser.Id),
+				Name:     googleUser.Name,
+				EMail:    googleUser.Email,
+				Origin:   "google",
+			}
+			err := a.SetUpNewUser(r.Context(), user, uuid.Nil)
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			principal, err = a.AuthenticateTrusted(ctx, fmt.Sprintf("%v", user.Username))
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+
+		cookie := a.CreateCookie(tokenAuth, expiryDuration, principal)
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	return http.HandlerFunc(fn)
+}
+
+func (a *app) LoginPage(currentPath string, formModel loginFormModel, loginParams *loginParams) g.Node {
 	return Page(
 		"Sign In",
 		currentPath,
@@ -196,11 +247,23 @@ func LoginPage(currentPath string, formModel loginFormModel, loginParams *loginP
 					LoginForm(formModel, loginParams),
 					Div(
 						Class("d-flex justify-content-center align-items-center mt-4 mb-3"),
-						A(
-							Class("btn btn-secondary"),
-							Href("/github/login"),
-							I(Class("bi-github")),
-							g.Text(" Sign in with Github"),
+						g.If(
+							a.Config.GithubClientId != "",
+							A(
+								Class("btn btn-secondary"),
+								Href("/github/login"),
+								I(Class("bi-github")),
+								g.Text(" Sign in with Github"),
+							),
+						),
+						g.If(
+							a.Config.GoogleClientId != "",
+							A(
+								Class("btn btn-secondary ms-2"),
+								Href("/google/login"),
+								I(Class("bi-google")),
+								g.Text(" Sign in with Google"),
+							),
 						),
 					),
 				),
@@ -336,6 +399,21 @@ func (a *app) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 		ClientSecret: a.Config.GithubClientSecret,
 		RedirectURL:  a.Config.GithubRedirectURL,
 		Endpoint:     githubOAuth2.Endpoint,
+	}
+	return stateConfig, oauth2Config
+}
+
+func (a *app) googleAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
+	stateConfig := gologin.DefaultCookieConfig
+	if !a.isProduction() {
+		stateConfig = gologin.DebugOnlyCookieConfig
+	}
+	oauth2Config := &oauth2.Config{
+		ClientID:     a.Config.GoogleClientId,
+		ClientSecret: a.Config.GoogleClientSecret,
+		RedirectURL:  a.Config.GoogleRedirectURL,
+		Endpoint:     googleOAuth2.Endpoint,
+		Scopes:       []string{"profile", "email"},
 	}
 	return stateConfig, oauth2Config
 }
