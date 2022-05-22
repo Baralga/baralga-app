@@ -245,7 +245,7 @@ func (a *app) ReportView(pageContext *pageContext, view *reportView, filter *Act
 								hx.Swap("outerHTML"),
 							}),
 						),
-						I(Class("bi-clock me-2")),
+						I(Class("bi-pie-chart me-2")),
 						g.Text("Project"),
 						Class("nav-link"),
 					),
