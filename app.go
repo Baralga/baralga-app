@@ -68,9 +68,9 @@ type app struct {
 	Conn   *pgx.Conn
 	Config *config
 
-	MailResource MailResource
+	MailResource   MailResource
+	RepositoryTxer RepositoryTxer
 
-	RepositoryTxer         RepositoryTxer
 	UserRepository         UserRepository
 	OrganizationRepository OrganizationRepository
 	ProjectRepository      ProjectRepository
@@ -219,7 +219,7 @@ func (a *app) webRouter(tokenAuth *jwtauth.JWTAuth) {
 		r.Use(CSRF)
 		r.Use(secureMiddleware.Handler)
 
-		r.Get("/", a.HandleIndexPage())
+		r.Get("/", a.HandleTrackingPage())
 		r.Get("/reports", a.HandleReportPage())
 		r.Get("/projects", a.HandleProjectsPage())
 		r.Post("/projects/new", a.HandleProjectForm())

@@ -12,6 +12,26 @@ import (
 	"github.com/matryer/is"
 )
 
+func TestHandleTrackingPage(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &app{
+		Config:             &config{},
+		ProjectRepository:  NewInMemProjectRepository(),
+		ActivityRepository: NewInMemActivityRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", "/", nil)
+	r = r.WithContext(context.WithValue(r.Context(), contextKeyPrincipal, &Principal{}))
+
+	a.HandleTrackingPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "Track Activities # Baralga"))
+}
+
 func TestHandleActivityAddPage(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
