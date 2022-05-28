@@ -1,0 +1,19 @@
+dependenciesRules:
+  - package: "**.baralga.tracking.*"
+    shouldOnlyDependsOn:
+      - "**.baralga.shared.**"
+  - package: "**.baralga.auth.*"
+    shouldOnlyDependsOn:
+      - "**.baralga.user.**"
+      - "**.baralga.shared.**"
+  - package: "**.user.*"
+    shouldOnlyDependsOn:
+      - "**.baralga.shared.**"
+  - package: "**.baralga.*"
+    shouldNotContainStructs: true
+    shouldNotContainInterfaces: true
+    shouldOnlyDependsOn:
+      - "**.baralga.shared.**"
+      - "**.baralga.user.**"
+      - "**.baralga.tracking.**"
+      - "**.baralga.auth.**"

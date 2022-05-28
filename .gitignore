@@ -8,3 +8,4 @@ __debug_bin
 
 .env
 .vscode/*.log
+.arch-go
