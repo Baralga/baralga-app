@@ -1,4 +1,6 @@
 # Baralga 
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FBaralga%2Fbaralga-app.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FBaralga%2Fbaralga-app?ref=badge_shield)
+
 
 Multi user time tracking application with web frontend and API.
 
@@ -93,3 +95,7 @@ BARALGA_GITHUBCLIENTID=my***clientid
 BARALGA_GITHUBCLIENTSECRET=my***secret
 BARALGA_GITHUBREDIRECTURL=https://localhost:8080/github/callback
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FBaralga%2Fbaralga-app.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FBaralga%2Fbaralga-app?ref=badge_large)
