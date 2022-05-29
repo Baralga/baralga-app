@@ -39,7 +39,7 @@ migrate.force:
 docker.postgres:
 	docker-compose up
 
-app.yaml: app.tpl.yaml ./.ci-util/generate-gcloud-app.go
+app.yaml: .ci-util/app.tpl.yaml .ci-util/generate-gcloud-app.go
 	go run .ci-util/generate-gcloud-app.go
 
 release.test:
