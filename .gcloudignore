@@ -33,4 +33,5 @@ README.md
 build
 dist
 .github
-ci-util
+.ci-util
+.arch-go

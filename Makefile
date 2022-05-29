@@ -1,8 +1,8 @@
 .PHONY: clean test security build run swag
 
-APP_NAME = baralga_backend
+APP_NAME = baralga
 BUILD_DIR = $(PWD)/build
-MIGRATIONS_FOLDER = $(PWD)/migrations
+MIGRATIONS_FOLDER = $(PWD)/shared/app/migrations
 DATABASE_URL = postgres://postgres:postgres@localhost:5432/baralga?sslmode=disable
 
 clean:
@@ -11,11 +11,17 @@ clean:
 linter:
 	golangci-lint run
 
+arch-go.install:
+	go install github.com/fdaines/arch-go@v0.8.6
+
+arch-go.check:
+	arch-go --verbose
+
 test:
 	go test -v -timeout 60s -coverprofile=cover.out -cover ./...
 	go tool cover -func=cover.out
 
-build: clean test
+build: clean
 	CGO_ENABLED=0 go build -ldflags="-w -s" -o $(BUILD_DIR)/$(APP_NAME) .
 
 migrate.up:
@@ -33,8 +39,8 @@ migrate.force:
 docker.postgres:
 	docker-compose up
 
-app.yaml: app.tpl.yaml ./ci-util/generate-gcloud-app.go
-	go run ci-util/generate-gcloud-app.go
+app.yaml: app.tpl.yaml ./.ci-util/generate-gcloud-app.go
+	go run .ci-util/generate-gcloud-app.go
 
 release.test:
 	goreleaser release --snapshot --rm-dist
