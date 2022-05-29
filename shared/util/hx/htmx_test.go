@@ -17,7 +17,8 @@ func TestBoost(t *testing.T) {
 	node := Boost()
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-boost=\"true\""))
 }
@@ -31,7 +32,8 @@ func TestPushURLTrue(t *testing.T) {
 	node := PushURLTrue()
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-push-url=\"true\""))
 }
@@ -45,7 +47,8 @@ func TestPushURL(t *testing.T) {
 	node := PushURL("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-push-url=\"my-url\""))
 }
@@ -59,7 +62,8 @@ func TestPost(t *testing.T) {
 	node := Post("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-post=\"my-url\""))
 }
@@ -73,7 +77,8 @@ func TestDelete(t *testing.T) {
 	node := Delete("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-delete=\"my-url\""))
 }
@@ -87,7 +92,8 @@ func TestGet(t *testing.T) {
 	node := Get("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-get=\"my-url\""))
 }
@@ -101,7 +107,8 @@ func TestTarget(t *testing.T) {
 	node := Target("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-target=\"my-url\""))
 }
@@ -115,7 +122,8 @@ func TestSwap(t *testing.T) {
 	node := Swap("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-swap=\"my-url\""))
 }
@@ -129,7 +137,8 @@ func TestTrigger(t *testing.T) {
 	node := Trigger("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-trigger=\"my-url\""))
 }
@@ -143,7 +152,8 @@ func TestConfirm(t *testing.T) {
 	node := Confirm("my-url")
 
 	// Assert
-	node.Render(&b)
+	err := node.Render(&b)
+	is.NoErr(err)
 	html := b.String()
 	is.True(strings.Contains(html, "hx-confirm=\"my-url\""))
 }
