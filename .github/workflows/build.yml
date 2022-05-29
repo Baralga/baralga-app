@@ -20,10 +20,16 @@ jobs:
       - name: Set up Go cover
         working-directory: .
         run: go get golang.org/x/tools/cmd/cover
+      - name: Set up arch-go
+        working-directory: .
+        run: make arch-go.install
       - name: Run Go linter
         uses: golangci/golangci-lint-action@v3
         with:
           working-directory: .
+      - name: Run arch-go check
+        working-directory: .
+        run: make arch-go.check
       - name: Test
         working-directory: .
         run: make test
