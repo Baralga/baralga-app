@@ -113,7 +113,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 				g.Attr("defer", "defer"),
 			),
 			Script(
-				Src("/assets/htmx-1.7.0/htmx.min.js"),
+				Src("/assets/htmx-1.8.0/htmx.min.js"),
 				g.Attr("crossorigin", "anonymous"),
 				g.Attr("defer", "defer"),
 			),

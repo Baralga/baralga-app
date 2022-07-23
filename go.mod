@@ -23,11 +23,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/snabb/isoweek v1.0.1
 	github.com/testcontainers/testcontainers-go v0.13.0
-	github.com/unrolled/secure v1.10.0
+	github.com/unrolled/secure v1.12.0
 	github.com/xuri/excelize/v2 v2.6.0
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
-	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
-	schneider.vip/problem v1.6.0
+	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
+	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
+	schneider.vip/problem v1.7.0
 )
 
 require (
@@ -40,5 +40,4 @@ require (
 	github.com/moby/sys/mount v0.3.2 // indirect
 	github.com/opencontainers/runc v1.1.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	google.golang.org/genproto v0.0.0-20220527130721-00d5c0f3be58 // indirect
 )
