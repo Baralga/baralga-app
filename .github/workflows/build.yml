@@ -26,6 +26,7 @@ jobs:
       - name: Run Go linter
         uses: golangci/golangci-lint-action@v3
         with:
+          version: v1.48.0
           working-directory: .
       - name: Run arch-go check
         working-directory: .
