@@ -23,11 +23,13 @@ jobs:
       - name: Set up arch-go
         working-directory: .
         run: make arch-go.install
-      - name: Run Go linter
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.48.0
-          working-directory: .
+#      - name: Run Go linter
+#        uses: golangci/golangci-lint-action@v3
+#        with:
+#          version: v1.48.0
+#          working-directory: .
+      - name: Run Go vet
+        run: go vet
       - name: Run arch-go check
         working-directory: .
         run: make arch-go.check
