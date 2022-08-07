@@ -28,9 +28,9 @@ jobs:
 #        with:
 #          version: v1.48.0
 #          working-directory: .
-      - name: Run Go vet
-        run: go vet
-      - name: Run arch-go check
+#      - name: Run Go vet
+#        run: go vet
+#      - name: Run arch-go check
         working-directory: .
         run: make arch-go.check
       - name: Test
