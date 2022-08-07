@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      
+
 permissions:
   contents: write
 
@@ -21,11 +21,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: magnetikonline/action-golang-cache@v3
         with:
-          go-version: 1.16
+          go-version-file: go.mod
       - name: Generate app.yaml
-        working-directory: . 
+        working-directory: .
         run: make app.yaml
         env:
           BARALGA_DB: ${{ secrets.BARALGA_DB }}
