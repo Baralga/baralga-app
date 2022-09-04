@@ -3,7 +3,6 @@ module github.com/baralga
 go 1.16
 
 require (
-	github.com/NYTimes/gziphandler v1.1.1
 	github.com/dghubble/gologin/v2 v2.3.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/jwtauth/v5 v5.0.2
