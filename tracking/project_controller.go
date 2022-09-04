@@ -10,6 +10,7 @@ import (
 	"github.com/baralga/shared/util/hal"
 	"github.com/baralga/shared/util/paged"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -98,7 +99,7 @@ func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
 			)
 		}
 
-		util.RenderJSON(w, projectsModel)
+		render.JSON(w, r, projectsModel)
 	}
 }
 
@@ -128,7 +129,7 @@ func (a *ProjectController) HandleGetProject() http.HandlerFunc {
 
 		projectModel := mapToProjectModel(principal, project)
 
-		util.RenderJSON(w, projectModel)
+		render.JSON(w, r, projectModel)
 	}
 }
 
@@ -173,7 +174,7 @@ func (a *ProjectController) HandleCreateProject() http.HandlerFunc {
 		projectModelCreated := mapToProjectModel(principal, project)
 
 		w.WriteHeader(http.StatusCreated)
-		util.RenderJSON(w, projectModelCreated)
+		render.JSON(w, r, projectModelCreated)
 	}
 }
 
@@ -229,7 +230,7 @@ func (a *ProjectController) HandleUpdateProject() http.HandlerFunc {
 		}
 
 		projectModelUpdate := mapToProjectModel(principal, projectUpdate)
-		util.RenderJSON(w, projectModelUpdate)
+		render.JSON(w, r, projectModelUpdate)
 	}
 }
 

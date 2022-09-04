@@ -14,6 +14,7 @@ import (
 	"github.com/baralga/shared/util/hal"
 	"github.com/baralga/shared/util/paged"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -129,7 +130,7 @@ func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
 			),
 		}
 
-		util.RenderJSON(w, activitiesModel)
+		render.JSON(w, r, activitiesModel)
 	}
 }
 
@@ -169,7 +170,7 @@ func (a *ActivityController) HandleCreateActivity() http.HandlerFunc {
 		activityModelCreated := mapToActivityModel(activity)
 
 		w.WriteHeader(http.StatusCreated)
-		util.RenderJSON(w, activityModelCreated)
+		render.JSON(w, r, activityModelCreated)
 	}
 }
 
@@ -198,7 +199,7 @@ func (a *ActivityController) HandleGetActivity() http.HandlerFunc {
 		}
 
 		activityModel := mapToActivityModel(activity)
-		util.RenderJSON(w, activityModel)
+		render.JSON(w, r, activityModel)
 	}
 }
 
@@ -276,7 +277,7 @@ func (a *ActivityController) HandleUpdateActivity() http.HandlerFunc {
 		}
 
 		activityModelUpdate := mapToActivityModel(activityUpdate)
-		util.RenderJSON(w, activityModelUpdate)
+		render.JSON(w, r, activityModelUpdate)
 	}
 }
 

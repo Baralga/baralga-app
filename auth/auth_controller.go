@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"schneider.vip/problem"
 )
@@ -67,7 +67,7 @@ func (a *AuthController) HandleLogin() http.HandlerFunc {
 		http.SetCookie(w, &cookie)
 
 		loginResponseModel := &loginResponseModel{AccessToken: cookie.Value}
-		util.RenderJSON(w, loginResponseModel)
+		render.JSON(w, r, loginResponseModel)
 	}
 }
 

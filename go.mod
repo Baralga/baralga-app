@@ -35,6 +35,7 @@ require (
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/containerd v1.6.7 // indirect
 	github.com/docker/docker v20.10.17+incompatible // indirect
+	github.com/go-chi/render v1.0.2 // indirect
 	github.com/go-http-utils/fresh v0.0.0-20161124030543-7231e26a4b27 // indirect
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
 	github.com/goccy/go-json v0.9.10 // indirect

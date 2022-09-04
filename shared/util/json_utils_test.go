@@ -9,24 +9,6 @@ import (
 	"github.com/matryer/is"
 )
 
-func TestRenderJSON(t *testing.T) {
-	is := is.New(t)
-
-	w := httptest.NewRecorder()
-
-	c := struct {
-		Name string
-		Type string
-	}{
-		Name: "Sammy",
-		Type: "Shark",
-	}
-
-	RenderJSON(w, c)
-
-	is.True(strings.Contains(w.Body.String(), "Shark"))
-}
-
 func TestRenderProblemJSONInProduction(t *testing.T) {
 	is := is.New(t)
 
