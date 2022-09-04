@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/hellofresh/health-go/v4 v4.6.0
 	github.com/jackc/pgtype v1.12.0
-	github.com/jackc/pgx/v4 v4.17.0
+	github.com/jackc/pgx/v4 v4.17.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/maragudk/gomponents v0.18.0
@@ -23,10 +23,10 @@ require (
 	github.com/snabb/isoweek v1.0.1
 	github.com/testcontainers/testcontainers-go v0.13.0
 	github.com/unrolled/secure v1.12.0
-	github.com/xuri/excelize/v2 v2.6.0
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
+	github.com/xuri/excelize/v2 v2.6.1
+	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
-	schneider.vip/problem v1.7.0
+	schneider.vip/problem v1.7.2
 )
 
 require (
@@ -43,12 +43,9 @@ require (
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/moby/sys/mount v0.3.3 // indirect
 	github.com/opencontainers/runc v1.1.3 // indirect
-	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
-	github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 // indirect
 	go.opentelemetry.io/otel v1.9.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
 	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
 	google.golang.org/api v0.91.0 // indirect
 	google.golang.org/genproto v0.0.0-20220805133916-01dd62135a58 // indirect
