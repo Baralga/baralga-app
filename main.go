@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/NYTimes/gziphandler"
 	"github.com/baralga/auth"
 	"github.com/baralga/shared"
 	"github.com/baralga/tracking"
@@ -141,7 +140,7 @@ func registerHealthcheck(a *shared.App, router *chi.Mux) {
 func registerRoutes(a *shared.App, router *chi.Mux, authController *auth.AuthController, authWeb *auth.AuthWeb, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
-	router.Use(gziphandler.GzipHandler)
+	router.Use(middleware.Compress(5))
 
 	router.Mount("/api", apiRouteHandler(authController, apiHandlers))
 	registerWebRoutes(a, router, authController, authWeb, webHandlers)
