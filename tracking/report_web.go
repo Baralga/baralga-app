@@ -668,6 +668,8 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							hx.Target("this"),
 							hx.Swap("outerHTML"),
 
+							TitleAttr(activity.Description),
+
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
 							Td(g.Text(util.FormatDateDEShort(activity.Start))),
 							Td(
@@ -744,6 +746,8 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 						return Tr(
 							hx.Target("this"),
 							hx.Swap("outerHTML"),
+
+							TitleAttr(activity.Description),
 
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
 							Td(g.Text(util.FormatDateDE(activity.Start))),
