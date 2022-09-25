@@ -3,7 +3,7 @@ package tracking
 import (
 	"context"
 
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )

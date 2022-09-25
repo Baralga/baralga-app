@@ -5,9 +5,8 @@ import (
 	"net/http"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hx"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
+	"github.com/baralga/shared/hx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -60,7 +59,7 @@ func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
 
 		projects, err := a.projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -74,7 +73,7 @@ func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
 			formModel := projectFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
 
-			util.RenderHTML(w, ProjectsPage(pageContext, formModel, projects))
+			shared.RenderHTML(w, ProjectsPage(pageContext, formModel, projects))
 			return
 		}
 
@@ -83,7 +82,7 @@ func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
 		formModel := projectFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
 
-		util.RenderHTML(w, ProjectsView(principal, formModel, projects))
+		shared.RenderHTML(w, ProjectsView(principal, formModel, projects))
 	}
 }
 
@@ -139,7 +138,7 @@ func (a *ProjectWeb) HandleProjectForm() http.HandlerFunc {
 		projectToCreate := mapFormToProject(formModel)
 		_, err = projectService.CreateProject(r.Context(), principal, &projectToCreate)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -152,7 +151,7 @@ func (a *ProjectWeb) HandleProjectForm() http.HandlerFunc {
 			projectFormModel{},
 		)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 	}
@@ -183,7 +182,7 @@ func (a *ProjectWeb) HandleArchiveProject() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -204,7 +203,7 @@ func (a *ProjectWeb) renderProjectsView(w http.ResponseWriter, r *http.Request, 
 
 	formModel.CSRFToken = csrf.Token(r)
 
-	util.RenderHTML(w, ProjectsView(principal, formModel, projects))
+	shared.RenderHTML(w, ProjectsView(principal, formModel, projects))
 
 	return nil
 }

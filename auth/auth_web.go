@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hx"
+	"github.com/baralga/shared/hx"
 	"github.com/baralga/user"
 	"github.com/dghubble/gologin/v2"
 	"github.com/dghubble/gologin/v2/github"
@@ -81,7 +80,7 @@ func (a *AuthWeb) HandleLoginForm() http.HandlerFunc {
 		if err != nil {
 			formModel := loginFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, &loginParams{}))
+			shared.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, &loginParams{}))
 			return
 		}
 
@@ -90,7 +89,7 @@ func (a *AuthWeb) HandleLoginForm() http.HandlerFunc {
 
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, &loginParams{}))
+			shared.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, &loginParams{}))
 			return
 		}
 
@@ -100,7 +99,7 @@ func (a *AuthWeb) HandleLoginForm() http.HandlerFunc {
 			loginParams := &loginParams{
 				errorMessage: "Login failed. Please check your credentials and try again.",
 			}
-			util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, loginParams))
+			shared.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, loginParams))
 			return
 		}
 
@@ -124,7 +123,7 @@ func (a *AuthWeb) HandleLoginPage() http.HandlerFunc {
 			Redirect: loginParams.redirect,
 		}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, loginParams))
+		shared.RenderHTML(w, a.LoginPage(r.URL.Path, formModel, loginParams))
 	}
 }
 

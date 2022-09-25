@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
 	"github.com/matryer/is"
 	"github.com/pkg/errors"

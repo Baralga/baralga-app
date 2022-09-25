@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hal"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/hal"
+	"github.com/baralga/shared/paged"
+	time_utils "github.com/baralga/shared/time"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -85,13 +85,13 @@ func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
 
 		filter, err := filterFromQueryParams(r.URL.Query())
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, errors.New("invalid query params"))
+			shared.RenderProblemJSON(w, isProduction, errors.New("invalid query params"))
 			return
 		}
 
 		activitiesPage, projects, err := actitivityService.ReadActivitiesWithProjects(r.Context(), principal, filter, pageParams)
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
@@ -100,7 +100,7 @@ func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
 			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Activities_%v.csv\"", filter.String()))
 			err := actitivityService.WriteAsCSV(activitiesPage.Activities, projects, w)
 			if err != nil {
-				util.RenderProblemJSON(w, isProduction, err)
+				shared.RenderProblemJSON(w, isProduction, err)
 				return
 			}
 			return
@@ -109,7 +109,7 @@ func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
 			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"Activities_%v.xlsx\"", filter.String()))
 			err := actitivityService.WriteAsExcel(activitiesPage.Activities, projects, w)
 			if err != nil {
-				util.RenderProblemJSON(w, isProduction, err)
+				shared.RenderProblemJSON(w, isProduction, err)
 				return
 			}
 			return
@@ -129,7 +129,7 @@ func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
 			),
 		}
 
-		util.RenderJSON(w, activitiesModel)
+		shared.RenderJSON(w, activitiesModel)
 	}
 }
 
@@ -162,14 +162,14 @@ func (a *ActivityController) HandleCreateActivity() http.HandlerFunc {
 
 		activity, err := actitivityService.CreateActivity(r.Context(), principal, activityToCreate)
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
 		activityModelCreated := mapToActivityModel(activity)
 
 		w.WriteHeader(http.StatusCreated)
-		util.RenderJSON(w, activityModelCreated)
+		shared.RenderJSON(w, activityModelCreated)
 	}
 }
 
@@ -193,12 +193,12 @@ func (a *ActivityController) HandleGetActivity() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
 		activityModel := mapToActivityModel(activity)
-		util.RenderJSON(w, activityModel)
+		shared.RenderJSON(w, activityModel)
 	}
 }
 
@@ -222,7 +222,7 @@ func (a *ActivityController) HandleDeleteActivity() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
@@ -271,12 +271,12 @@ func (a *ActivityController) HandleUpdateActivity() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
 		activityModelUpdate := mapToActivityModel(activityUpdate)
-		util.RenderJSON(w, activityModelUpdate)
+		shared.RenderJSON(w, activityModelUpdate)
 	}
 }
 
@@ -291,12 +291,12 @@ func mapToActivity(activityModel *activityModel) (*Activity, error) {
 		activityID = aID
 	}
 
-	start, err := util.ParseDateTime(activityModel.Start)
+	start, err := time_utils.ParseDateTime(activityModel.Start)
 	if err != nil {
 		return nil, err
 	}
 
-	end, err := util.ParseDateTime(activityModel.End)
+	end, err := time_utils.ParseDateTime(activityModel.End)
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +322,8 @@ func mapToActivityModel(activity *Activity) *activityModel {
 	return &activityModel{
 		ID:          activity.ID.String(),
 		Description: activity.Description,
-		Start:       util.FormatDateTime(activity.Start),
-		End:         util.FormatDateTime(activity.End),
+		Start:       time_utils.FormatDateTime(activity.Start),
+		End:         time_utils.FormatDateTime(activity.End),
 		Links: hal.NewLinks(
 			hal.NewSelfLink(fmt.Sprintf("/api/activities/%s", activity.ID)),
 			hal.NewLink("delete", fmt.Sprintf("/api/activities/%s", activity.ID)),
@@ -456,7 +456,7 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 	case TimespanCustom:
 		startParamValue := params.Get("start")
 		if startParamValue != "" {
-			startParam, err := util.ParseDate(startParamValue)
+			startParam, err := time_utils.ParseDate(startParamValue)
 			if err != nil {
 				return nil, err
 			}
@@ -465,7 +465,7 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 
 		endParamValue := params.Get("end")
 		if endParamValue != "" {
-			endParam, err := util.ParseDate(endParamValue)
+			endParam, err := time_utils.ParseDate(endParamValue)
 			if err != nil {
 				return nil, err
 			}

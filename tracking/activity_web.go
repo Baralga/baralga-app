@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hx"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/hx"
+	"github.com/baralga/shared/paged"
+	time_utils "github.com/baralga/shared/time"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -77,9 +77,9 @@ func (a *ActivityWeb) RegisterOpen(r chi.Router) {
 func newActivityFormModel() activityFormModel {
 	now := time.Now()
 	return activityFormModel{
-		Date:      util.FormatDateDE(now),
-		StartTime: util.FormatTime(now),
-		EndTime:   util.FormatTime(now),
+		Date:      time_utils.FormatDateDE(now),
+		StartTime: time_utils.FormatTime(now),
+		EndTime:   time_utils.FormatTime(now),
 	}
 }
 
@@ -107,18 +107,18 @@ func (a *ActivityWeb) HandleTrackingPage() http.HandlerFunc {
 			pageParams,
 		)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
 		projects, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
 		if hx.IsHXTargetRequest(r, "baralga__main_content") {
-			util.RenderHTML(w, Div(ActivitiesInWeekView(filter, activitiesPage, projectsOfActivities)))
+			shared.RenderHTML(w, Div(ActivitiesInWeekView(filter, activitiesPage, projectsOfActivities)))
 			return
 		}
 
@@ -130,7 +130,7 @@ func (a *ActivityWeb) HandleTrackingPage() http.HandlerFunc {
 		formModel := activityTrackFormModel{Action: "start"}
 		formModel.CSRFToken = csrf.Token(r)
 
-		util.RenderHTML(w, TrackingPage(pageContext, formModel, filter, activitiesPage, projectsOfActivities, projects))
+		shared.RenderHTML(w, TrackingPage(pageContext, formModel, filter, activitiesPage, projectsOfActivities, projects))
 	}
 }
 
@@ -147,7 +147,7 @@ func (a *ActivityWeb) HandleActivityAddPage() http.HandlerFunc {
 
 		projects, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -161,14 +161,14 @@ func (a *ActivityWeb) HandleActivityAddPage() http.HandlerFunc {
 
 		if !hx.IsHXRequest(r) {
 			activityFormModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
+			shared.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
 			return
 		}
 
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
 
 		activityFormModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, ActivityForm(activityFormModel, projects, ""))
+		shared.RenderHTML(w, ActivityForm(activityFormModel, projects, ""))
 	}
 }
 
@@ -182,7 +182,7 @@ func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -199,7 +199,7 @@ func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
 
 		projects, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -212,14 +212,14 @@ func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
 
 		if !hx.IsHXRequest(r) {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, ActivityAddPage(pageContext, formModel, projects))
+			shared.RenderHTML(w, ActivityAddPage(pageContext, formModel, projects))
 			return
 		}
 
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
 
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, ActivityForm(formModel, projects, ""))
+		shared.RenderHTML(w, ActivityForm(formModel, projects, ""))
 	}
 }
 
@@ -230,14 +230,14 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
 		var formModel activityTrackFormModel
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -255,20 +255,20 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 		if formModel.Action == "start" {
 			projectsPage, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 			if err != nil {
-				util.RenderProblemHTML(w, isProduction, err)
+				shared.RenderProblemHTML(w, isProduction, err)
 				return
 			}
 			projects = projectsPage.Projects
 
 			if actionParam == "reload" {
-				util.RenderHTML(w, TrackPanel(projects, formModel))
+				shared.RenderHTML(w, TrackPanel(projects, formModel))
 				return
 			}
 
 			now := time.Now()
 			formModel.Action = "running"
-			formModel.Date = util.FormatDateDE(now)
-			formModel.StartTime = util.FormatTime(now)
+			formModel.Date = time_utils.FormatDateDE(now)
+			formModel.StartTime = time_utils.FormatTime(now)
 			formModel.Duration = "0:00 h"
 
 			for _, project := range projectsPage.Projects {
@@ -279,7 +279,7 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 			}
 
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, TrackPanel(projects, formModel))
+			shared.RenderHTML(w, TrackPanel(projects, formModel))
 		} else if formModel.Action == "running" {
 			projects = []*Project{
 				{
@@ -292,7 +292,7 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 			activityFormModel := activityFormModel{
 				Date:        formModel.Date,
 				StartTime:   formModel.StartTime,
-				EndTime:     util.FormatTime(time.Now()),
+				EndTime:     time_utils.FormatTime(time.Now()),
 				ProjectID:   formModel.ProjectID,
 				Description: formModel.Description,
 			}
@@ -300,13 +300,13 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 			formModel.Duration = activityToCreate.DurationFormatted()
 
 			if actionParam == "reload" {
-				util.RenderHTML(w, TrackPanel(projects, formModel))
+				shared.RenderHTML(w, TrackPanel(projects, formModel))
 				return
 			}
 
 			_, err := activityService.CreateActivity(r.Context(), principal, activityToCreate)
 			if err != nil {
-				util.RenderProblemHTML(w, isProduction, err)
+				shared.RenderProblemHTML(w, isProduction, err)
 				return
 			}
 
@@ -314,7 +314,7 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 
 			projectsPage, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 			if err != nil {
-				util.RenderProblemHTML(w, isProduction, err)
+				shared.RenderProblemHTML(w, isProduction, err)
 				return
 			}
 			projects = projectsPage.Projects
@@ -322,7 +322,7 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 			formModel = activityTrackFormModel{Action: "start"}
 			formModel.CSRFToken = csrf.Token(r)
 
-			util.RenderHTML(w, TrackPanel(projects, formModel))
+			shared.RenderHTML(w, TrackPanel(projects, formModel))
 		}
 	}
 }
@@ -389,7 +389,7 @@ func (a *ActivityWeb) HandleActivityForm() http.HandlerFunc {
 			_, err = activityService.UpdateActivity(r.Context(), principal, activityNew)
 		}
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
@@ -410,9 +410,9 @@ func (a *ActivityWeb) HandleStartTimeValidation() http.HandlerFunc {
 			return
 		}
 
-		formModel.StartTime = util.CompleteTimeValue(formModel.StartTime)
+		formModel.StartTime = time_utils.CompleteTimeValue(formModel.StartTime)
 
-		util.RenderHTML(w, StartTimeInputView(formModel))
+		shared.RenderHTML(w, StartTimeInputView(formModel))
 	}
 }
 
@@ -429,9 +429,9 @@ func (a *ActivityWeb) HandleEndTimeValidation() http.HandlerFunc {
 			return
 		}
 
-		formModel.EndTime = util.CompleteTimeValue(formModel.EndTime)
+		formModel.EndTime = time_utils.CompleteTimeValue(formModel.EndTime)
 
-		util.RenderHTML(w, EndTimeInputView(formModel))
+		shared.RenderHTML(w, EndTimeInputView(formModel))
 	}
 }
 
@@ -571,8 +571,8 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 		day := activity.Start.Day()
 		dayFormattedByDay[day] = []string{
 			activity.Start.Format("Monday"),
-			util.FormatDateDEShort(activity.Start),
-			util.FormatDate(activity.Start),
+			time_utils.FormatDateDEShort(activity.Start),
+			time_utils.FormatDate(activity.Start),
 		}
 		activitySumByDay[day] = activitySumByDay[day] + float64(activity.DurationMinutesTotal())
 		activitiesByDay[day] = append(activitiesByDay[day], activity)
@@ -635,7 +635,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 						TitleAttr(activity.Description),
 						Span(
 							Class("flex-fill"),
-							g.Text(util.FormatTime(activity.Start)+" - "+util.FormatTime(activity.End)),
+							g.Text(time_utils.FormatTime(activity.Start)+" - "+time_utils.FormatTime(activity.End)),
 						),
 						Span(
 							Class("flex-fill"),
@@ -658,7 +658,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 								hx.Confirm(
 									fmt.Sprintf(
 										"Do you really want to delete the activity from %v on %v?",
-										util.FormatTime(activity.Start),
+										time_utils.FormatTime(activity.Start),
 										activity.Start.Format("Monday"),
 									),
 								),
@@ -1035,13 +1035,13 @@ func (a *ActivityWeb) renderActivityAddView(w http.ResponseWriter, r *http.Reque
 
 	projects, err := a.projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 	if err != nil {
-		util.RenderProblemHTML(w, isProduction, err)
+		shared.RenderProblemHTML(w, isProduction, err)
 		return
 	}
 
 	if hx.IsHXRequest(r) {
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, ActivityForm(formModel, projects, ""))
+		shared.RenderHTML(w, ActivityForm(formModel, projects, ""))
 		return
 	}
 
@@ -1054,7 +1054,7 @@ func (a *ActivityWeb) renderActivityAddView(w http.ResponseWriter, r *http.Reque
 	activityFormModel := newActivityFormModel()
 	activityFormModel.CSRFToken = csrf.Token(r)
 
-	util.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
+	shared.RenderHTML(w, ActivityAddPage(pageContext, activityFormModel, projects))
 }
 
 func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
@@ -1068,12 +1068,12 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 		activityID = aID
 	}
 
-	start, err := util.ParseDateTimeForm(fmt.Sprintf("%v %v", formModel.Date, formModel.StartTime))
+	start, err := time_utils.ParseDateTimeForm(fmt.Sprintf("%v %v", formModel.Date, formModel.StartTime))
 	if err != nil {
 		return nil, err
 	}
 
-	end, err := util.ParseDateTimeForm(fmt.Sprintf("%v %v", formModel.Date, formModel.EndTime))
+	end, err := time_utils.ParseDateTimeForm(fmt.Sprintf("%v %v", formModel.Date, formModel.EndTime))
 	if err != nil {
 		return nil, err
 	}
@@ -1097,9 +1097,9 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 func mapActivityToForm(activity Activity) activityFormModel {
 	return activityFormModel{
 		ID:          activity.ID.String(),
-		Date:        util.FormatDateDE(activity.Start),
-		StartTime:   util.FormatTime(activity.Start),
-		EndTime:     util.FormatTime(activity.End),
+		Date:        time_utils.FormatDateDE(activity.Start),
+		StartTime:   time_utils.FormatTime(activity.Start),
+		EndTime:     time_utils.FormatTime(activity.End),
 		ProjectID:   activity.ProjectID.String(),
 		Description: activity.Description,
 	}

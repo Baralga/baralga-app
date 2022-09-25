@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 )
-
 
 // DbUserRepository is a SQL database repository for users
 type DbActivityRepository struct {

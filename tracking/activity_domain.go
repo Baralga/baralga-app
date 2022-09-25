@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
+	time_utils "github.com/baralga/shared/time"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
@@ -49,7 +49,6 @@ type ActivityTimeReportItem struct {
 	DurationInMinutesTotal int
 }
 
-
 type ActivitiesPaged struct {
 	Activities []*Activity
 	Page       *paged.Page
@@ -63,7 +62,6 @@ type ActivitiesFilter struct {
 	Username       string
 	OrganizationID uuid.UUID
 }
-
 
 func IsValidActivitySortField(f string) bool {
 	switch strings.ToLower(f) {
@@ -252,7 +250,7 @@ func (f *ActivityFilter) String() string {
 	case TimespanMonth:
 		return f.Start().Format("2006-01")
 	case TimespanQuarter:
-		q := util.Quarter(f.Start())
+		q := time_utils.Quarter(f.Start())
 		return fmt.Sprintf("%v-%v", f.Start().Format("2006"), q)
 	case TimespanYear:
 		return f.Start().Format("2006")
@@ -266,16 +264,16 @@ func (f *ActivityFilter) StringFormatted() string {
 	case TimespanCustom:
 		return fmt.Sprintf(
 			"%v - %v",
-			util.FormatDateDEShort(f.Start()),
-			util.FormatDateDEShort(f.End()),
+			time_utils.FormatDateDEShort(f.Start()),
+			time_utils.FormatDateDEShort(f.End()),
 		)
 	case TimespanDay:
-		return util.FormatDateDEShort(f.Start())
+		return time_utils.FormatDateDEShort(f.Start())
 	default:
 		return fmt.Sprintf(
 			"%v - %v",
-			util.FormatDateDEShort(f.Start()),
-			util.FormatDateDEShort(f.End().AddDate(0, 0, -1)),
+			time_utils.FormatDateDEShort(f.Start()),
+			time_utils.FormatDateDEShort(f.End().AddDate(0, 0, -1)),
 		)
 	}
 }

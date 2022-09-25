@@ -6,8 +6,7 @@ import (
 	"net/http"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hx"
+	"github.com/baralga/shared/hx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -116,7 +115,7 @@ func (a *UserWeb) HandleSignUpFormValidate() http.HandlerFunc {
 		if err != nil {
 			formModel := signupFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
+			shared.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
@@ -124,19 +123,19 @@ func (a *UserWeb) HandleSignUpFormValidate() http.HandlerFunc {
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
+			shared.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
 		fieldErrors, err := validate(r.Context(), formModel)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
+			shared.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
 			return
 		}
 
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
+		shared.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
 	}
 }
 
@@ -144,7 +143,7 @@ func (a *UserWeb) HandleSignUpPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := signupFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
-		util.RenderHTML(w, a.SignUpPage(r.URL.Path, formModel))
+		shared.RenderHTML(w, a.SignUpPage(r.URL.Path, formModel))
 	}
 }
 
@@ -157,7 +156,7 @@ func (a *UserWeb) HandleSignUpForm() http.HandlerFunc {
 		if err != nil {
 			formModel := signupFormModel{}
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
+			shared.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
@@ -165,14 +164,14 @@ func (a *UserWeb) HandleSignUpForm() http.HandlerFunc {
 		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.SignupForm(formModel, "", nil))
+			shared.RenderHTML(w, a.SignupForm(formModel, "", nil))
 			return
 		}
 
 		fieldErrors, err := validate(r.Context(), formModel)
 		if err != nil {
 			formModel.CSRFToken = csrf.Token(r)
-			util.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
+			shared.RenderHTML(w, a.SignupForm(formModel, "", fieldErrors))
 			return
 		}
 
@@ -180,11 +179,11 @@ func (a *UserWeb) HandleSignUpForm() http.HandlerFunc {
 		confirmationID := uuid.New()
 		err = userService.SetUpNewUser(r.Context(), &user, confirmationID)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, err)
+			shared.RenderProblemHTML(w, isProduction, err)
 			return
 		}
 
-		util.RenderHTML(w, SignupSuccess(formModel))
+		shared.RenderHTML(w, SignupSuccess(formModel))
 	}
 }
 

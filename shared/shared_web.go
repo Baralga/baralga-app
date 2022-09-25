@@ -3,10 +3,11 @@ package shared
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 
-	"github.com/baralga/shared/util/hx"
+	"github.com/baralga/shared/hx"
 	g "github.com/maragudk/gomponents"
 	c "github.com/maragudk/gomponents/components"
 	. "github.com/maragudk/gomponents/html"
@@ -190,4 +191,23 @@ func NavbarLi(href, name, currentPath string) g.Node {
 			g.Text(name),
 		),
 	)
+}
+
+func RenderHTML(w http.ResponseWriter, n g.Node) {
+	w.Header().Set("Content-Type", "text/html")
+	err := n.Render(w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func RenderProblemHTML(w http.ResponseWriter, isProduction bool, err error) {
+	log.Printf("internal server error: %s", err)
+
+	if !isProduction {
+		http.Error(w, fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	http.Error(w, "internal server error", http.StatusInternalServerError)
 }

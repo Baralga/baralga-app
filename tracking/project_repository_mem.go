@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
 )
 

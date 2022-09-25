@@ -6,9 +6,8 @@ import (
 	"net/http"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hal"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/hal"
+	"github.com/baralga/shared/paged"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -69,7 +68,7 @@ func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
 
 		projectsPaged, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
@@ -98,7 +97,7 @@ func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
 			)
 		}
 
-		util.RenderJSON(w, projectsModel)
+		shared.RenderJSON(w, projectsModel)
 	}
 }
 
@@ -122,13 +121,13 @@ func (a *ProjectController) HandleGetProject() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
 		projectModel := mapToProjectModel(principal, project)
 
-		util.RenderJSON(w, projectModel)
+		shared.RenderJSON(w, projectModel)
 	}
 }
 
@@ -166,14 +165,14 @@ func (a *ProjectController) HandleCreateProject() http.HandlerFunc {
 
 		project, err := projectService.CreateProject(r.Context(), principal, projectToCreate)
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
 		projectModelCreated := mapToProjectModel(principal, project)
 
 		w.WriteHeader(http.StatusCreated)
-		util.RenderJSON(w, projectModelCreated)
+		shared.RenderJSON(w, projectModelCreated)
 	}
 }
 
@@ -224,12 +223,12 @@ func (a *ProjectController) HandleUpdateProject() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 
 		projectModelUpdate := mapToProjectModel(principal, projectUpdate)
-		util.RenderJSON(w, projectModelUpdate)
+		shared.RenderJSON(w, projectModelUpdate)
 	}
 }
 
@@ -258,7 +257,7 @@ func (a *ProjectController) HandleDeleteProject() http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			util.RenderProblemJSON(w, isProduction, err)
+			shared.RenderProblemJSON(w, isProduction, err)
 			return
 		}
 

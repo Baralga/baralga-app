@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util/hal"
+	"github.com/baralga/shared/hal"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/matryer/is"

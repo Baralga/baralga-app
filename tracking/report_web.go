@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/hx"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/hx"
+	"github.com/baralga/shared/paged"
+	time_utils "github.com/baralga/shared/time"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	g "github.com/maragudk/gomponents"
@@ -51,7 +51,7 @@ func (a *ReportWeb) HandleReportPage() http.HandlerFunc {
 		queryParams := r.URL.Query()
 		filter, err := filterFromQueryParams(queryParams)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, errors.New("invalid query params"))
+			shared.RenderProblemHTML(w, isProduction, errors.New("invalid query params"))
 			return
 		}
 
@@ -59,16 +59,16 @@ func (a *ReportWeb) HandleReportPage() http.HandlerFunc {
 
 		reportView, err := a.ReportView(pageContext, view, filter)
 		if err != nil {
-			util.RenderProblemHTML(w, isProduction, errors.New("invalid reports"))
+			shared.RenderProblemHTML(w, isProduction, errors.New("invalid reports"))
 			return
 		}
 
 		if hx.IsHXTargetRequest(r, "baralga__report_content") {
-			util.RenderHTML(w, reportView)
+			shared.RenderHTML(w, reportView)
 			return
 		}
 
-		util.RenderHTML(w, a.ReportPage(pageContext, reportView))
+		shared.RenderHTML(w, a.ReportPage(pageContext, reportView))
 	}
 }
 
@@ -671,7 +671,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							TitleAttr(activity.Description),
 
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
-							Td(g.Text(util.FormatDateDEShort(activity.Start))),
+							Td(g.Text(time_utils.FormatDateDEShort(activity.Start))),
 							Td(
 								Class("text-end"),
 								g.Text(activity.DurationFormatted()),
@@ -690,7 +690,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 									hx.Confirm(
 										fmt.Sprintf(
 											"Do you really want to delete the activity from %v on %v?",
-											util.FormatTime(activity.Start),
+											time_utils.FormatTime(activity.Start),
 											activity.Start.Format("Monday"),
 										),
 									),
@@ -750,9 +750,9 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							TitleAttr(activity.Description),
 
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
-							Td(g.Text(util.FormatDateDE(activity.Start))),
-							Td(g.Text(util.FormatTime(activity.Start))),
-							Td(g.Text(util.FormatTime(activity.End))),
+							Td(g.Text(time_utils.FormatDateDE(activity.Start))),
+							Td(g.Text(time_utils.FormatTime(activity.Start))),
+							Td(g.Text(time_utils.FormatTime(activity.End))),
 							Td(
 								Class("text-end"),
 								g.Text(activity.DurationFormatted()),
@@ -771,7 +771,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 									hx.Confirm(
 										fmt.Sprintf(
 											"Do you really want to delete the activity from %v on %v?",
-											util.FormatTime(activity.Start),
+											time_utils.FormatTime(activity.Start),
 											activity.Start.Format("Monday"),
 										),
 									),

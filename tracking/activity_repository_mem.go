@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
+	time_utils "github.com/baralga/shared/time"
 	"github.com/google/uuid"
 )
 
@@ -35,7 +35,7 @@ func (r *InMemActivityRepository) TimeReportByDay(ctx context.Context, filter *A
 		reportItem := &ActivityTimeReportItem{
 			Year:                   a.Start.Year(),
 			Month:                  int(a.Start.Month()),
-			Quarter:                util.Quarter(a.Start),
+			Quarter:                time_utils.Quarter(a.Start),
 			Week:                   w,
 			Day:                    a.Start.Day(),
 			DurationInMinutesTotal: 60,
@@ -77,7 +77,7 @@ func (r *InMemActivityRepository) TimeReportByQuarter(ctx context.Context, filte
 	for _, a := range r.activities {
 		reportItem := &ActivityTimeReportItem{
 			Year:                   a.Start.Year(),
-			Quarter:                util.Quarter(a.Start),
+			Quarter:                time_utils.Quarter(a.Start),
 			DurationInMinutesTotal: 60,
 		}
 		reportItems = append(reportItems, reportItem)

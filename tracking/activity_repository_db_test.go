@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/util/paged"
+	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/matryer/is"
