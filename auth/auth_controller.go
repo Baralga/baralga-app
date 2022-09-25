@@ -24,14 +24,14 @@ type loginResponseModel struct {
 }
 
 type AuthController struct {
-	app         *shared.App
+	config      *shared.Config
 	authService *AuthService
 	tokenAuth   *jwtauth.JWTAuth
 }
 
-func NewAuthController(app *shared.App, authService *AuthService, tokenAuth *jwtauth.JWTAuth) *AuthController {
+func NewAuthController(config *shared.Config, authService *AuthService, tokenAuth *jwtauth.JWTAuth) *AuthController {
 	return &AuthController{
-		app:         app,
+		config:      config,
 		authService: authService,
 		tokenAuth:   tokenAuth,
 	}
@@ -47,7 +47,7 @@ func (a *AuthController) RegisterOpen(r chi.Router) {
 // HandleLogin handles the authentication request of a user
 func (a *AuthController) HandleLogin() http.HandlerFunc {
 	tokenAuth := a.tokenAuth
-	expiryDuration := a.app.Config.ExpiryDuration()
+	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
 	return func(w http.ResponseWriter, r *http.Request) {
 		var loginModel loginModel

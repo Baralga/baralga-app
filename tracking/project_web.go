@@ -26,14 +26,14 @@ type projectFormModel struct {
 }
 
 type ProjectWeb struct {
-	app               *shared.App
+	config            *shared.Config
 	projectService    *ProjectService
 	projectRepository ProjectRepository
 }
 
-func NewProjectWeb(app *shared.App, projectService *ProjectService, projectRepository ProjectRepository) *ProjectWeb {
+func NewProjectWeb(config *shared.Config, projectService *ProjectService, projectRepository ProjectRepository) *ProjectWeb {
 	return &ProjectWeb{
-		app:               app,
+		config:            config,
 		projectService:    projectService,
 		projectRepository: projectRepository,
 	}
@@ -49,7 +49,7 @@ func (a *ProjectWeb) RegisterOpen(r chi.Router) {
 }
 
 func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
 
@@ -88,7 +88,7 @@ func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
 }
 
 func (a *ProjectWeb) HandleProjectForm() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +160,7 @@ func (a *ProjectWeb) HandleProjectForm() http.HandlerFunc {
 
 // HandleArchiveProject archives a project
 func (a *ProjectWeb) HandleArchiveProject() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")

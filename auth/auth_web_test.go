@@ -18,9 +18,7 @@ func TestHandleLoginPage(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &AuthWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 	}
 
 	r, _ := http.NewRequest("GET", "/login", nil)
@@ -37,15 +35,14 @@ func TestHandleLoginFormWithSuccessfullLogin(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	app := &shared.App{
-		Config: &shared.Config{},
-	}
+	config := &shared.Config{}
+
 	userRepository := user.NewInMemUserRepository()
 	a := &AuthWeb{
-		app:       app,
+		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
-			app:            app,
+			config:         config,
 			userRepository: userRepository,
 		},
 	}
@@ -67,14 +64,13 @@ func TestHandleLoginFormWithSuccessfullLoginAndRedirect(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	app := &shared.App{
-		Config: &shared.Config{},
-	}
+	config := &shared.Config{}
+
 	a := &AuthWeb{
-		app:       app,
+		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
-			app:            app,
+			config:         config,
 			userRepository: user.NewInMemUserRepository(),
 		},
 	}
@@ -97,15 +93,14 @@ func TestHandleLoginFormWithInvalidLogin(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	app := &shared.App{
-		Config: &shared.Config{},
-	}
+	config := &shared.Config{}
+
 	userRepository := user.NewInMemUserRepository()
 	a := &AuthWeb{
-		app:       app,
+		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
-			app:            app,
+			config:         config,
 			userRepository: userRepository,
 		},
 	}
@@ -130,9 +125,7 @@ func TestHandleLoginFormWithInvalidFormData(t *testing.T) {
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 	a := &AuthWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:      &shared.Config{},
 		tokenAuth:   tokenAuth,
 		userService: user.NewInMemUserService(),
 	}
@@ -156,9 +149,7 @@ func TestHandleLoginFormWithInvalidBodyData(t *testing.T) {
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 	a := &AuthWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:      &shared.Config{},
 		tokenAuth:   tokenAuth,
 		userService: user.NewInMemUserService(),
 	}

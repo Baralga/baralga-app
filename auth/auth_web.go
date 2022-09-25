@@ -41,15 +41,15 @@ type loginParams struct {
 }
 
 type AuthWeb struct {
-	app         *shared.App
+	config      *shared.Config
 	authService *AuthService
 	userService *user.UserService
 	tokenAuth   *jwtauth.JWTAuth
 }
 
-func NewAuthWeb(app *shared.App, authService *AuthService, userService *user.UserService, tokenAuth *jwtauth.JWTAuth) *AuthWeb {
+func NewAuthWeb(config *shared.Config, authService *AuthService, userService *user.UserService, tokenAuth *jwtauth.JWTAuth) *AuthWeb {
 	return &AuthWeb{
-		app:         app,
+		config:      config,
 		authService: authService,
 		userService: userService,
 		tokenAuth:   tokenAuth,
@@ -73,7 +73,7 @@ func (a *AuthWeb) RegisterOpen(r chi.Router) {
 }
 
 func (a *AuthWeb) HandleLoginForm() http.HandlerFunc {
-	expiryDuration := a.app.Config.ExpiryDuration()
+	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
 	tokenAuth := a.tokenAuth
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +179,7 @@ func HandleTokenFailure() http.Handler {
 
 func (a *AuthWeb) IssueCookieForGithub() http.Handler {
 	tokenAuth := a.tokenAuth
-	expiryDuration := a.app.Config.ExpiryDuration()
+	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
 	userService := a.userService
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -220,7 +220,7 @@ func (a *AuthWeb) IssueCookieForGithub() http.Handler {
 
 func (a *AuthWeb) IssueCookieForGoogle() http.Handler {
 	tokenAuth := a.tokenAuth
-	expiryDuration := a.app.Config.ExpiryDuration()
+	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
 	userService := a.userService
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -292,7 +292,7 @@ func (a *AuthWeb) LoginPage(currentPath string, formModel loginFormModel, loginP
 					Div(
 						Class("d-flex justify-content-center align-items-center mt-4 mb-3"),
 						g.If(
-							a.app.Config.GithubClientId != "",
+							a.config.GithubClientId != "",
 							A(
 								Class("btn btn-secondary"),
 								Href("/github/login"),
@@ -301,7 +301,7 @@ func (a *AuthWeb) LoginPage(currentPath string, formModel loginFormModel, loginP
 							),
 						),
 						g.If(
-							a.app.Config.GoogleClientId != "",
+							a.config.GoogleClientId != "",
 							A(
 								Class("btn btn-secondary ms-2"),
 								Href("/google/login"),
@@ -436,13 +436,13 @@ func (a *AuthWeb) WebVerifier() func(http.Handler) http.Handler {
 
 func (a *AuthWeb) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 	stateConfig := gologin.DefaultCookieConfig
-	if !a.app.IsProduction() {
+	if !a.config.IsProduction() {
 		stateConfig = gologin.DebugOnlyCookieConfig
 	}
 	oauth2Config := &oauth2.Config{
-		ClientID:     a.app.Config.GithubClientId,
-		ClientSecret: a.app.Config.GithubClientSecret,
-		RedirectURL:  a.app.Config.GithubRedirectURL,
+		ClientID:     a.config.GithubClientId,
+		ClientSecret: a.config.GithubClientSecret,
+		RedirectURL:  a.config.GithubRedirectURL,
 		Endpoint:     githubOAuth2.Endpoint,
 	}
 	return stateConfig, oauth2Config
@@ -450,13 +450,13 @@ func (a *AuthWeb) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 
 func (a *AuthWeb) googleAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 	stateConfig := gologin.DefaultCookieConfig
-	if !a.app.IsProduction() {
+	if !a.config.IsProduction() {
 		stateConfig = gologin.DebugOnlyCookieConfig
 	}
 	oauth2Config := &oauth2.Config{
-		ClientID:     a.app.Config.GoogleClientId,
-		ClientSecret: a.app.Config.GoogleClientSecret,
-		RedirectURL:  a.app.Config.GoogleRedirectURL,
+		ClientID:     a.config.GoogleClientId,
+		ClientSecret: a.config.GoogleClientSecret,
+		RedirectURL:  a.config.GoogleRedirectURL,
 		Endpoint:     googleOAuth2.Endpoint,
 		Scopes:       []string{"profile", "email"},
 	}

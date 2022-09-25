@@ -20,9 +20,7 @@ func TestHandleSignUpPage(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &UserWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 	}
 
 	r, _ := http.NewRequest("GET", "/signup", nil)
@@ -41,13 +39,11 @@ func TestHandleSignUpFormWithSuccessfullSignUp(t *testing.T) {
 	userRepository := NewInMemUserRepository()
 	organizationInitializerCalled := false
 
-	a := &shared.App{
-		Config: &shared.Config{},
-	}
+	config := &shared.Config{}
 	w := &UserWeb{
-		app: a,
+		config: config,
 		userService: &UserService{
-			app:                    a,
+			config:                 config,
 			repositoryTxer:         shared.NewInMemRepositoryTxer(),
 			mailResource:           mailService,
 			organizationRepository: NewInMemOrganizationRepository(),
@@ -79,9 +75,7 @@ func TestHandleSignUpFormWithInvalidData(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &UserWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 	}
 
 	data := url.Values{}
@@ -100,9 +94,7 @@ func TestHandleSignUpFormWithInvalidFormData(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &UserWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 	}
 
 	r, _ := http.NewRequest("POST", "/signup", strings.NewReader("Not a form!!"))
@@ -118,9 +110,7 @@ func TestHandleSignUpFormValidation(t *testing.T) {
 
 	userRepository := NewInMemUserRepository()
 	a := &UserWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		userService: &UserService{
 			repositoryTxer:         shared.NewInMemRepositoryTxer(),
 			organizationRepository: NewInMemOrganizationRepository(),
@@ -149,13 +139,12 @@ func TestHandleSignUpConfirmWithExistingConfirmation(t *testing.T) {
 
 	userRepository := NewInMemUserRepository()
 
-	a := &shared.App{
-		Config: &shared.Config{},
-	}
+	config := &shared.Config{}
+
 	w := &UserWeb{
-		app: a,
+		config: config,
 		userService: &UserService{
-			app:                    a,
+			config:                 config,
 			repositoryTxer:         shared.NewInMemRepositoryTxer(),
 			organizationRepository: NewInMemOrganizationRepository(),
 			userRepository:         userRepository,
@@ -185,9 +174,7 @@ func TestHandleSignUpConfirmWithoutConfirmation(t *testing.T) {
 	userRepository := NewInMemUserRepository()
 
 	a := &UserWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		userService: &UserService{
 			repositoryTxer:         shared.NewInMemRepositoryTxer(),
 			organizationRepository: NewInMemOrganizationRepository(),

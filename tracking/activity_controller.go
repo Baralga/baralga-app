@@ -49,14 +49,14 @@ type durationModel struct {
 }
 
 type ActivityController struct {
-	app                *shared.App
+	config             *shared.Config
 	actitivityService  *ActitivityService
 	activityRepository ActivityRepository
 }
 
-func NewActivityController(app *shared.App, actitivityService *ActitivityService, activityRepository ActivityRepository) *ActivityController {
+func NewActivityController(config *shared.Config, actitivityService *ActitivityService, activityRepository ActivityRepository) *ActivityController {
 	return &ActivityController{
-		app:                app,
+		config:             config,
 		actitivityService:  actitivityService,
 		activityRepository: activityRepository,
 	}
@@ -75,7 +75,7 @@ func (a *ActivityController) RegisterProtected(r chi.Router) {
 
 // HandleGetActivities reads activities
 func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -135,7 +135,7 @@ func (a *ActivityController) HandleGetActivities() http.HandlerFunc {
 
 // HandleGetActivities creates an activity
 func (a *ActivityController) HandleCreateActivity() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -175,7 +175,7 @@ func (a *ActivityController) HandleCreateActivity() http.HandlerFunc {
 
 // HandleGetActivity reads an activity
 func (a *ActivityController) HandleGetActivity() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	activityRepository := a.activityRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
@@ -204,7 +204,7 @@ func (a *ActivityController) HandleGetActivity() http.HandlerFunc {
 
 // HandleDeleteActivity deletes an activity
 func (a *ActivityController) HandleDeleteActivity() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
@@ -232,7 +232,7 @@ func (a *ActivityController) HandleDeleteActivity() http.HandlerFunc {
 
 // HandleUpdateActivity updates an activity
 func (a *ActivityController) HandleUpdateActivity() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -9,10 +9,8 @@ import (
 func TestIsProduction(t *testing.T) {
 	is := is.New(t)
 
-	a := &App{
-		Config: &Config{
-			Env: "dev",
-		},
+	config := &Config{
+		Env: "dev",
 	}
-	is.True(!a.IsProduction())
+	is.True(!config.IsProduction())
 }

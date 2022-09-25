@@ -19,9 +19,7 @@ func TestHandleTrackingPage(t *testing.T) {
 
 	activityRepository := NewInMemActivityRepository()
 	a := &ActivityWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		projectRepository:  NewInMemProjectRepository(),
 		activityService: &ActitivityService{
@@ -44,9 +42,7 @@ func TestHandleActivityAddPage(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ActivityWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
 
@@ -65,9 +61,7 @@ func TestHandleActivityEditPage(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ActivityWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 		projectRepository:  NewInMemProjectRepository(),
 	}
@@ -91,15 +85,13 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemActivityRepository()
-	a := &shared.App{
-		Config: &shared.Config{},
-	}
+	config := &shared.Config{}
+
 	w := &ActivityWeb{
-		app:                a,
+		config:             config,
 		activityRepository: repo,
 		projectRepository:  NewInMemProjectRepository(),
 		activityService: &ActitivityService{
-			app:                a,
 			repositoryTxer:     shared.NewInMemRepositoryTxer(),
 			activityRepository: repo,
 		},
@@ -132,9 +124,7 @@ func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
 
 	repo := NewInMemActivityRepository()
 	a := &ActivityWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:             &shared.Config{},
 		activityRepository: repo,
 		projectRepository:  NewInMemProjectRepository(),
 	}
@@ -164,7 +154,7 @@ func TestHandleStartTimeValidation(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ActivityWeb{
-		app: &shared.App{},
+		config: &shared.Config{},
 	}
 
 	data := url.Values{}
@@ -187,7 +177,7 @@ func TestHandleEndTimeValidation(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ActivityWeb{
-		app: &shared.App{},
+		config: &shared.Config{},
 	}
 
 	data := url.Values{}

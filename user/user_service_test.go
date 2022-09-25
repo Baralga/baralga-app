@@ -23,9 +23,7 @@ func TestSetUpNewUser(t *testing.T) {
 	organizationInitializerCalled := false
 
 	a := &UserService{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:                 &shared.Config{},
 		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		mailResource:           mailResource,
 		userRepository:         userRepository,
@@ -64,9 +62,7 @@ func TestSetUpNewUserWithUserRepositoryError(t *testing.T) {
 	organizationRepository := NewInMemOrganizationRepository()
 
 	a := &UserService{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:                 &shared.Config{},
 		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		mailResource:           mailResource,
 		userRepository:         userRepository,

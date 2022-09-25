@@ -14,7 +14,6 @@ func TestArchiveProject(t *testing.T) {
 
 	projectRepository := NewInMemProjectRepository()
 	a := &ProjectService{
-		app:               &shared.App{},
 		repositoryTxer:    shared.NewInMemRepositoryTxer(),
 		projectRepository: projectRepository,
 	}

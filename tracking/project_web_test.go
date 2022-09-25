@@ -19,9 +19,7 @@ func TestHandleProjectsPageAsUser(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ProjectWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
 
@@ -41,9 +39,7 @@ func TestHandleProjectsPageAsAdmin(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ProjectWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
 
@@ -67,9 +63,7 @@ func TestHandleCreateProjectWithNotValidProject(t *testing.T) {
 
 	repo := NewInMemProjectRepository()
 	a := &ProjectWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:            &shared.Config{},
 		projectRepository: repo,
 	}
 
@@ -98,14 +92,10 @@ func TestHandleCreateProjectWithValidProject(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemProjectRepository()
-	a := &shared.App{
-		Config: &shared.Config{},
-	}
 	w := &ProjectWeb{
-		app:               a,
+		config:            &shared.Config{},
 		projectRepository: repo,
 		projectService: &ProjectService{
-			app:               a,
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
 			projectRepository: repo,
 		},
@@ -137,9 +127,7 @@ func TestHandleCreateProjectWithValidProjectAsUser(t *testing.T) {
 
 	repo := NewInMemProjectRepository()
 	a := &ProjectWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:            &shared.Config{},
 		projectRepository: repo,
 	}
 
@@ -164,9 +152,7 @@ func TestHandleCreateProjectWithInvalidProject(t *testing.T) {
 
 	repo := NewInMemProjectRepository()
 	a := &ProjectWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:            &shared.Config{},
 		projectRepository: repo,
 	}
 
@@ -192,14 +178,11 @@ func TestHandleArchiveProjectAsAdmin(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemProjectRepository()
-	a := &shared.App{
-		Config: &shared.Config{},
-	}
+
 	w := &ProjectWeb{
-		app:               a,
+		config:            &shared.Config{},
 		projectRepository: repo,
 		projectService: &ProjectService{
-			app:               a,
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
 			projectRepository: repo,
 		},
@@ -222,14 +205,11 @@ func TestHandleArchiveProjectAsUser(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemProjectRepository()
-	a := &shared.App{
-		Config: &shared.Config{},
-	}
+
 	w := &ProjectWeb{
-		app:               a,
+		config:            &shared.Config{},
 		projectRepository: repo,
 		projectService: &ProjectService{
-			app:               a,
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
 			projectRepository: repo,
 		},

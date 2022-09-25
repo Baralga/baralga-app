@@ -18,13 +18,13 @@ import (
 )
 
 type ReportWeb struct {
-	app             *shared.App
+	config          *shared.Config
 	activityService *ActitivityService
 }
 
-func NewReportWeb(app *shared.App, activityService *ActitivityService) *ReportWeb {
+func NewReportWeb(config *shared.Config, activityService *ActitivityService) *ReportWeb {
 	return &ReportWeb{
-		app:             app,
+		config:          config,
 		activityService: activityService,
 	}
 }
@@ -37,7 +37,7 @@ func (a *ReportWeb) RegisterOpen(r chi.Router) {
 }
 
 func (a *ReportWeb) HandleReportPage() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
 		pageContext := &shared.PageContext{

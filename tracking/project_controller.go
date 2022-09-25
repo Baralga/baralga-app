@@ -35,14 +35,14 @@ type projectsModel struct {
 }
 
 type ProjectController struct {
-	app               *shared.App
+	config            *shared.Config
 	projectRepository ProjectRepository
 	projectService    *ProjectService
 }
 
-func NewProjectController(app *shared.App, projectRepository ProjectRepository, projectService *ProjectService) *ProjectController {
+func NewProjectController(config *shared.Config, projectRepository ProjectRepository, projectService *ProjectService) *ProjectController {
 	return &ProjectController{
-		app:               app,
+		config:            config,
 		projectRepository: projectRepository,
 		projectService:    projectService,
 	}
@@ -61,7 +61,7 @@ func (a *ProjectController) RegisterOpen(r chi.Router) {
 
 // HandleGetProjects reads projects
 func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
@@ -104,7 +104,7 @@ func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
 
 // HandleGetProject reads a project
 func (a *ProjectController) HandleGetProject() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
@@ -134,7 +134,7 @@ func (a *ProjectController) HandleGetProject() http.HandlerFunc {
 
 // HandleCreateProject creates a project
 func (a *ProjectController) HandleCreateProject() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +179,7 @@ func (a *ProjectController) HandleCreateProject() http.HandlerFunc {
 
 // HandleUpdateProject updates a project
 func (a *ProjectController) HandleUpdateProject() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +235,7 @@ func (a *ProjectController) HandleUpdateProject() http.HandlerFunc {
 
 // HandleDeleteProject deletes a project
 func (a *ProjectController) HandleDeleteProject() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
