@@ -8,14 +8,12 @@ import (
 )
 
 type ProjectService struct {
-	app               *shared.App
 	repositoryTxer    shared.RepositoryTxer
 	projectRepository ProjectRepository
 }
 
-func NewProjectService(app *shared.App, repositoryTxer shared.RepositoryTxer, projectRepository ProjectRepository) *ProjectService {
+func NewProjectService(repositoryTxer shared.RepositoryTxer, projectRepository ProjectRepository) *ProjectService {
 	return &ProjectService{
-		app:               app,
 		repositoryTxer:    repositoryTxer,
 		projectRepository: projectRepository,
 	}

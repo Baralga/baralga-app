@@ -19,17 +19,15 @@ func TestHandleLogin(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	app := &shared.App{
-		Config: &shared.Config{
-			JWTExpiry: "1h",
-		},
+	config := &shared.Config{
+		JWTExpiry: "1h",
 	}
 
 	a := &AuthController{
-		app:       app,
+		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
-			app:            app,
+			config:         config,
 			userRepository: user.NewInMemUserRepository(),
 		},
 	}
@@ -58,9 +56,7 @@ func TestHandleInvalidLogin(t *testing.T) {
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 	a := &AuthController{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:    &shared.Config{},
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
 			userRepository: user.NewInMemUserRepository(),
@@ -82,10 +78,8 @@ func TestHandleInvalidLogin(t *testing.T) {
 func TestHandleLoginWithInvalidDuration(t *testing.T) {
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 	a := &AuthController{
-		app: &shared.App{
-			Config: &shared.Config{
-				JWTExpiry: "invalid",
-			},
+		config: &shared.Config{
+			JWTExpiry: "invalid",
 		},
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
@@ -122,9 +116,7 @@ func TestJWTPrincipalHandlerWithoutJWT(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &AuthController{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 	}
 
 	r, _ := http.NewRequest("GET", "/api/projects", nil)

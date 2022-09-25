@@ -17,9 +17,7 @@ func TestHandleReportPage(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ReportWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		activityService: &ActitivityService{
 			activityRepository: NewInMemActivityRepository(),
 		},
@@ -40,9 +38,7 @@ func TestHandleReportPageWithTimeByDay(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ReportWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		activityService: &ActitivityService{
 			activityRepository: NewInMemActivityRepository(),
 		},
@@ -65,9 +61,7 @@ func TestHandleReportPageWithTimeByWeek(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ReportWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		activityService: &ActitivityService{
 			activityRepository: NewInMemActivityRepository(),
 		},
@@ -90,9 +84,7 @@ func TestHandleReportPageWithTimeByMonth(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ReportWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		activityService: &ActitivityService{
 			activityRepository: NewInMemActivityRepository(),
 		},
@@ -115,9 +107,7 @@ func TestHandleReportPageWithTimeByQuarter(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ReportWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		activityService: &ActitivityService{
 			activityRepository: NewInMemActivityRepository(),
 		},
@@ -140,9 +130,7 @@ func TestHandleReportPageWithProject(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	a := &ReportWeb{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 		activityService: &ActitivityService{
 			activityRepository: NewInMemActivityRepository(),
 		},

@@ -14,13 +14,13 @@ import (
 )
 
 type AuthService struct {
-	app            *shared.App
+	config         *shared.Config
 	userRepository user.UserRepository
 }
 
-func NewAuthService(App *shared.App, UserRepository user.UserRepository) *AuthService {
+func NewAuthService(config *shared.Config, UserRepository user.UserRepository) *AuthService {
 	return &AuthService{
-		app:            App,
+		config:         config,
 		userRepository: UserRepository,
 	}
 }
@@ -90,7 +90,7 @@ func (a *AuthService) CreateCookie(tokenAuth *jwtauth.JWTAuth, expiryDuration ti
 		Value:    tokenString,
 		Expires:  time.Now().Add(expiryDuration),
 		SameSite: http.SameSiteLaxMode,
-		Secure:   a.app.IsProduction(),
+		Secure:   a.config.IsProduction(),
 		Path:     "/",
 	}
 }
@@ -101,7 +101,7 @@ func (a *AuthService) CreateExpiredCookie() http.Cookie {
 		Value:    "",
 		Expires:  time.Now(),
 		SameSite: http.SameSiteLaxMode,
-		Secure:   a.app.IsProduction(),
+		Secure:   a.config.IsProduction(),
 		Path:     "/",
 	}
 }

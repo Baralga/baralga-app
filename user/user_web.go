@@ -27,14 +27,14 @@ type signupFormModel struct {
 }
 
 type UserWeb struct {
-	app            *shared.App
+	config         *shared.Config
 	userService    *UserService
 	userRepository UserRepository
 }
 
-func NewUserWeb(app *shared.App, userService *UserService, userRepository UserRepository) *UserWeb {
+func NewUserWeb(config *shared.Config, userService *UserService, userRepository UserRepository) *UserWeb {
 	return &UserWeb{
-		app:            app,
+		config:         config,
 		userService:    userService,
 		userRepository: userRepository,
 	}
@@ -149,7 +149,7 @@ func (a *UserWeb) HandleSignUpPage() http.HandlerFunc {
 }
 
 func (a *UserWeb) HandleSignUpForm() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validate := a.signupFormValidator(false)
 	userService := a.userService
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -347,8 +347,8 @@ func (a *UserWeb) SignupForm(formModel signupFormModel, errorMessage string, fie
 				g.Attr("for", "acceptConditions"),
 				g.Raw(
 					fmt.Sprintf("Ich bin mit den <a href=\"%v\">Datenschutzbestimmungen</a> einverstanden. I accept the <a href=\"%v\">data protection rules</a>.",
-						a.app.Config.DataProtectionURL,
-						a.app.Config.DataProtectionURL,
+						a.config.DataProtectionURL,
+						a.config.DataProtectionURL,
 					),
 				),
 			),

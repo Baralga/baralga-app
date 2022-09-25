@@ -14,14 +14,12 @@ import (
 )
 
 type ActitivityService struct {
-	app                *shared.App
 	repositoryTxer     shared.RepositoryTxer
 	activityRepository ActivityRepository
 }
 
-func NewActitivityService(app *shared.App, repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository) *ActitivityService {
+func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository) *ActitivityService {
 	return &ActitivityService{
-		app:                app,
 		repositoryTxer:     repositoryTxer,
 		activityRepository: activityRepository,
 	}

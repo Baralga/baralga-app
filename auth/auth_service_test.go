@@ -16,9 +16,7 @@ func TestAuthenticateTrustedWithExistingUser(t *testing.T) {
 	is := is.New(t)
 
 	a := &AuthService{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:         &shared.Config{},
 		userRepository: user.NewInMemUserRepository(),
 	}
 	username := "admin@baralga.com"
@@ -35,9 +33,7 @@ func TestAuthenticateTrustedWithMissingUser(t *testing.T) {
 	// Arrange
 	is := is.New(t)
 	a := &AuthService{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config:         &shared.Config{},
 		userRepository: user.NewInMemUserRepository(),
 	}
 	username := "not.found@baralga.com"
@@ -53,9 +49,7 @@ func TestCreateExpiredCookie(t *testing.T) {
 	// Arrange
 	is := is.New(t)
 	a := &AuthService{
-		app: &shared.App{
-			Config: &shared.Config{},
-		},
+		config: &shared.Config{},
 	}
 
 	// Act

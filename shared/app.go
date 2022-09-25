@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-type App struct {
-	Config *Config
-}
-
 type Config struct {
 	BindPort   string `default:"8080"`
 	Webroot    string `default:"http://localhost:8080"`
@@ -46,6 +42,6 @@ func (c *Config) ExpiryDuration() time.Duration {
 	return expiryDuration
 }
 
-func (a *App) IsProduction() bool {
-	return strings.ToLower(a.Config.Env) == "production"
+func (c *Config) IsProduction() bool {
+	return strings.ToLower(c.Env) == "production"
 }

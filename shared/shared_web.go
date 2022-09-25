@@ -20,7 +20,7 @@ type PageContext struct {
 	CurrentQuery url.Values
 }
 
-func (a *App) HandleWebManifest() http.HandlerFunc {
+func HandleWebManifest() http.HandlerFunc {
 	manifest := []byte(`
 	{
 		"short_name": "Baralga",

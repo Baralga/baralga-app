@@ -45,15 +45,15 @@ type activityTrackFormModel struct {
 }
 
 type ActivityWeb struct {
-	app                *shared.App
+	config             *shared.Config
 	activityService    *ActitivityService
 	activityRepository ActivityRepository
 	projectRepository  ProjectRepository
 }
 
-func NewActivityWeb(app *shared.App, activityService *ActitivityService, activityRepository ActivityRepository, projectRepository ProjectRepository) *ActivityWeb {
+func NewActivityWeb(config *shared.Config, activityService *ActitivityService, activityRepository ActivityRepository, projectRepository ProjectRepository) *ActivityWeb {
 	return &ActivityWeb{
-		app:                app,
+		config:             config,
 		activityService:    activityService,
 		activityRepository: activityRepository,
 		projectRepository:  projectRepository,
@@ -84,7 +84,7 @@ func newActivityFormModel() activityFormModel {
 }
 
 func (a *ActivityWeb) HandleTrackingPage() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	activityService := a.activityService
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +135,7 @@ func (a *ActivityWeb) HandleTrackingPage() http.HandlerFunc {
 }
 
 func (a *ActivityWeb) HandleActivityAddPage() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
@@ -173,7 +173,7 @@ func (a *ActivityWeb) HandleActivityAddPage() http.HandlerFunc {
 }
 
 func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	activityRepository := a.activityRepository
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +224,7 @@ func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
 }
 
 func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	activityService := a.activityService
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -328,7 +328,7 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 }
 
 func (a *ActivityWeb) HandleActivityForm() http.HandlerFunc {
-	isProduction := a.app.IsProduction()
+	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	activityService := a.activityService
 	return func(w http.ResponseWriter, r *http.Request) {

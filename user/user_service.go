@@ -10,7 +10,7 @@ import (
 )
 
 type UserService struct {
-	app                     *shared.App
+	config                  *shared.Config
 	repositoryTxer          shared.RepositoryTxer
 	mailResource            shared.MailResource
 	userRepository          UserRepository
@@ -25,7 +25,7 @@ func NewInMemUserService() *UserService {
 }
 
 func NewUserService(
-	app *shared.App,
+	config *shared.Config,
 	repositoryTxer shared.RepositoryTxer,
 	mailResource shared.MailResource,
 	userRepository UserRepository,
@@ -33,7 +33,7 @@ func NewUserService(
 	organizationInitializer func(ctxWithTx context.Context, organizationID uuid.UUID) error,
 ) *UserService {
 	return &UserService{
-		app:                     app,
+		config:                  config,
 		repositoryTxer:          repositoryTxer,
 		mailResource:            mailResource,
 		userRepository:          userRepository,
@@ -71,7 +71,7 @@ func (a *UserService) SetUpNewUser(ctx context.Context, user *User, confirmation
 	subject := "Confirm your Email address"
 	body := fmt.Sprintf(
 		`Confirm your Email address at %v/signup/confirm/%v to activate your account.`,
-		a.app.Config.Webroot,
+		a.config.Webroot,
 		confirmationID,
 	)
 
