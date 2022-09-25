@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	g "github.com/maragudk/gomponents"
+	. "github.com/maragudk/gomponents/html"
 	"github.com/matryer/is"
 )
 
