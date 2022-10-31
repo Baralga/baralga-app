@@ -2,7 +2,7 @@
 
 APP_NAME = baralga
 BUILD_DIR = $(PWD)/build
-MIGRATIONS_FOLDER = $(PWD)/shared/app/migrations
+MIGRATIONS_FOLDER = $(PWD)/shared/migrations
 DATABASE_URL = postgres://postgres:postgres@localhost:5432/baralga?sslmode=disable
 
 clean:
