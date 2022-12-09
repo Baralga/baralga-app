@@ -39,9 +39,11 @@ func TestActivityRepository(t *testing.T) {
 	activityRepository := NewDbActivityRepository(connPool)
 	repositoryTxer := shared.NewDbRepositoryTxer(connPool)
 
+	start, _ := time.Parse(time.RFC3339, "2020-01-01T00:00:00.000Z")
+
 	t.Run("FindActivitiesByOrganizationId", func(t *testing.T) {
 		filter := &ActivitiesFilter{
-			Start:          time.Now().AddDate(-1, 0, 0),
+			Start:          start,
 			End:            time.Now(),
 			OrganizationID: shared.OrganizationIDSample,
 		}
@@ -63,7 +65,7 @@ func TestActivityRepository(t *testing.T) {
 
 	t.Run("FindActivitiesByOrganizationId and sort by field 'project' ascending", func(t *testing.T) {
 		filter := &ActivitiesFilter{
-			Start:          time.Now().AddDate(-1, 0, 0),
+			Start:          start,
 			End:            time.Now(),
 			OrganizationID: shared.OrganizationIDSample,
 			SortBy:         "project",
@@ -87,7 +89,7 @@ func TestActivityRepository(t *testing.T) {
 
 	t.Run("FindActivitiesByOrganizationIdAndUsername", func(t *testing.T) {
 		filter := &ActivitiesFilter{
-			Start:          time.Now().AddDate(-1, 0, 0),
+			Start:          start,
 			End:            time.Now(),
 			Username:       "admin",
 			OrganizationID: shared.OrganizationIDSample,
