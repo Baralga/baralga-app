@@ -24,7 +24,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.13.0
 	github.com/unrolled/secure v1.12.0
 	github.com/xuri/excelize/v2 v2.6.1
-	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
+	golang.org/x/crypto v0.4.0
 	golang.org/x/oauth2 v0.3.0
 	schneider.vip/problem v1.7.2
 )
