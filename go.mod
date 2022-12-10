@@ -17,7 +17,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx v1.2.25
-	github.com/maragudk/gomponents v0.18.0
+	github.com/maragudk/gomponents v0.20.0
 	github.com/matryer/is v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/snabb/isoweek v1.0.1
