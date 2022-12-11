@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/paged"
 	"github.com/baralga/shared/hx"
+	"github.com/baralga/shared/paged"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -251,8 +251,7 @@ func ProjectsView(principal *shared.Principal, formModel projectFormModel, proje
 				ProjectForm(formModel, ""),
 			),
 			g.Group(
-				g.Map(len(projects.Projects), func(i int) g.Node {
-					project := projects.Projects[i]
+				g.Map(projects.Projects, func(project *Project) g.Node {
 					return Div(
 						Class("card mt-2"),
 
