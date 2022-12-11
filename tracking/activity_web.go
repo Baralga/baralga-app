@@ -564,11 +564,13 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 	}
 
 	// prepare activities
+	var days []int
 	activitySumByDay := make(map[int]float64)
 	activitiesByDay := make(map[int][]*Activity)
 	dayFormattedByDay := make(map[int][]string)
 	for _, activity := range activitiesPage.Activities {
 		day := activity.Start.Day()
+		days = append(days, day)
 		dayFormattedByDay[day] = []string{
 			activity.Start.Format("Monday"),
 			time_utils.FormatDateDEShort(activity.Start),
@@ -587,11 +589,11 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 
 	today := time.Now().Day()
 
-	return g.Group(g.Map(len(activitiesByDay), func(i int) g.Node {
-		activities := activitiesByDay[dayNodes[i]]
-		activityCardID := fmt.Sprintf("baralga__activity_card_%v", dayFormattedByDay[dayNodes[i]][2])
+	return g.Group(g.Map(days, func(i int) g.Node {
+		activities := activitiesByDay[i]
+		activityCardID := fmt.Sprintf("baralga__activity_card_%v", dayFormattedByDay[i][2])
 
-		sum := activitySumByDay[dayNodes[i]]
+		sum := activitySumByDay[i]
 		durationFormatted := FormatMinutesAsDuration(sum)
 
 		return Div(
@@ -603,7 +605,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 
 			Div(
 				Class("card-body position-relative p-2 pt-1"),
-				g.If(today == dayNodes[i],
+				g.If(today == i,
 					StyleAttr("background-color: rgba(255, 255,255, 0.05);"),
 				),
 				H6(
@@ -613,12 +615,12 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 						Div(
 							Class("text-muted"),
 							Span(
-								g.Text(dayFormattedByDay[dayNodes[i]][0]),
+								g.Text(dayFormattedByDay[i][0]),
 							),
 							Span(
 								Class("ms-2"),
 								StyleAttr("opacity: .45; font-size: 80%;"),
-								g.Text(dayFormattedByDay[dayNodes[i]][1]),
+								g.Text(dayFormattedByDay[i][1]),
 							),
 						),
 					),
@@ -627,8 +629,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 						g.Text(durationFormatted),
 					),
 				),
-				g.Group(g.Map(len(activities), func(i int) g.Node {
-					activity := activities[i]
+				g.Group(g.Map(activities, func(activity *Activity) g.Node {
 					return Div(
 						Class("d-flex justify-content-between mb-2"),
 						hx.Target(fmt.Sprintf("#%v", activityCardID)),
@@ -805,8 +806,7 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 					ID("ProjectID"),
 					Name("ProjectID"),
 					g.Group(
-						g.Map(len(projects.Projects), func(i int) g.Node {
-							project := projects.Projects[i]
+						g.Map(projects.Projects, func(project *Project) g.Node {
 							return Option(
 								Value(project.ID.String()),
 								g.Text(project.Title),
@@ -981,8 +981,7 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 						Disabled(),
 					),
 					g.Group(
-						g.Map(len(projects), func(i int) g.Node {
-							project := projects[i]
+						g.Map(projects, func(project *Project) g.Node {
 							return Option(
 								Value(project.ID.String()),
 								g.Text(project.Title),

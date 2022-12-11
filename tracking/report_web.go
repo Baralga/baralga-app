@@ -449,8 +449,7 @@ func (a *ReportWeb) reportProjectView(pageContext *shared.PageContext, view *rep
 					),
 				),
 				TBody(
-					g.Group(g.Map(len(projectReports), func(i int) g.Node {
-						activity := projectReports[i]
+					g.Group(g.Map(projectReports, func(activity *ActivityProjectReportItem) g.Node {
 						return Tr(
 							hx.Target("this"),
 							hx.Swap("outerHTML"),
@@ -483,8 +482,7 @@ func reportByDayView(timeReports []*ActivityTimeReportItem) g.Node {
 			),
 		),
 		TBody(
-			g.Group(g.Map(len(timeReports), func(i int) g.Node {
-				reportItem := timeReports[i]
+			g.Group(g.Map(timeReports, func(reportItem *ActivityTimeReportItem) g.Node {
 				return Tr(
 					Td(
 						g.Text(reportItem.AsTime().Format("02.01.2006 Monday")),
@@ -515,8 +513,7 @@ func reportByWeekView(timeReports []*ActivityTimeReportItem) g.Node {
 			),
 		),
 		TBody(
-			g.Group(g.Map(len(timeReports), func(i int) g.Node {
-				reportItem := timeReports[i]
+			g.Group(g.Map(timeReports, func(reportItem *ActivityTimeReportItem) g.Node {
 				return Tr(
 					Td(
 						g.Text(fmt.Sprintf("%v", reportItem.Week)),
@@ -550,8 +547,7 @@ func reportByMonthView(timeReports []*ActivityTimeReportItem) g.Node {
 			),
 		),
 		TBody(
-			g.Group(g.Map(len(timeReports), func(i int) g.Node {
-				reportItem := timeReports[i]
+			g.Group(g.Map(timeReports, func(reportItem *ActivityTimeReportItem) g.Node {
 				return Tr(
 					Td(
 						g.Text(reportItem.AsTime().Format("01 January")),
@@ -585,8 +581,7 @@ func reportByQuarterView(timeReports []*ActivityTimeReportItem) g.Node {
 			),
 		),
 		TBody(
-			g.Group(g.Map(len(timeReports), func(i int) g.Node {
-				reportItem := timeReports[i]
+			g.Group(g.Map(timeReports, func(reportItem *ActivityTimeReportItem) g.Node {
 				return Tr(
 					Td(
 						g.Text(fmt.Sprintf("Q%v", reportItem.Quarter)),
@@ -627,6 +622,12 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 		), nil
 	}
 
+	// pages to iterate over
+	var pageIndices []int
+	for i := 1; i <= activitiesPage.Page.TotalPages; i++ {
+		pageIndices = append(pageIndices, i)
+	}
+
 	return g.Group([]g.Node{
 		Div(
 			Class("table-responsive-sm d-lg-none"),
@@ -662,8 +663,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 					),
 				),
 				TBody(
-					g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
-						activity := activitiesPage.Activities[i]
+					g.Group(g.Map(activitiesPage.Activities, func(activity *Activity) g.Node {
 						return Tr(
 							hx.Target("this"),
 							hx.Swap("outerHTML"),
@@ -741,8 +741,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 					),
 				),
 				TBody(
-					g.Group(g.Map(len(activitiesPage.Activities), func(i int) g.Node {
-						activity := activitiesPage.Activities[i]
+					g.Group(g.Map(activitiesPage.Activities, func(activity *Activity) g.Node {
 						return Tr(
 							hx.Target("this"),
 							hx.Swap("outerHTML"),
@@ -816,7 +815,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							),
 						),
 					),
-					g.Group(g.Map(activitiesPage.Page.TotalPages, func(pageIndex int) g.Node {
+					g.Group(g.Map(pageIndices, func(pageIndex int) g.Node {
 						return Li(
 							g.If(
 								pageIndex == activitiesPage.Page.Number,
