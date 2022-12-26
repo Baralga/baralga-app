@@ -12,9 +12,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 //go:embed migrations
@@ -86,34 +86,46 @@ func insertSampleContent(ctx context.Context, connPool *pgxpool.Pool) error {
 	return err
 }
 
-func SetupTestDatabase(ctx context.Context) (testcontainers.Container, *pgxpool.Pool, error) {
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:14",
-		ExposedPorts: []string{"5432/tcp"},
-		WaitingFor:   wait.ForListeningPort("5432/tcp"),
-		Env: map[string]string{
-			"POSTGRES_DB":       "baralga",
-			"POSTGRES_PASSWORD": "postgres",
-			"POSTGRES_USER":     "postgres",
-		},
+func SetupTestDatabase(ctx context.Context) (func() error, *pgxpool.Pool, error) {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not construct pool: %s", err)
 	}
-	dbContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
+
+	// uses pool to try to connect to Docker
+	err = pool.Client.Ping()
+	if err != nil {
+		log.Fatalf("Could not connect to Docker: %s", err)
+	}
+
+	// pulls an image, creates a container based on it and runs it
+	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "postgres", Tag: "14", Env: []string{"POSTGRES_DB=baralga", "POSTGRES_PASSWORD=postgres", "POSTGRES_USER=postgres", "listen_addresses = '*'"}},
+		func(config *docker.HostConfig) {
+			config.AutoRemove = true
+			config.RestartPolicy = docker.RestartPolicy{
+				Name: "no",
+			}
+		})
+	if err != nil {
+		log.Fatalf("Could not start resource: %s", err)
+	}
+
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	dbURI := fmt.Sprintf("postgres://postgres:postgres@localhost:%v/baralga", resource.GetPort("5432/tcp"))
+
+	err = pool.Retry(func() error {
+		var err error
+
+		_, err = Connect(dbURI, 1)
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
-	port, err := dbContainer.MappedPort(ctx, "5432")
-	if err != nil {
-		return nil, nil, err
-	}
-	host, err := dbContainer.Host(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	dbURI := fmt.Sprintf("postgres://postgres:postgres@%v:%v/baralga", host, port.Port())
 
 	connPool, err := Connect(dbURI, 1)
 	if err != nil {
@@ -122,7 +134,10 @@ func SetupTestDatabase(ctx context.Context) (testcontainers.Container, *pgxpool.
 
 	err = insertSampleContent(ctx, connPool)
 
-	return dbContainer, connPool, err
+	return func() error {
+		return pool.Purge(resource)
+	}, connPool, err
+
 }
 
 func Connect(dbURL string, maxConns int32) (*pgxpool.Pool, error) {
