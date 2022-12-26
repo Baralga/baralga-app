@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/baralga/shared"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
-
 
 // DbOrganizationRepository is a SQL database repository for users
 type DbOrganizationRepository struct {

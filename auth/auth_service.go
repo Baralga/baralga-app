@@ -8,7 +8,7 @@ import (
 	"github.com/baralga/shared"
 	"github.com/baralga/user"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
