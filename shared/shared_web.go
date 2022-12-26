@@ -77,7 +77,7 @@ func ModalView() g.Node {
 }
 
 func Page(title, currentPath string, body []g.Node) g.Node {
-	return c.HTML5(c.HTML5Props{
+	return HTML5Page(c.HTML5Props{
 		Title:    fmt.Sprintf("%s # Baralga", title),
 		Language: "en",
 		Head: []g.Node{
@@ -86,7 +86,8 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("/assets/bootstrap-dark-5@1.1.3/bootstrap-dark.min.css"),
+				Href("/assets/bootstrap-5.3.0-alpha1/bootstrap.min.css"),
+				g.Attr("integrity", "sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"),
 				g.Attr("crossorigin", "anonymous"),
 			),
 			Link(
@@ -109,8 +110,9 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 				Href("manifest.webmanifest"),
 			),
 			Script(
-				Src("/assets/bootstrap-5.1.3/bootstrap.bundle.min.js"),
+				Src("/assets/bootstrap-5.3.0-alpha1/bootstrap.bundle.min.js"),
 				g.Attr("crossorigin", "anonymous"),
+				g.Attr("integrity", "sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"),
 				g.Attr("defer", "defer"),
 			),
 			Script(
@@ -123,12 +125,29 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 	})
 }
 
+// HTML5 document template.
+func HTML5Page(p c.HTML5Props) g.Node {
+	return Doctype(
+		HTML(g.If(p.Language != "", Lang(p.Language)),
+			g.Attr("data-bs-theme", "dark"),
+			Head(
+				Meta(Charset("utf-8")),
+				Meta(Name("viewport"), Content("width=device-width, initial-scale=1")),
+				TitleEl(g.Text(p.Title)),
+				g.If(p.Description != "", Meta(Name("description"), Content(p.Description))),
+				g.Group(p.Head),
+			),
+			Body(g.Group(p.Body)),
+		),
+	)
+}
+
 func Navbar(pageContext *PageContext) g.Node {
 	return Nav(
-		Class("container-xxl flex-wrap flex-md-nowrap navbar navbar-expand-lg navbar-dark bg-dark"),
+		Class("container-xxl navbar navbar-expand-lg bg-body-tertiary"),
 		hx.Boost(),
 		A(
-			Class("navbar-brand p-0 me-2"), Href("/"),
+			Class("navbar-brand ms-2"), Href("/"),
 			Img(
 				Src("assets/baralga_48.png"),
 			),

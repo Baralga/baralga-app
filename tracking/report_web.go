@@ -438,7 +438,7 @@ func (a *ReportWeb) reportProjectView(pageContext *shared.PageContext, view *rep
 			Class("table-responsive"),
 			Table(
 				ID("project-report"),
-				Class("table table-borderless table-striped"),
+				Class("table table-striped"),
 				THead(
 					Tr(
 						Th(g.Text("Project")),
@@ -471,7 +471,7 @@ func (a *ReportWeb) reportProjectView(pageContext *shared.PageContext, view *rep
 func reportByDayView(timeReports []*ActivityTimeReportItem) g.Node {
 	return Table(
 		ID("time-report-by-day"),
-		Class("table table-borderless table-striped"),
+		Class("table table-striped"),
 		THead(
 			Tr(
 				Th(g.Text("Day")),
@@ -501,7 +501,7 @@ func reportByDayView(timeReports []*ActivityTimeReportItem) g.Node {
 func reportByWeekView(timeReports []*ActivityTimeReportItem) g.Node {
 	return Table(
 		ID("time-report-by-week"),
-		Class("table table-borderless table-striped"),
+		Class("table table-striped"),
 		THead(
 			Tr(
 				Th(g.Text("Week")),
@@ -535,7 +535,7 @@ func reportByWeekView(timeReports []*ActivityTimeReportItem) g.Node {
 func reportByMonthView(timeReports []*ActivityTimeReportItem) g.Node {
 	return Table(
 		ID("time-report-by-month"),
-		Class("table table-borderless table-striped"),
+		Class("table table-striped"),
 		THead(
 			Tr(
 				Th(g.Text("Month")),
@@ -569,7 +569,7 @@ func reportByMonthView(timeReports []*ActivityTimeReportItem) g.Node {
 func reportByQuarterView(timeReports []*ActivityTimeReportItem) g.Node {
 	return Table(
 		ID("time-report-by-quarter"),
-		Class("table table-borderless table-striped"),
+		Class("table table-striped"),
 		THead(
 			Tr(
 				Th(g.Text("Quarter")),
@@ -632,7 +632,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 		Div(
 			Class("table-responsive-sm d-lg-none"),
 			Table(
-				Class("table table-borderless table-striped"),
+				Class("table table-striped"),
 				THead(
 					Tr(
 						Th(
@@ -708,7 +708,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 		Div(
 			Class("table-responsive-lg d-none d-lg-block"),
 			Table(
-				Class("table table-borderless table-striped"),
+				Class("table table-striped"),
 				THead(
 					Tr(
 						Th(
