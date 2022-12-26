@@ -11,7 +11,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
@@ -151,10 +151,9 @@ func Connect(dbURL string, maxConns int32) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	pgxConfig.LazyConnect = true
 	pgxConfig.MaxConns = maxConns
 
-	conn, err := pgxpool.ConnectConfig(context.Background(), pgxConfig)
+	conn, err := pgxpool.NewWithConfig(context.Background(), pgxConfig)
 	if err != nil {
 		return nil, err
 	}

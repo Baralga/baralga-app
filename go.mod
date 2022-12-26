@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/hellofresh/health-go/v4 v4.7.0
 	github.com/jackc/pgtype v1.13.0
-	github.com/jackc/pgx/v4 v4.17.2
+	github.com/jackc/pgx/v5 v5.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.8
 	github.com/maragudk/gomponents v0.20.0
@@ -72,7 +72,8 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/puddle v1.3.0 // indirect
+	github.com/jackc/pgx/v4 v4.17.2 // indirect
+	github.com/jackc/puddle/v2 v2.1.2 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
@@ -100,9 +101,10 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.11.1 // indirect
 	go.opentelemetry.io/otel/trace v1.11.1 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
