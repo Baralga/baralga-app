@@ -91,7 +91,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("/assets/bootstrap-icons-1.8.0/bootstrap-icons.css"),
+				Href("/assets/bootstrap-icons-1.10.2/bootstrap-icons.css"),
 				g.Attr("media", "print"),
 				g.Attr("onload", "this.media='all'"),
 				g.Attr("crossorigin", "anonymous"),
