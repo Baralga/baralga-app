@@ -20,16 +20,10 @@ func TestOrganizationRepository(t *testing.T) {
 
 	// Setup database
 	ctx := context.Background()
-	dbContainer, connPool, err := shared.SetupTestDatabase(ctx)
+	connPool, err := shared.SetupTestDatabase(ctx)
 	if err != nil {
 		t.Error(err)
 	}
-	defer func() {
-		err := dbContainer.Terminate(ctx)
-		if err != nil {
-			t.Log(err)
-		}
-	}()
 
 	organizationRepository := NewDbOrganizationRepository(connPool)
 	repositoryTxer := shared.NewDbRepositoryTxer(connPool)
