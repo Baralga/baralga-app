@@ -86,7 +86,7 @@ func insertSampleContent(ctx context.Context, connPool *pgxpool.Pool) error {
 	return err
 }
 
-func SetupTestDatabase(ctx context.Context) (*pgxpool.Pool, error) {
+func SetupTestDatabase(ctx context.Context) (func() error, *pgxpool.Pool, error) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not construct pool: %s", err)
@@ -113,7 +113,8 @@ func SetupTestDatabase(ctx context.Context) (*pgxpool.Pool, error) {
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	dbURI := fmt.Sprintf("postgres://postgres:postgres@localhost:%v/baralga", resource.GetPort("5432/tcp"))
-	if err := pool.Retry(func() error {
+
+	err = pool.Retry(func() error {
 		var err error
 
 		_, err = Connect(dbURI, 1)
@@ -121,18 +122,21 @@ func SetupTestDatabase(ctx context.Context) (*pgxpool.Pool, error) {
 			return err
 		}
 		return nil
-	}); err != nil {
-		return nil, err
+	})
+	if err != nil {
+		return nil, nil, err
 	}
 
 	connPool, err := Connect(dbURI, 1)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = insertSampleContent(ctx, connPool)
 
-	return connPool, err
+	return func() error {
+		return pool.Purge(resource)
+	}, connPool, err
 
 }
 

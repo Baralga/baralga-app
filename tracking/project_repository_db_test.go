@@ -21,10 +21,17 @@ func TestProjectRepository(t *testing.T) {
 
 	// Setup database
 	ctx := context.Background()
-	connPool, err := shared.SetupTestDatabase(ctx)
+	cleanupFunc, connPool, err := shared.SetupTestDatabase(ctx)
 	if err != nil {
 		t.Error(err)
 	}
+
+	defer func() {
+		err := cleanupFunc()
+		if err != nil {
+			t.Log(err)
+		}
+	}()
 
 	projectRepository := NewDbProjectRepository(connPool)
 	repositoryTxer := shared.NewDbRepositoryTxer(connPool)
@@ -144,10 +151,17 @@ func TestProjectRepositoryDeleteProject(t *testing.T) {
 
 	// Setup database
 	ctx := context.Background()
-	connPool, err := shared.SetupTestDatabase(ctx)
+	cleanupFunc, connPool, err := shared.SetupTestDatabase(ctx)
 	if err != nil {
 		t.Error(err)
 	}
+
+	defer func() {
+		err := cleanupFunc()
+		if err != nil {
+			t.Log(err)
+		}
+	}()
 
 	projectRepository := NewDbProjectRepository(connPool)
 	repositoryTxer := shared.NewDbRepositoryTxer(connPool)

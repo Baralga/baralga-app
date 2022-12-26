@@ -24,10 +24,17 @@ func TestActivityRepository(t *testing.T) {
 
 	// Setup database
 	ctx := context.Background()
-	connPool, err := shared.SetupTestDatabase(ctx)
+	cleanupFunc, connPool, err := shared.SetupTestDatabase(ctx)
 	if err != nil {
 		t.Error(err)
 	}
+
+	defer func() {
+		err := cleanupFunc()
+		if err != nil {
+			t.Log(err)
+		}
+	}()
 
 	activityRepository := NewDbActivityRepository(connPool)
 	repositoryTxer := shared.NewDbRepositoryTxer(connPool)
@@ -344,10 +351,17 @@ func TestActivityRepositoryReports(t *testing.T) {
 
 	// Setup database
 	ctx := context.Background()
-	connPool, err := shared.SetupTestDatabase(ctx)
+	cleanupFunc, connPool, err := shared.SetupTestDatabase(ctx)
 	if err != nil {
 		t.Error(err)
 	}
+
+	defer func() {
+		err := cleanupFunc()
+		if err != nil {
+			t.Log(err)
+		}
+	}()
 
 	err = insertSampleActivitiesForReports(ctx, connPool)
 	if err != nil {
