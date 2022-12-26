@@ -137,7 +137,6 @@ func SetupTestDatabase(ctx context.Context) (func() error, *pgxpool.Pool, error)
 	return func() error {
 		return pool.Purge(resource)
 	}, connPool, err
-
 }
 
 func Connect(dbURL string, maxConns int32) (*pgxpool.Pool, error) {
