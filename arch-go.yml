@@ -1,19 +1,22 @@
+version: 1
 dependenciesRules:
-  - package: "**.baralga.tracking.*"
-    shouldOnlyDependsOn:
-      - "**.baralga.shared.**"
-  - package: "**.baralga.auth.*"
-    shouldOnlyDependsOn:
-      - "**.baralga.user.**"
-      - "**.baralga.shared.**"
-  - package: "**.user.*"
-    shouldOnlyDependsOn:
-      - "**.baralga.shared.**"
-  - package: "**.baralga.*"
-    shouldNotContainStructs: true
-    shouldNotContainInterfaces: true
-    shouldOnlyDependsOn:
-      - "**.baralga.shared.**"
-      - "**.baralga.user.**"
-      - "**.baralga.tracking.**"
-      - "**.baralga.auth.**"
+- package: '**.baralga.tracking.*'
+  shouldOnlyDependsOn:
+    internal:
+    - '**.baralga.shared.**'
+- package: '**.baralga.auth.*'
+  shouldOnlyDependsOn:
+    internal:
+    - '**.baralga.user.**'
+    - '**.baralga.shared.**'
+- package: '**.user.*'
+  shouldOnlyDependsOn:
+    internal:
+    - '**.baralga.shared.**'
+- package: '**.baralga.*'
+  shouldOnlyDependsOn:
+    internal:
+    - '**.baralga.shared.**'
+    - '**.baralga.user.**'
+    - '**.baralga.tracking.**'
+    - '**.baralga.auth.**'
