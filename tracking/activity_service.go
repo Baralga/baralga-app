@@ -185,7 +185,10 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 
 	f := excelize.NewFile()
 	f.SetActiveSheet(0)
-	f.SetSheetName("Sheet1", "Activities")
+	err := f.SetSheetName("Sheet1", "Activities")
+	if err != nil {
+		return err
+	}
 
 	_ = f.SetCellValue("Activities", "A1", "Project")
 	_ = f.SetCellValue("Activities", "B1", "Date")
