@@ -26,7 +26,7 @@ require (
 	github.com/xuri/excelize/v2 v2.7.0
 	golang.org/x/crypto v0.5.0
 	golang.org/x/oauth2 v0.3.0
-	schneider.vip/problem v1.7.2
+	schneider.vip/problem v1.8.1
 )
 
 require (
