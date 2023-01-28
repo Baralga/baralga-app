@@ -27,6 +27,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.50.1
+          args: --timeout=5m
       - name: Run arch-go check
         working-directory: .
         run: make arch-go.check

@@ -96,6 +96,15 @@ BARALGA_GITHUBCLIENTSECRET=my***secret
 BARALGA_GITHUBREDIRECTURL=https://localhost:8080/github/callback
 ```
 
+## Migrate local Database
+Migrate your local database using the [migrate CLI](https://github.com/golang-migrate/migrate#cli-usage). Install the CLI, e.g. on Mac using `brew install golang-migrate`.
+
+Then run the migration locally with:
+```
+make migrate.up
+```
+
+
 
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FBaralga%2Fbaralga-app.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FBaralga%2Fbaralga-app?ref=badge_large)
