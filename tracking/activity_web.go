@@ -564,13 +564,11 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 	}
 
 	// prepare activities
-	var days []int
 	activitySumByDay := make(map[int]float64)
 	activitiesByDay := make(map[int][]*Activity)
 	dayFormattedByDay := make(map[int][]string)
 	for _, activity := range activitiesPage.Activities {
 		day := activity.Start.Day()
-		days = append(days, day)
 		dayFormattedByDay[day] = []string{
 			activity.Start.Format("Monday"),
 			time_utils.FormatDateDEShort(activity.Start),
@@ -589,7 +587,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 
 	today := time.Now().Day()
 
-	return g.Group(g.Map(days, func(i int) g.Node {
+	return g.Group(g.Map(dayNodes, func(i int) g.Node {
 		activities := activitiesByDay[i]
 		activityCardID := fmt.Sprintf("baralga__activity_card_%v", dayFormattedByDay[i][2])
 
