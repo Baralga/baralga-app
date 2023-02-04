@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -114,14 +113,7 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 }
 
 func registerHealthcheck(config *shared.Config, router *chi.Mux) {
-	h, _ := health.New(health.WithChecks(health.Config{
-		Name:      "http",
-		Timeout:   time.Second * 5,
-		SkipOnErr: true,
-		Check: func(ctx context.Context) error {
-			return nil
-		},
-	},
+	h, _ := health.New(health.WithChecks(
 		health.Config{
 			Name:      "db",
 			Timeout:   time.Second * 2,
