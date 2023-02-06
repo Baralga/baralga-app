@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -19,8 +18,8 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-http-utils/etag"
 	"github.com/gorilla/csrf"
-	"github.com/hellofresh/health-go/v4"
-	healthPgx4 "github.com/hellofresh/health-go/v4/checks/pgx4"
+	"github.com/hellofresh/health-go/v5"
+	healthPgx "github.com/hellofresh/health-go/v5/checks/pgx4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/unrolled/secure"
@@ -114,24 +113,17 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 }
 
 func registerHealthcheck(config *shared.Config, router *chi.Mux) {
-	h, _ := health.New(health.WithChecks(health.Config{
-		Name:      "http",
-		Timeout:   time.Second * 5,
-		SkipOnErr: true,
-		Check: func(ctx context.Context) error {
-			return nil
-		},
-	},
+	h, _ := health.New(health.WithChecks(
 		health.Config{
 			Name:      "db",
 			Timeout:   time.Second * 2,
 			SkipOnErr: false,
-			Check: healthPgx4.New(healthPgx4.Config{
+			Check: healthPgx.New(healthPgx.Config{
 				DSN: config.Db,
 			}),
 		},
 	))
-	router.Handle("/health", h.Handler())
+	router.Get("/health", h.HandlerFunc)
 }
 
 func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthController, authWeb *auth.AuthWeb, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
