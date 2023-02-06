@@ -19,7 +19,7 @@ import (
 	"github.com/go-http-utils/etag"
 	"github.com/gorilla/csrf"
 	"github.com/hellofresh/health-go/v5"
-	healthPgx4 "github.com/hellofresh/health-go/v5/checks/pgx4"
+	healthPgx "github.com/hellofresh/health-go/v5/checks/pgx4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/unrolled/secure"
@@ -118,12 +118,12 @@ func registerHealthcheck(config *shared.Config, router *chi.Mux) {
 			Name:      "db",
 			Timeout:   time.Second * 2,
 			SkipOnErr: false,
-			Check: healthPgx4.New(healthPgx4.Config{
+			Check: healthPgx.New(healthPgx.Config{
 				DSN: config.Db,
 			}),
 		},
 	))
-	router.Handle("/health", h.Handler())
+	router.Get("/health", h.HandlerFunc)
 }
 
 func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthController, authWeb *auth.AuthWeb, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
