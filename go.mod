@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/schema v1.2.0
-	github.com/hellofresh/health-go/v5 v5.0.0
+	github.com/hellofresh/health-go/v5 v5.1.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
