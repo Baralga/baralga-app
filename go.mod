@@ -21,7 +21,7 @@ require (
 	github.com/matryer/is v1.4.0
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pkg/errors v0.9.1
-	github.com/snabb/isoweek v1.0.1
+	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.13.0
 	github.com/xuri/excelize/v2 v2.7.0
 	golang.org/x/crypto v0.6.0
