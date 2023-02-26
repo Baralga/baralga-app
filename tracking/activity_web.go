@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
+	ghx "github.com/maragudk/gomponents-htmx"
 	. "github.com/maragudk/gomponents/html"
 	"github.com/pkg/errors"
 	"github.com/snabb/isoweek"
@@ -449,11 +450,11 @@ func TrackingPage(pageContext *shared.PageContext, formModel activityTrackFormMo
 						ID("baralga__main_content"),
 						Class("col-lg-8 col-sm-12 mb-2 order-2 order-lg-1 mt-lg-4 mt-2"),
 
-						hx.Target("#baralga__main_content"),
-						hx.Swap("innerHTML"),
+						ghx.Target("#baralga__main_content"),
+						ghx.Swap("innerHTML"),
 
-						hx.Trigger("baralga__activities-changed from:body"),
-						hx.Get("/"),
+						ghx.Trigger("baralga__activities-changed from:body"),
+						ghx.Get("/"),
 
 						ActivitiesInWeekView(filter, activitiesPage, projectsOfActivities),
 					),
@@ -513,10 +514,10 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			),
 			Div(
 				A(
-					hx.Target("#baralga__main_content_modal_content"),
-					hx.Trigger("click, keyup[altKey && shiftKey && key == 'P'] from:body"),
-					hx.Swap("outerHTML"),
-					hx.Get("/projects"),
+					ghx.Target("#baralga__main_content_modal_content"),
+					ghx.Trigger("click, keyup[altKey && shiftKey && key == 'P'] from:body"),
+					ghx.Swap("outerHTML"),
+					ghx.Get("/projects"),
 					Class("btn btn-outline-primary btn-sm ms-1"),
 					I(Class("bi-card-list")),
 					TitleAttr("Manage Projects"),
@@ -524,10 +525,10 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 			),
 			Div(
 				A(
-					hx.Target("#baralga__main_content_modal_content"),
-					hx.Trigger("click, keyup[altKey && shiftKey && key == 'N'] from:body"),
-					hx.Swap("outerHTML"),
-					hx.Get("/activities/new"),
+					ghx.Target("#baralga__main_content_modal_content"),
+					ghx.Trigger("click, keyup[altKey && shiftKey && key == 'N'] from:body"),
+					ghx.Swap("outerHTML"),
+					ghx.Get("/activities/new"),
 					Class("btn btn-outline-primary btn-sm ms-1"),
 					I(Class("bi-plus")),
 					TitleAttr("Add Activity"),
@@ -544,9 +545,9 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 				A(
 					Href("#"),
 					Class("info-link"),
-					hx.Target("#baralga__main_content_modal_content"),
-					hx.Swap("outerHTML"),
-					hx.Get("/activities/new"),
+					ghx.Target("#baralga__main_content_modal_content"),
+					ghx.Swap("outerHTML"),
+					ghx.Get("/activities/new"),
 					g.Text("here"),
 				),
 				g.Text("!"),
@@ -598,8 +599,8 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 			ID(activityCardID),
 			Class("card mb-4 me-1"),
 
-			hx.Target("this"),
-			hx.Swap("outerHTML"),
+			ghx.Target("this"),
+			ghx.Swap("outerHTML"),
 
 			Div(
 				Class("card-body position-relative p-2 pt-1"),
@@ -630,7 +631,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 				g.Group(g.Map(activities, func(activity *Activity) g.Node {
 					return Div(
 						Class("d-flex justify-content-between mb-2"),
-						hx.Target(fmt.Sprintf("#%v", activityCardID)),
+						ghx.Target(fmt.Sprintf("#%v", activityCardID)),
 						TitleAttr(activity.Description),
 						Span(
 							Class("flex-fill"),
@@ -646,9 +647,9 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 						),
 						Div(
 							A(
-								hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-								hx.Target("#baralga__main_content_modal_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+								ghx.Target("#baralga__main_content_modal_content"),
+								ghx.Swap("outerHTML"),
 
 								Class("btn btn-outline-secondary btn-sm"),
 								I(Class("bi-pen")),
@@ -706,8 +707,8 @@ func StartTimeInputView(formModel activityFormModel) g.Node {
 			ID("StartTime"),
 			Type("text"),
 			Name("StartTime"),
-			hx.Target("#activity_start_time"),
-			hx.Post("/activities/validate-start-time"),
+			ghx.Target("#activity_start_time"),
+			ghx.Post("/activities/validate-start-time"),
 			Value(formModel.StartTime),
 			Pattern("[0-9]{2}:[0-5][0-9]"),
 			MinLength("5"),
@@ -732,8 +733,8 @@ func EndTimeInputView(formModel activityFormModel) g.Node {
 			ID("EndTime"),
 			Type("text"),
 			Name("EndTime"),
-			hx.Target("#activity_end_time"),
-			hx.Post("/activities/validate-end-time"),
+			ghx.Target("#activity_end_time"),
+			ghx.Post("/activities/validate-end-time"),
 			Value(formModel.EndTime),
 			Pattern("[0-9]{2}:[0-5][0-9]"),
 			MinLength("5"),
@@ -752,10 +753,10 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 		Class("modal-content"),
 
 		g.If(formModel.ID == "",
-			hx.Post("/activities/new"),
+			ghx.Post("/activities/new"),
 		),
 		g.If(formModel.ID != "",
-			hx.Post(fmt.Sprintf("/activities/%v", formModel.ID)),
+			ghx.Post(fmt.Sprintf("/activities/%v", formModel.ID)),
 		),
 
 		Div(
@@ -882,17 +883,17 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 		Class("container p-3 rounded-3"),
 		StyleAttr("background-color: #14142B"),
 
-		hx.Target("#baralga__track_panel"),
-		hx.Swap("outerHTML"),
-		hx.Post("/activities/track"),
+		ghx.Target("#baralga__track_panel"),
+		ghx.Swap("outerHTML"),
+		ghx.Post("/activities/track"),
 
 		Input(
 			Type("hidden"),
 
-			hx.Target("#baralga__track_panel"),
-			hx.Swap("outerHTML"),
-			hx.Trigger("baralga__projects-changed from:body"),
-			hx.Post("/activities/track?action=reload"),
+			ghx.Target("#baralga__track_panel"),
+			ghx.Swap("outerHTML"),
+			ghx.Trigger("baralga__projects-changed from:body"),
+			ghx.Post("/activities/track?action=reload"),
 		),
 
 		Input(
@@ -905,10 +906,10 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 			Input(
 				Type("hidden"),
 
-				hx.Target("#baralga__track_panel"),
-				hx.Swap("outerHTML"),
-				hx.Trigger("every 60s"),
-				hx.Post("/activities/track?action=reload"),
+				ghx.Target("#baralga__track_panel"),
+				ghx.Swap("outerHTML"),
+				ghx.Trigger("every 60s"),
+				ghx.Post("/activities/track?action=reload"),
 			),
 		),
 

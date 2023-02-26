@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
+	ghx "github.com/maragudk/gomponents-htmx"
 	. "github.com/maragudk/gomponents/html"
 	"github.com/pkg/errors"
 	"schneider.vip/problem"
@@ -255,8 +256,8 @@ func ProjectsView(principal *shared.Principal, formModel projectFormModel, proje
 					return Div(
 						Class("card mt-2"),
 
-						hx.Target("this"),
-						hx.Swap("outerHTML"),
+						ghx.Target("this"),
+						ghx.Swap("outerHTML"),
 
 						Div(
 							Class("card-body"),
@@ -281,7 +282,7 @@ func ProjectsView(principal *shared.Principal, formModel projectFormModel, proje
 										principal.HasRole("ROLE_ADMIN"),
 										A(
 											hx.Confirm(fmt.Sprintf("Do you really want to archive project %v?", project.Title)),
-											hx.Get(fmt.Sprintf("/projects/%v/archive", project.ID)),
+											ghx.Get(fmt.Sprintf("/projects/%v/archive", project.ID)),
 											Class("btn btn-outline-secondary btn-sm ms-1"),
 											I(Class("bi-archive")),
 										),
@@ -300,9 +301,9 @@ func ProjectForm(formModel projectFormModel, errorMessage string) g.Node {
 	return FormEl(
 		ID("project_form"),
 		Class("mb-4 mt-2"),
-		hx.Post("/projects/new"),
-		hx.Target("#baralga__main_content_modal_content"),
-		hx.Swap("outerHTML"),
+		ghx.Post("/projects/new"),
+		ghx.Target("#baralga__main_content_modal_content"),
+		ghx.Swap("outerHTML"),
 
 		Input(
 			Type("hidden"),
