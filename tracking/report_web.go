@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	g "github.com/maragudk/gomponents"
+	ghx "github.com/maragudk/gomponents-htmx"
 	. "github.com/maragudk/gomponents/html"
 	"github.com/pkg/errors"
 )
@@ -102,20 +103,20 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 		ID("baralga__report_content"),
 		Class("container mt-lg-2"),
 
-		hx.Trigger("baralga__activities-changed from:body"),
-		hx.Get(reportHref(filter, view)),
-		hx.Target("#baralga__report_content"),
-		hx.Swap("outerHTML"),
+		ghx.Trigger("baralga__activities-changed from:body"),
+		ghx.Get(reportHref(filter, view)),
+		ghx.Target("#baralga__report_content"),
+		ghx.Swap("outerHTML"),
 
 		Div(
 			Class("row mb-2"),
 			Div(
 				Class("col-md-4 col-12 mt-2"),
 				Select(
-					hx.Get(fmt.Sprintf("/reports?c=%v", view.asParam())),
-					hx.PushURLTrue(),
-					hx.Target("#baralga__report_content"),
-					hx.Swap("outerHTML"),
+					ghx.Get(fmt.Sprintf("/reports?c=%v", view.asParam())),
+					ghx.PushURL("true"),
+					ghx.Target("#baralga__report_content"),
+					ghx.Swap("outerHTML"),
 
 					Name("t"),
 					Class("form-select"),
@@ -152,33 +153,33 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 					Class("btn-group"),
 					Role("group"),
 					A(
-						hx.Get(reportHref(previousFilter, view)),
-						hx.PushURLTrue(),
-						hx.Target("#baralga__report_content"),
-						hx.Trigger("click, keyup[shiftKey && key == 'ArrowLeft'] from:body"),
-						hx.Swap("outerHTML"),
+						ghx.Get(reportHref(previousFilter, view)),
+						ghx.PushURL("true"),
+						ghx.Target("#baralga__report_content"),
+						ghx.Trigger("click, keyup[shiftKey && key == 'ArrowLeft'] from:body"),
+						ghx.Swap("outerHTML"),
 
 						TitleAttr(fmt.Sprintf("Show previous actvities from %v", previousFilter.String())),
 						Class("btn btn-outline-primary"),
 						I(Class("bi-arrow-left")),
 					),
 					A(
-						hx.Get(reportHref(homeFilter, view)),
-						hx.PushURLTrue(),
-						hx.Target("#baralga__report_content"),
-						hx.Trigger("click, keyup[shiftKey && key == 'ArrowDown'] from:body"),
-						hx.Swap("outerHTML"),
+						ghx.Get(reportHref(homeFilter, view)),
+						ghx.PushURL("true"),
+						ghx.Target("#baralga__report_content"),
+						ghx.Trigger("click, keyup[shiftKey && key == 'ArrowDown'] from:body"),
+						ghx.Swap("outerHTML"),
 
 						TitleAttr(fmt.Sprintf("Show current actvities from %v", homeFilter.String())),
 						Class("btn btn-outline-primary"),
 						I(Class("bi-house-fill")),
 					),
 					A(
-						hx.Get(reportHref(nextFilter, view)),
-						hx.PushURLTrue(),
-						hx.Target("#baralga__report_content"),
-						hx.Trigger("click, keyup[shiftKey && key == 'ArrowRight'] from:body"),
-						hx.Swap("outerHTML"),
+						ghx.Get(reportHref(nextFilter, view)),
+						ghx.PushURL("true"),
+						ghx.Target("#baralga__report_content"),
+						ghx.Trigger("click, keyup[shiftKey && key == 'ArrowRight'] from:body"),
+						ghx.Swap("outerHTML"),
 
 						TitleAttr(fmt.Sprintf("Show next actvities from %v", nextFilter.String())),
 						Class("btn btn-outline-primary"),
@@ -227,10 +228,10 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 						g.If(view.main != "general",
 							g.Group([]g.Node{
 								Class("btn nav-link"),
-								hx.Get(reportHrefForView(filter, "general", "")),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForView(filter, "general", "")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 							}),
 						),
 						I(Class("bi-list me-2")),
@@ -243,10 +244,10 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 						g.If(view.main != "time",
 							g.Group([]g.Node{
 								Class("btn nav-link"),
-								hx.Get(reportHrefForView(filter, "time", "d")),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForView(filter, "time", "d")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 							}),
 						),
 						I(Class("bi-clock me-2")),
@@ -260,10 +261,10 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 						g.If(view.main != "project",
 							g.Group([]g.Node{
 								Class("btn nav-link"),
-								hx.Get(reportHrefForView(filter, "project", "d")),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForView(filter, "project", "d")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 							}),
 						),
 						I(Class("bi-pie-chart me-2")),
@@ -347,10 +348,10 @@ func (a *ReportWeb) reportTimeView(pageContext *shared.PageContext, view *report
 					g.If(view.sub != "d",
 						g.Group([]g.Node{
 							Class("nav-link"),
-							hx.Get(reportHrefForView(filter, "time", "d")),
-							hx.PushURLTrue(),
-							hx.Target("#baralga__report_content"),
-							hx.Swap("outerHTML"),
+							ghx.Get(reportHrefForView(filter, "time", "d")),
+							ghx.PushURL("true"),
+							ghx.Target("#baralga__report_content"),
+							ghx.Swap("outerHTML"),
 						}),
 					),
 					Type("button"),
@@ -364,10 +365,10 @@ func (a *ReportWeb) reportTimeView(pageContext *shared.PageContext, view *report
 						g.If(view.sub != "w",
 							g.Group([]g.Node{
 								Class("nav-link"),
-								hx.Get(reportHrefForView(filter, "time", "w")),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForView(filter, "time", "w")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 							}),
 						),
 						Type("button"),
@@ -382,10 +383,10 @@ func (a *ReportWeb) reportTimeView(pageContext *shared.PageContext, view *report
 						g.If(view.sub != "m",
 							g.Group([]g.Node{
 								Class("nav-link"),
-								hx.Get(reportHrefForView(filter, "time", "m")),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForView(filter, "time", "m")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 							}),
 						),
 						Type("button"),
@@ -400,10 +401,10 @@ func (a *ReportWeb) reportTimeView(pageContext *shared.PageContext, view *report
 						g.If(view.sub != "q",
 							g.Group([]g.Node{
 								Class("nav-link"),
-								hx.Get(reportHrefForView(filter, "time", "q")),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForView(filter, "time", "q")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 							}),
 						),
 						Type("button"),
@@ -451,8 +452,8 @@ func (a *ReportWeb) reportProjectView(pageContext *shared.PageContext, view *rep
 				TBody(
 					g.Group(g.Map(projectReports, func(activity *ActivityProjectReportItem) g.Node {
 						return Tr(
-							hx.Target("this"),
-							hx.Swap("outerHTML"),
+							ghx.Target("this"),
+							ghx.Swap("outerHTML"),
 
 							Td(g.Text(activity.ProjectTitle)),
 							Td(
@@ -637,20 +638,20 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 					Tr(
 						Th(
 							A(
-								hx.Get(reportHref(filter.WithSortToggle("project"), view)),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHref(filter.WithSortToggle("project"), view)),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 
 								g.Text("Project"),
 							),
 						),
 						Th(
 							A(
-								hx.Get(reportHref(filter.WithSortToggle("start"), view)),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHref(filter.WithSortToggle("start"), view)),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 
 								g.Text("Date"),
 							),
@@ -665,8 +666,8 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 				TBody(
 					g.Group(g.Map(activitiesPage.Activities, func(activity *Activity) g.Node {
 						return Tr(
-							hx.Target("this"),
-							hx.Swap("outerHTML"),
+							ghx.Target("this"),
+							ghx.Swap("outerHTML"),
 
 							TitleAttr(activity.Description),
 
@@ -679,9 +680,9 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							Td(
 								Class("text-end"),
 								A(
-									hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-									hx.Target("#baralga__main_content_modal_content"),
-									hx.Swap("outerHTML"),
+									ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+									ghx.Target("#baralga__main_content_modal_content"),
+									ghx.Swap("outerHTML"),
 
 									Class("btn btn-outline-secondary btn-sm"),
 									I(Class("bi-pen")),
@@ -713,20 +714,20 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 					Tr(
 						Th(
 							A(
-								hx.Get(reportHref(filter.WithSortToggle("project"), view)),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHref(filter.WithSortToggle("project"), view)),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 
 								g.Text("Project"),
 							),
 						),
 						Th(
 							A(
-								hx.Get(reportHref(filter.WithSortToggle("start"), view)),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHref(filter.WithSortToggle("start"), view)),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 
 								g.Text("Date"),
 							),
@@ -743,8 +744,8 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 				TBody(
 					g.Group(g.Map(activitiesPage.Activities, func(activity *Activity) g.Node {
 						return Tr(
-							hx.Target("this"),
-							hx.Swap("outerHTML"),
+							ghx.Target("this"),
+							ghx.Swap("outerHTML"),
 
 							TitleAttr(activity.Description),
 
@@ -759,9 +760,9 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							Td(
 								Class("text-end"),
 								A(
-									hx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-									hx.Target("#baralga__main_content_modal_content"),
-									hx.Swap("outerHTML"),
+									ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+									ghx.Target("#baralga__main_content_modal_content"),
+									ghx.Swap("outerHTML"),
 
 									Class("btn btn-outline-secondary btn-sm"),
 									I(Class("bi-pen")),
@@ -799,10 +800,10 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 								Class("page-link"),
 								Href(""),
 
-								hx.Get(reportHrefForPage(filter, view, activitiesPage.Page.Number-1)),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForPage(filter, view, activitiesPage.Page.Number-1)),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 
 								g.Raw("&laquo;"),
 							),
@@ -835,10 +836,10 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 										Class("page-link"),
 										Href(""),
 
-										hx.Get(reportHrefForPage(filter, view, pageIndex)),
-										hx.PushURLTrue(),
-										hx.Target("#baralga__report_content"),
-										hx.Swap("outerHTML"),
+										ghx.Get(reportHrefForPage(filter, view, pageIndex)),
+										ghx.PushURL("true"),
+										ghx.Target("#baralga__report_content"),
+										ghx.Swap("outerHTML"),
 
 										g.Textf("%v", pageIndex+1),
 									),
@@ -854,10 +855,10 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 								Class("page-link"),
 								Href(""),
 
-								hx.Get(reportHrefForPage(filter, view, activitiesPage.Page.Number+1)),
-								hx.PushURLTrue(),
-								hx.Target("#baralga__report_content"),
-								hx.Swap("outerHTML"),
+								ghx.Get(reportHrefForPage(filter, view, activitiesPage.Page.Number+1)),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
 
 								g.Raw("&raquo;"),
 							),

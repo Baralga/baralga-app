@@ -6,13 +6,13 @@ import (
 	"net/http"
 
 	"github.com/baralga/shared"
-	"github.com/baralga/shared/hx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
+	ghx "github.com/maragudk/gomponents-htmx"
 	. "github.com/maragudk/gomponents/html"
 	"github.com/pkg/errors"
 )
@@ -233,10 +233,10 @@ func SignupSuccess(formModel signupFormModel) g.Node {
 func (a *UserWeb) SignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
 	return FormEl(
 		ID("signup_form"),
-		hx.Post("/signup"),
+		ghx.Post("/signup"),
 
-		hx.Target("this"),
-		hx.Swap("outerHTML"),
+		ghx.Target("this"),
+		ghx.Swap("outerHTML"),
 
 		g.If(
 			errorMessage != "",
@@ -273,7 +273,7 @@ func (a *UserWeb) SignupForm(formModel signupFormModel, errorMessage string, fie
 			Class("form-floating mb-3"),
 			Input(
 				ID("email"),
-				hx.Post("/signup/validate"),
+				ghx.Post("/signup/validate"),
 				Required(),
 				Type("email"),
 				Name("EMail"),

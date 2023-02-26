@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/baralga/shared/hx"
 	g "github.com/maragudk/gomponents"
+	ghx "github.com/maragudk/gomponents-htmx"
 	c "github.com/maragudk/gomponents/components"
 	. "github.com/maragudk/gomponents/html"
 )
@@ -145,7 +145,7 @@ func HTML5Page(p c.HTML5Props) g.Node {
 func Navbar(pageContext *PageContext) g.Node {
 	return Nav(
 		Class("container-xxl navbar navbar-expand-lg bg-body-tertiary"),
-		hx.Boost(),
+		ghx.Boost(""),
 		A(
 			Class("navbar-brand ms-2"), Href("/"),
 			Img(
@@ -187,7 +187,7 @@ func Navbar(pageContext *PageContext) g.Node {
 						Li(
 							A(
 								Href("/logout"),
-								hx.Boost(),
+								ghx.Boost(""),
 								Class("dropdown-item"),
 								I(Class("bi-box-arrow-right me-2")),
 								TitleAttr(fmt.Sprintf("Sign out %v", pageContext.Principal.Name)),

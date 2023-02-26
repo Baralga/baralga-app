@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	g "github.com/maragudk/gomponents"
+	ghx "github.com/maragudk/gomponents-htmx"
 	. "github.com/maragudk/gomponents/html"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -399,7 +400,7 @@ func LoginForm(formModel loginFormModel, loginParams *loginParams) g.Node {
 				Class("col-4 text-center"),
 				A(
 					Href("/signup"),
-					hx.Boost(),
+					ghx.Boost(""),
 					Class("link-secondary"),
 					g.Text("Sign up here"),
 				),
