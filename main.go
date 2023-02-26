@@ -19,7 +19,7 @@ import (
 	"github.com/go-http-utils/etag"
 	"github.com/gorilla/csrf"
 	"github.com/hellofresh/health-go/v5"
-	healthPgx "github.com/hellofresh/health-go/v5/checks/pgx4"
+	healthPgx "github.com/hellofresh/health-go/v5/checks/pgx5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/unrolled/secure"

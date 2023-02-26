@@ -12,16 +12,16 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/schema v1.2.0
-	github.com/hellofresh/health-go/v5 v5.0.0
+	github.com/hellofresh/health-go/v5 v5.1.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.8
 	github.com/maragudk/gomponents v0.20.1
-	github.com/matryer/is v1.4.0
+	github.com/matryer/is v1.4.1
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pkg/errors v0.9.1
-	github.com/snabb/isoweek v1.0.1
+	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.13.0
 	github.com/xuri/excelize/v2 v2.7.0
 	golang.org/x/crypto v0.6.0
@@ -47,7 +47,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -83,7 +83,7 @@ require (
 	github.com/opencontainers/runc v1.1.4 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect
-	github.com/rogpeppe/go-internal v1.8.1 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -102,7 +102,7 @@ require (
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/api v0.110.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44 // indirect
+	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
