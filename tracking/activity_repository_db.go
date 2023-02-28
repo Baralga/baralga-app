@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/maps"
 )
 
 // DbUserRepository is a SQL database repository for users
@@ -364,10 +365,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 
 	}
 
-	projects := make([]*Project, 0, len(projectsById))
-	for _, project := range projectsById {
-		projects = append(projects, project)
-	}
+	projects := maps.Values(projectsById)
 
 	countParams := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	countFilter := ""
