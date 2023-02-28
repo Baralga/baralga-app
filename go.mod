@@ -14,10 +14,11 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/hellofresh/health-go/v5 v5.1.0
 	github.com/jackc/pgtype v1.14.0
-	github.com/jackc/pgx/v5 v5.3.0
+	github.com/jackc/pgx/v5 v5.3.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.8
 	github.com/maragudk/gomponents v0.20.1
+	github.com/maragudk/gomponents-htmx v0.2.0
 	github.com/matryer/is v1.4.1
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pkg/errors v0.9.1
@@ -75,7 +76,6 @@ require (
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
-	github.com/maragudk/gomponents-htmx v0.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
