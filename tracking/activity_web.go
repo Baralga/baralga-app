@@ -655,14 +655,14 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 								I(Class("bi-pen")),
 							),
 							A(
-								hx.Confirm(
+								ghx.Confirm(
 									fmt.Sprintf(
 										"Do you really want to delete the activity from %v on %v?",
 										time_utils.FormatTime(activity.Start),
 										activity.Start.Format("Monday"),
 									),
 								),
-								hx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
+								ghx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
 								Class("btn btn-outline-secondary btn-sm ms-1"),
 								I(Class("bi-trash2")),
 							),

@@ -3,19 +3,11 @@ package hx
 import (
 	"net/http"
 
-	g "github.com/maragudk/gomponents"
+	ghttp "github.com/maragudk/gomponents-htmx/http"
 )
 
-func Delete(action string) g.Node {
-	return g.Attr("hx-delete", action)
-}
-
-func Confirm(message string) g.Node {
-	return g.Attr("hx-confirm", message)
-}
-
 func IsHXRequest(r *http.Request) bool {
-	return r.Header.Get("HX-Request") == "true"
+	return ghttp.IsRequest(r.Header)
 }
 
 func IsHXTargetRequest(r *http.Request, target string) bool {

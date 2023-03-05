@@ -272,8 +272,8 @@ func ProjectsView(principal *shared.Principal, formModel projectFormModel, proje
 									g.If(
 										principal.HasRole("ROLE_ADMIN"),
 										A(
-											hx.Confirm(fmt.Sprintf("Do you really want to delete project %v?", project.Title)),
-											hx.Delete(fmt.Sprintf("/api/projects/%v", project.ID)),
+											ghx.Confirm(fmt.Sprintf("Do you really want to delete project %v?", project.Title)),
+											ghx.Delete(fmt.Sprintf("/api/projects/%v", project.ID)),
 											Class("btn btn-outline-secondary btn-sm ms-1"),
 											I(Class("bi-trash2")),
 										),
@@ -281,7 +281,7 @@ func ProjectsView(principal *shared.Principal, formModel projectFormModel, proje
 									g.If(
 										principal.HasRole("ROLE_ADMIN"),
 										A(
-											hx.Confirm(fmt.Sprintf("Do you really want to archive project %v?", project.Title)),
+											ghx.Confirm(fmt.Sprintf("Do you really want to archive project %v?", project.Title)),
 											ghx.Get(fmt.Sprintf("/projects/%v/archive", project.ID)),
 											Class("btn btn-outline-secondary btn-sm ms-1"),
 											I(Class("bi-archive")),
