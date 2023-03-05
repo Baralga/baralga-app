@@ -18,13 +18,15 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.8
 	github.com/maragudk/gomponents v0.20.1
+	github.com/maragudk/gomponents-htmx v0.2.0
 	github.com/matryer/is v1.4.1
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pkg/errors v0.9.1
 	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.13.0
 	github.com/xuri/excelize/v2 v2.7.0
-	golang.org/x/crypto v0.6.0
+	golang.org/x/crypto v0.7.0
+	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 	golang.org/x/oauth2 v0.5.0
 	schneider.vip/problem v1.8.1
 )
@@ -75,7 +77,6 @@ require (
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
-	github.com/maragudk/gomponents-htmx v0.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -95,12 +96,11 @@ require (
 	go.opentelemetry.io/otel v1.13.0 // indirect
 	go.opentelemetry.io/otel/trace v1.13.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/api v0.110.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
