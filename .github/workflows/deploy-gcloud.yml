@@ -50,4 +50,5 @@ jobs:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy app.yaml dispatch.yaml --quiet
+          args: cp app.yaml gs://baralga.appspot.com/
+          cli: gsutil
