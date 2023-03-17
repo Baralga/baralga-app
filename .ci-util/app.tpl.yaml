@@ -1,5 +1,5 @@
-runtime: go119
-service: default
+runtime: go120
+service: production
 
 handlers:
 - url: /api/*

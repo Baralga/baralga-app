@@ -5,4 +5,4 @@ dispatch:
 
   # Default module serves simple hostname request.
   - url: "*/*"
-    service: default
+    service: production
