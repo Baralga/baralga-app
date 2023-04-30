@@ -23,14 +23,24 @@ jobs:
       - name: Set up arch-go
         working-directory: .
         run: make arch-go.install
-      - name: Run Go linter
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.50.1
-          args: --timeout=5m
       - name: Run arch-go check
         working-directory: .
         run: make arch-go.check
       - name: Test
         working-directory: .
         run: make test
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: false
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.50.1
+          args: --timeout=5m
