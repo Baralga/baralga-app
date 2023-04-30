@@ -418,7 +418,7 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		}
 
 		d := 24 * time.Hour
-		start.Truncate(d)
+		start = start.Truncate(d)
 
 		startQuarterOfYear, err := strconv.Atoi(valueParts[1])
 		if err != nil {
