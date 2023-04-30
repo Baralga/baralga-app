@@ -170,7 +170,7 @@ func registerWebRoutes(config *shared.Config, router *chi.Mux, authController *a
 		FrameDeny:             true,
 		ContentTypeNosniff:    true,
 		BrowserXssFilter:      true,
-		ContentSecurityPolicy: "script-src 'self'; base-uri 'self'; object-src 'none';",
+		ContentSecurityPolicy: "base-uri 'self'; object-src 'none';",
 		ReferrerPolicy:        "same-origin",
 		PermissionsPolicy:     "fullscreen=*",
 	})
