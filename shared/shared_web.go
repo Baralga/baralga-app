@@ -82,6 +82,10 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 		Language: "en",
 		Head: []g.Node{
 			Meta(
+				g.Attr("name", "description"),
+				g.Attr("content", "Simple and lightweight time tracking for individuals and teams, for the cloud in the cloud."),
+			),
+			Meta(
 				g.Attr("color-scheme", "light dark"),
 			),
 			Link(
