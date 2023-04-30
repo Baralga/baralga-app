@@ -1,7 +1,16 @@
 name: lint
 
 on:
-  workflow_call:
+  push:
+    tags:
+      - v*
+    branches:
+      - master
+      - main
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   golangci:
