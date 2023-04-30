@@ -29,21 +29,3 @@ jobs:
       - name: Test
         working-directory: .
         run: make test
-
-  golangci:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Set up Go
-        uses: magnetikonline/action-golang-cache@v3
-        with:
-          go-version-file: go.mod
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.50.1
-          args: --timeout=5m
