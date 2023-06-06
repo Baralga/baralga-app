@@ -90,8 +90,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("/assets/bootstrap-5.3.0-alpha3/bootstrap.min.css"),
-				g.Attr("integrity", "sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"),
+				Href("/assets/bootstrap-5.3.0/bootstrap.min.css"),
 				g.Attr("crossorigin", "anonymous"),
 			),
 			Link(
