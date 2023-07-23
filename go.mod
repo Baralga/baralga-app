@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/schema v1.2.0
-	github.com/hellofresh/health-go/v5 v5.2.0
+	github.com/hellofresh/health-go/v5 v5.3.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v5 v5.4.2
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -109,7 +109,7 @@ require (
 	google.golang.org/api v0.120.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
-	google.golang.org/grpc v1.56.0 // indirect
+	google.golang.org/grpc v1.56.1 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
