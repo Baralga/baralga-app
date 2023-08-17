@@ -161,12 +161,12 @@ func (a *AuthWeb) GithubCallbackHandler() http.Handler {
 
 func (a *AuthWeb) GoogleLoginHandler() http.Handler {
 	stateConfig, oauth2Config := a.googleAuthConfig()
-	return github.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))
+	return google.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))
 }
 
 func (a *AuthWeb) GoogleCallbackHandler() http.Handler {
 	stateConfig, oauth2Config := a.googleAuthConfig()
-	return github.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, a.IssueCookieForGoogle(), HandleTokenFailure()))
+	return google.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, a.IssueCookieForGoogle(), HandleTokenFailure()))
 }
 
 func HandleTokenFailure() http.Handler {
