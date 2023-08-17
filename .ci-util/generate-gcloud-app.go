@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
 )
 
 func main() {
-	data, err := ioutil.ReadFile(".ci-util/app.tpl.yaml")
+	data, err := os.ReadFile(".ci-util/app.tpl.yaml")
 	if err != nil {
 		fmt.Println("File reading error", err)
 		return
