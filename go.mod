@@ -18,7 +18,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.13
 	github.com/maragudk/gomponents v0.20.1
-	github.com/maragudk/gomponents-htmx v0.3.0
+	github.com/maragudk/gomponents-htmx v0.4.0
 	github.com/matryer/is v1.4.1
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
