@@ -25,9 +25,9 @@ require (
 	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.13.0
 	github.com/xuri/excelize/v2 v2.8.0
-	golang.org/x/crypto v0.13.0
+	golang.org/x/crypto v0.14.0
 	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
-	golang.org/x/oauth2 v0.12.0
+	golang.org/x/oauth2 v0.13.0
 	schneider.vip/problem v1.8.1
 )
 
@@ -101,9 +101,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/net v0.16.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/api v0.137.0 // indirect
