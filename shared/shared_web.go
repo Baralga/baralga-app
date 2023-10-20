@@ -90,7 +90,8 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 			),
 			Link(
 				Rel("stylesheet"),
-				Href("/assets/bootstrap-5.3.1/bootstrap.min.css"),
+				Href("/assets/bootstrap-5.3.2/bootstrap.min.css"),
+				g.Attr("integrity", "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"),
 				g.Attr("crossorigin", "anonymous"),
 			),
 			Link(
@@ -113,13 +114,13 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 				Href("manifest.webmanifest"),
 			),
 			Script(
-				Src("/assets/bootstrap-5.3.1/bootstrap.bundle.min.js"),
+				Src("/assets/bootstrap-5.3.2/bootstrap.bundle.min.js"),
 				g.Attr("crossorigin", "anonymous"),
-				g.Attr("integrity", "sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"),
+				g.Attr("integrity", "sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"),
 				g.Attr("defer", "defer"),
 			),
 			Script(
-				Src("/assets/htmx-1.9.4/htmx.min.js"),
+				Src("/assets/htmx-1.9.6/htmx.min.js"),
 				g.Attr("crossorigin", "anonymous"),
 				g.Attr("defer", "defer"),
 			),
