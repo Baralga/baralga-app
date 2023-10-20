@@ -940,6 +940,8 @@ github.com/lestrrat-go/jwx/v2 v2.0.12 h1:3d589+5w/b9b7S3DneICPW16AqTyYXB7VRjgluS
 github.com/lestrrat-go/jwx/v2 v2.0.12/go.mod h1:Mq4KN1mM7bp+5z/W5HS8aCNs5RKZ911G/0y2qUjAQuQ=
 github.com/lestrrat-go/jwx/v2 v2.0.13 h1:XdxzJbudGaHEoNmyJACAT8aFCB+DmviiaiMoZwuJoUo=
 github.com/lestrrat-go/jwx/v2 v2.0.13/go.mod h1:UzXMzcV99p9/xe1JsIb336NJDGXLsleR+Qj3ucEDtfI=
+github.com/lestrrat-go/jwx/v2 v2.0.15 h1:XvR2lQdX+mZechmqWxqQb2foU3hgAn5+Rj0ICa0I6sU=
+github.com/lestrrat-go/jwx/v2 v2.0.15/go.mod h1:jBHyESp4e7QxfERM0UKkQ80/94paqNIEcdEfiUYz5zE=
 github.com/lestrrat-go/option v1.0.0/go.mod h1:5ZHFbivi4xwXxhxY9XHDe2FHo6/Z7WWmtT7T5nBBp3I=
 github.com/lestrrat-go/option v1.0.1 h1:oAzP2fvZGQKWkvHa1/SAcFolBEca1oN+mQ7eooNBEYU=
 github.com/lestrrat-go/option v1.0.1/go.mod h1:5ZHFbivi4xwXxhxY9XHDe2FHo6/Z7WWmtT7T5nBBp3I=
@@ -1793,6 +1795,7 @@ golang.org/x/term v0.7.0/go.mod h1:P32HKFT3hSsZrRxla30E9HqToFYAQPCMs/zFMBUFqPY=
 golang.org/x/term v0.8.0/go.mod h1:xPskH00ivmX89bAKVGSKKtLOWNx2+17Eiy94tnKShWo=
 golang.org/x/term v0.11.0/go.mod h1:zC9APTIj3jG3FdV/Ons+XE1riIZXG4aZ4GTHiPZJPIU=
 golang.org/x/term v0.12.0/go.mod h1:owVbMEjm3cBLCHdkQu9b1opXd4ETQWc3BhuQGKgXgvU=
+golang.org/x/term v0.13.0/go.mod h1:LTmsnFJwVN6bCy1rVCoS+qHT1HhALEFxKncY3WNNh4U=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
