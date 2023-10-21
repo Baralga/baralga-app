@@ -964,7 +964,7 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 				g.If(formModel.Action == "running",
 					Button(
 						Type("submit"),
-						Class("btn btn-danger btn-lg bg-danger progress-bar progress-bar-striped progress-bar-animated"),
+						Class("btn btn-danger btn-lg bg-danger progress-bar-striped progress-bar-animated"),
 						StyleAttr("width: 100%"),
 						Alt("Stop tracking"),
 						I(Class("bi-stop")),
