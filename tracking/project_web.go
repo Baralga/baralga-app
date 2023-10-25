@@ -43,6 +43,9 @@ func (a *ProjectWeb) RegisterProtected(r chi.Router) {
 	r.Get("/projects", a.HandleProjectsPage())
 	r.Post("/projects/new", a.HandleProjectForm())
 	r.Get("/projects/{project-id}/archive", a.HandleArchiveProject())
+	r.Get("/projects/{project-id}", a.HandleProjectView())
+	r.Get("/projects/{project-id}/edit", a.HandleProjectEdit())
+	r.Post("/projects/{project-id}/edit", a.HandleProjectEditForm())
 }
 
 func (a *ProjectWeb) RegisterOpen(r chi.Router) {
@@ -84,6 +87,125 @@ func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
 		formModel.CSRFToken = csrf.Token(r)
 
 		shared.RenderHTML(w, ProjectsView(principal, formModel, projects))
+	}
+}
+
+func (a *ProjectWeb) HandleProjectView() http.HandlerFunc {
+	isProduction := a.config.IsProduction()
+	projectRepository := a.projectRepository
+	return func(w http.ResponseWriter, r *http.Request) {
+		projectIDParam := chi.URLParam(r, "project-id")
+		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+
+		projectID, err := uuid.Parse(projectIDParam)
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+
+		project, err := projectRepository.FindProjectByID(r.Context(), principal.OrganizationID, projectID)
+		if errors.Is(err, ErrProjectNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		shared.RenderHTML(w, ProjectRow(principal, project))
+
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+	}
+}
+
+func (a *ProjectWeb) HandleProjectEdit() http.HandlerFunc {
+	isProduction := a.config.IsProduction()
+	projectRepository := a.projectRepository
+	return func(w http.ResponseWriter, r *http.Request) {
+		projectIDParam := chi.URLParam(r, "project-id")
+		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+
+		projectID, err := uuid.Parse(projectIDParam)
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+
+		if !principal.HasRole("ROLE_ADMIN") {
+			http.Error(w, "No permission.", http.StatusForbidden)
+			return
+		}
+
+		project, err := projectRepository.FindProjectByID(r.Context(), principal.OrganizationID, projectID)
+		if errors.Is(err, ErrProjectNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		formModel := mapProjectToForm(*project)
+		formModel.CSRFToken = csrf.Token(r)
+
+		shared.RenderHTML(w, ProjectEditForm(formModel))
+
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+	}
+}
+
+func (a *ProjectWeb) HandleProjectEditForm() http.HandlerFunc {
+	isProduction := a.config.IsProduction()
+	validator := validator.New()
+	projectService := a.projectService
+	return func(w http.ResponseWriter, r *http.Request) {
+		projectIDParam := chi.URLParam(r, "project-id")
+		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+
+		projectID, err := uuid.Parse(projectIDParam)
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+
+		if !principal.HasRole("ROLE_ADMIN") {
+			http.Error(w, "No permission.", http.StatusForbidden)
+			return
+		}
+
+		err = r.ParseForm()
+		if err != nil {
+			shared.RenderHTML(w, ProjectEditForm(projectFormModel{}))
+			return
+		}
+
+		var formModel projectFormModel
+		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
+		if err != nil {
+			shared.RenderHTML(w, ProjectEditForm(formModel))
+			return
+		}
+
+		err = validator.Struct(formModel)
+		if err != nil {
+			shared.RenderHTML(w, ProjectEditForm(formModel))
+			return
+		}
+
+		projectToUpdate := mapFormToProject(formModel)
+		projectToUpdate.ID = projectID
+		_, err = projectService.UpdateProject(r.Context(), principal.OrganizationID, &projectToUpdate)
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
+
+		shared.RenderHTML(w, ProjectRow(principal, &projectToUpdate))
+
+		if err != nil {
+			shared.RenderProblemHTML(w, isProduction, err)
+			return
+		}
 	}
 }
 
@@ -249,62 +371,106 @@ func ProjectsView(principal *shared.Principal, formModel projectFormModel, proje
 			Class("modal-body"),
 			g.If(
 				principal.HasRole("ROLE_ADMIN"),
-				ProjectForm(formModel, ""),
+				ProjectNewForm(formModel, ""),
 			),
 			g.Group(
 				g.Map(projects.Projects, func(project *Project) g.Node {
-					return Div(
-						Class("card mt-2"),
-
-						ghx.Target("this"),
-						ghx.Swap("outerHTML"),
-
-						Div(
-							Class("card-body"),
-							H5(
-								Class("card-title mt-2"),
-								Div(
-									Class("d-flex justify-content-between mb-2"),
-									Span(
-										Class("flex-grow-1"),
-										g.Text(project.Title),
-									),
-									g.If(
-										principal.HasRole("ROLE_ADMIN"),
-										A(
-											ghx.Confirm(fmt.Sprintf("Do you really want to delete project %v?", project.Title)),
-											ghx.Delete(fmt.Sprintf("/api/projects/%v", project.ID)),
-											Class("btn btn-outline-secondary btn-sm ms-1"),
-											I(Class("bi-trash2")),
-										),
-									),
-									g.If(
-										principal.HasRole("ROLE_ADMIN"),
-										A(
-											ghx.Confirm(fmt.Sprintf("Do you really want to archive project %v?", project.Title)),
-											ghx.Get(fmt.Sprintf("/projects/%v/archive", project.ID)),
-											Class("btn btn-outline-secondary btn-sm ms-1"),
-											I(Class("bi-archive")),
-										),
-									),
-								),
-							),
-						),
-					)
+					return ProjectRow(principal, project)
 				}),
 			),
 		),
 	)
 }
 
-func ProjectForm(formModel projectFormModel, errorMessage string) g.Node {
-	return FormEl(
-		ID("project_form"),
-		Class("mb-4 mt-2"),
-		ghx.Post("/projects/new"),
-		ghx.Target("#baralga__main_content_modal_content"),
+func ProjectRow(principal *shared.Principal, project *Project) g.Node {
+	return Div(
+		Class("card mt-2"),
+
+		ghx.Target("this"),
 		ghx.Swap("outerHTML"),
 
+		Div(
+			Class("card-body"),
+			H5(
+				Class("card-title mt-2"),
+				Div(
+					Class("d-flex justify-content-between mb-2"),
+					Span(
+						Class("flex-grow-1"),
+						g.Text(project.Title),
+					),
+					g.If(
+						principal.HasRole("ROLE_ADMIN"),
+						A(
+							ghx.Get(fmt.Sprintf("/projects/%v/edit", project.ID)),
+							Class("btn btn-outline-secondary btn-sm ms-1"),
+							I(Class("bi-pen")),
+						),
+					),
+					g.If(
+						principal.HasRole("ROLE_ADMIN"),
+						A(
+							ghx.Confirm(fmt.Sprintf("Do you really want to delete project %v?", project.Title)),
+							ghx.Delete(fmt.Sprintf("/api/projects/%v", project.ID)),
+							Class("btn btn-outline-secondary btn-sm ms-1"),
+							I(Class("bi-trash2")),
+						),
+					),
+					g.If(
+						principal.HasRole("ROLE_ADMIN"),
+						A(
+							ghx.Confirm(fmt.Sprintf("Do you really want to archive project %v?", project.Title)),
+							ghx.Get(fmt.Sprintf("/projects/%v/archive", project.ID)),
+							Class("btn btn-outline-secondary btn-sm ms-1"),
+							I(Class("bi-archive")),
+						),
+					),
+				),
+			),
+		),
+	)
+}
+
+func ProjectEditForm(formModel projectFormModel) g.Node {
+	return ProjectForm(formModel, true, "")
+}
+
+func ProjectNewForm(formModel projectFormModel, errorMessage string) g.Node {
+	return ProjectForm(formModel, false, errorMessage)
+}
+
+func ProjectForm(formModel projectFormModel, editMode bool, errorMessage string) g.Node {
+	return FormEl(
+		Class("mb-4 mt-2"),
+		g.If(
+			!editMode,
+			g.Group(
+				[]g.Node{
+					ID("project_form_new"),
+					ghx.Post("/projects/new"),
+					ghx.Target("#baralga__main_content_modal_content"),
+				},
+			),
+		),
+		g.If(
+			editMode,
+			g.Group(
+				[]g.Node{
+					ID(fmt.Sprintf("project_form_edit_%s", formModel.ID)),
+					ghx.Post(fmt.Sprintf("/projects/%s/edit", formModel.ID)),
+					ghx.Target("this"),
+				},
+			),
+		),
+		ghx.Swap("outerHTML"),
+
+		g.If(formModel.ID != "",
+			Input(
+				Type("hidden"),
+				Name("ID"),
+				Value(formModel.ID),
+			),
+		),
 		Input(
 			Type("hidden"),
 			Name("CSRFToken"),
@@ -324,11 +490,34 @@ func ProjectForm(formModel projectFormModel, errorMessage string) g.Node {
 				Class("form-control"),
 				g.Attr("placeholder", "My new Project"),
 			),
-			Button(
-				Class("btn btn-outline-primary"),
-				g.Attr("for", "ProjectTitle"),
-				TitleAttr("Add Project"),
-				I(Class("bi-plus")),
+			g.If(
+				editMode,
+				g.Group(
+					[]g.Node{
+						Button(
+							Class("btn btn-outline-primary"),
+							g.Attr("for", "ProjectTitle"),
+							TitleAttr("Update Project"),
+							I(Class("bi-save")),
+						),
+						Button(
+							Class("btn btn-outline-secondary"),
+							g.Attr("for", "ProjectTitle"),
+							TitleAttr("Cancel Edit"),
+							ghx.Get(fmt.Sprintf("/projects/%s", formModel.ID)),
+							I(Class("bi-x")),
+						),
+					},
+				),
+			),
+			g.If(
+				!editMode,
+				Button(
+					Class("btn btn-outline-primary"),
+					g.Attr("for", "ProjectTitle"),
+					TitleAttr("Add Project"),
+					I(Class("bi-plus")),
+				),
 			),
 		),
 	)
@@ -338,5 +527,12 @@ func mapFormToProject(projectFormModel projectFormModel) Project {
 	return Project{
 		Title:  projectFormModel.Title,
 		Active: true,
+	}
+}
+
+func mapProjectToForm(project Project) projectFormModel {
+	return projectFormModel{
+		ID:    project.ID.String(),
+		Title: project.Title,
 	}
 }

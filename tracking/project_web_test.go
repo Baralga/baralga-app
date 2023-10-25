@@ -227,3 +227,129 @@ func TestHandleArchiveProjectAsUser(t *testing.T) {
 	w.HandleArchiveProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 }
+
+func TestHandleProjectViewAsUser(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &ProjectWeb{
+		config:            &shared.Config{},
+		projectRepository: NewInMemProjectRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s", shared.ProjectIDSample.String()), nil)
+	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleProjectView()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "card"))
+}
+
+func TestHandleProjectEditAsUser(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &ProjectWeb{
+		config:            &shared.Config{},
+		projectRepository: NewInMemProjectRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
+	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleProjectEdit()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
+}
+
+func TestHandleProjectEditAsAdmin(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &ProjectWeb{
+		config:            &shared.Config{},
+		projectRepository: NewInMemProjectRepository(),
+	}
+
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
+	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+		Username: "admin",
+		Roles:    []string{"ROLE_ADMIN"},
+	}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleProjectEdit()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "form"))
+}
+
+func TestHandleProjectEditFormAsUser(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	a := &ProjectWeb{
+		config:            &shared.Config{},
+		projectRepository: NewInMemProjectRepository(),
+	}
+
+	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
+	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleProjectEditForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
+}
+
+func TestHandleProjectEditFormAsAdmin(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	projectRepository := NewInMemProjectRepository()
+	a := &ProjectWeb{
+		config:            &shared.Config{},
+		projectRepository: projectRepository,
+		projectService: &ProjectService{
+			repositoryTxer:    shared.NewInMemRepositoryTxer(),
+			projectRepository: projectRepository,
+		},
+	}
+
+	data := url.Values{}
+	data["ID"] = []string{shared.ProjectIDSample.String()}
+	data["Title"] = []string{"My new Title!"}
+
+	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+		Username: "admin",
+		Roles:    []string{"ROLE_ADMIN"},
+	}))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+	a.HandleProjectEditForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "card"))
+}
