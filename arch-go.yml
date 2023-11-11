@@ -9,6 +9,15 @@ dependenciesRules:
   shouldOnlyDependsOn:
     internal:
     - '**.baralga.shared.**'
+- package: '**.tracking.*'
+  shouldOnlyDependsOn:
+    internal:
+    - '**.baralga.shared.**'
+    - '**.baralga.tracking.**'
+- package: '**.shared.*'
+  shouldOnlyDependsOn:
+    internal:
+    - '**.baralga.shared.**'
 - package: '**.baralga.*'
   shouldOnlyDependsOn:
     internal:
