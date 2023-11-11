@@ -5,7 +5,7 @@ import (
 
 	"github.com/baralga/shared"
 	"github.com/baralga/shared/paged"
-	time_utils "github.com/baralga/shared/time"
+	time_utils "github.com/baralga/tracking/time"
 	"github.com/google/uuid"
 )
 

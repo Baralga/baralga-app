@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/baralga/shared/paged"
-	time_utils "github.com/baralga/shared/time"
+	time_utils "github.com/baralga/tracking/time"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )

@@ -9,7 +9,7 @@ import (
 	"github.com/baralga/shared"
 	"github.com/baralga/shared/hx"
 	"github.com/baralga/shared/paged"
-	time_utils "github.com/baralga/shared/time"
+	time_utils "github.com/baralga/tracking/time"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	g "github.com/maragudk/gomponents"
