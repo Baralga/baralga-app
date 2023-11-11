@@ -14,7 +14,7 @@ linter:
 	golangci-lint run
 
 arch-go.install:
-	go install github.com/fdaines/arch-go@v1.0.2
+	go install github.com/fdaines/arch-go@v1.4.2
 
 arch-go.check:
 	arch-go --verbose

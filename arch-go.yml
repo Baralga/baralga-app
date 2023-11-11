@@ -1,9 +1,5 @@
 version: 1
 dependenciesRules:
-- package: '**.baralga.tracking.*'
-  shouldOnlyDependsOn:
-    internal:
-    - '**.baralga.shared.**'
 - package: '**.baralga.auth.*'
   shouldOnlyDependsOn:
     internal:
