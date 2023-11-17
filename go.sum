@@ -161,6 +161,8 @@ github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+l
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
 github.com/hellofresh/health-go/v5 v5.5.0 h1:N6zl1kOTTRsn26Bvo0KLTFSrK3iBOekhCLj3jbP9brI=
 github.com/hellofresh/health-go/v5 v5.5.0/go.mod h1:+eIMwQtFWKlrl9kE+eLeK//f97xAewFg2pP1U1v+Svg=
+github.com/hellofresh/health-go/v5 v5.5.1 h1:QVGiq5Amv73HMlVh/KgrB3OqxZ+wSUpZKiOrIs5mNco=
+github.com/hellofresh/health-go/v5 v5.5.1/go.mod h1:GutnYy+rj2sZsyArSSt5VhfHP3FH8tiZ2tpKLOY+/0M=
 github.com/imdario/mergo v0.3.16 h1:wwQJbIsHYGMUyLSPrEq1CT16AhnhNJQ51+4fdHUnCl4=
 github.com/imdario/mergo v0.3.16/go.mod h1:WBLT9ZmE3lPoWsEzCh9LPo3TiwVN+ZKEjmz+hD27ysY=
 github.com/jackc/chunkreader v1.0.0/go.mod h1:RT6O25fNZIuasFJRyZ4R/Y2BbhasbmZXF9QQ7T3kePo=
