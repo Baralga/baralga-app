@@ -590,3 +590,5 @@ honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWh
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
 schneider.vip/problem v1.8.1 h1:oAgLMu286aNHgvjuoR1PowYx+7hyBUjyzbrFPR1dEMI=
 schneider.vip/problem v1.8.1/go.mod h1:6hLRfO1e1MQWdG23Kl5b3Yp5FSexE+YiGVqCkAp3HUQ=
+schneider.vip/problem v1.9.0 h1:oqg9k40H30FbQYeg5jjmo/u8Qy47Y5MBgm2JHFZajsc=
+schneider.vip/problem v1.9.0/go.mod h1:6hLRfO1e1MQWdG23Kl5b3Yp5FSexE+YiGVqCkAp3HUQ=
