@@ -67,6 +67,8 @@ github.com/go-chi/jwtauth/v5 v5.1.1 h1:Pjixqu5YkjE9sCLpzE01L0Q4sQzJIPdo7uz9r8ftp
 github.com/go-chi/jwtauth/v5 v5.1.1/go.mod h1:CYP1WSbzD4MPuKCr537EM3kfFhSQgpUEtMJFuYJjqWU=
 github.com/go-chi/jwtauth/v5 v5.2.0 h1:rw2wRNY6QHxyjYhoZYrQ4IeXVpPeun9nCZ9DBItDFPc=
 github.com/go-chi/jwtauth/v5 v5.2.0/go.mod h1:2PoGm/KbnzRN9ILY6HFZAI6fTnb1gEZAKogAyqkd6fY=
+github.com/go-chi/jwtauth/v5 v5.3.0 h1:X7RKGks1lrVeIe2omGyz47pNaNjG2YmwlRN5UKhN8qg=
+github.com/go-chi/jwtauth/v5 v5.3.0/go.mod h1:2PoGm/KbnzRN9ILY6HFZAI6fTnb1gEZAKogAyqkd6fY=
 github.com/go-http-utils/etag v0.0.0-20161124023236-513ea8f21eb1 h1:zga7zaRE8HCbWjcXMDlfvmQtH0/kMVLo7cQ48dy6kWg=
 github.com/go-http-utils/etag v0.0.0-20161124023236-513ea8f21eb1/go.mod h1:PumS+5d59wmAGsZo6IfRpVNaJUq+6xjC4Utt/k8GO6Q=
 github.com/go-http-utils/fresh v0.0.0-20161124030543-7231e26a4b27 h1:O6yi4xa9b2DMosGsXzlMe2E9qXgXCVkRLCoRX+5amxI=
