@@ -1,4 +1,7 @@
 FROM alpine
+
+LABEL org.opencontainers.image.source="https://github.com/Baralga/baralga-app"
+
 COPY baralga /usr/bin/baralga
 
 ENV BARALGA_DB "postgres://postgres:postgres@localhost:5432/baralga"
