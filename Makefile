@@ -5,7 +5,7 @@ BUILD_DIR = $(PWD)/build
 MIGRATIONS_FOLDER = $(PWD)/shared/migrations
 DATABASE_URL = postgres://postgres:postgres@localhost:5432/baralga?sslmode=disable
 
-HTMX_VERSION = 1.9.8
+HTMX_VERSION = 1.9.9
 
 clean:
 	rm -rf ./build
@@ -47,7 +47,7 @@ app.yaml: .ci-util/app.tpl.yaml .ci-util/generate-gcloud-app.go
 release.test:
 	goreleaser release --snapshot --rm-dist
 
-hmtx.download:
+htmx.download:
 	rm -rf shared/assets/htmx-*
 	mkdir -p shared/assets/htmx-$(HTMX_VERSION)
 	curl -o shared/assets/htmx-$(HTMX_VERSION)/htmx.min.js https://cdnjs.cloudflare.com/ajax/libs/htmx/$(HTMX_VERSION)/htmx.min.js
