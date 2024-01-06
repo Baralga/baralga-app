@@ -506,7 +506,7 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 						g.If(len(activitiesPage.Activities) > 0,
 							Span(
 								Class("badge rounded-pill bg-secondary fw-normal"),
-								g.Text(FormatMinutesAsDuration(durationWeekTotal)),
+								g.Text(time_utils.FormatMinutesAsDuration(durationWeekTotal)),
 							),
 						),
 					),
@@ -593,7 +593,7 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 		activityCardID := fmt.Sprintf("baralga__activity_card_%v", dayFormattedByDay[i][2])
 
 		sum := activitySumByDay[i]
-		durationFormatted := FormatMinutesAsDuration(sum)
+		durationFormatted := time_utils.FormatMinutesAsDuration(sum)
 
 		return Div(
 			ID(activityCardID),
