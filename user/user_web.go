@@ -25,31 +25,31 @@ type signupFormModel struct {
 	AcceptConditions bool
 }
 
-type UserWeb struct {
+type UserWebHandlers struct {
 	config         *shared.Config
 	userService    *UserService
 	userRepository UserRepository
 }
 
-func NewUserWeb(config *shared.Config, userService *UserService, userRepository UserRepository) *UserWeb {
-	return &UserWeb{
+func NewUserWeb(config *shared.Config, userService *UserService, userRepository UserRepository) *UserWebHandlers {
+	return &UserWebHandlers{
 		config:         config,
 		userService:    userService,
 		userRepository: userRepository,
 	}
 }
 
-func (a *UserWeb) RegisterProtected(r chi.Router) {
+func (a *UserWebHandlers) RegisterProtected(r chi.Router) {
 }
 
-func (a *UserWeb) RegisterOpen(r chi.Router) {
+func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
 	r.Get("/signup", a.HandleSignUpPage())
 	r.Post("/signup", a.HandleSignUpForm())
 	r.Post("/signup/validate", a.HandleSignUpFormValidate())
 	r.Get("/signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
 }
 
-func (a *UserWeb) signupFormValidator(incomplete bool) func(ctx context.Context, formModel signupFormModel) (map[string]string, error) {
+func (a *UserWebHandlers) signupFormValidator(incomplete bool) func(ctx context.Context, formModel signupFormModel) (map[string]string, error) {
 	validator := validator.New()
 	userRepository := a.userRepository
 	return func(ctx context.Context, formModel signupFormModel) (map[string]string, error) {
@@ -82,7 +82,7 @@ func (a *UserWeb) signupFormValidator(incomplete bool) func(ctx context.Context,
 	}
 }
 
-func (a *UserWeb) HandleSignUpConfirm() http.HandlerFunc {
+func (a *UserWebHandlers) HandleSignUpConfirm() http.HandlerFunc {
 	userService := a.userService
 	userRepository := a.userRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +108,7 @@ func (a *UserWeb) HandleSignUpConfirm() http.HandlerFunc {
 	}
 }
 
-func (a *UserWeb) HandleSignUpFormValidate() http.HandlerFunc {
+func (a *UserWebHandlers) HandleSignUpFormValidate() http.HandlerFunc {
 	validate := a.signupFormValidator(true)
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -139,7 +139,7 @@ func (a *UserWeb) HandleSignUpFormValidate() http.HandlerFunc {
 	}
 }
 
-func (a *UserWeb) HandleSignUpPage() http.HandlerFunc {
+func (a *UserWebHandlers) HandleSignUpPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		formModel := signupFormModel{}
 		formModel.CSRFToken = csrf.Token(r)
@@ -147,7 +147,7 @@ func (a *UserWeb) HandleSignUpPage() http.HandlerFunc {
 	}
 }
 
-func (a *UserWeb) HandleSignUpForm() http.HandlerFunc {
+func (a *UserWebHandlers) HandleSignUpForm() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	validate := a.signupFormValidator(false)
 	userService := a.userService
@@ -187,7 +187,7 @@ func (a *UserWeb) HandleSignUpForm() http.HandlerFunc {
 	}
 }
 
-func (a *UserWeb) SignUpPage(currentPath string, formModel signupFormModel) g.Node {
+func (a *UserWebHandlers) SignUpPage(currentPath string, formModel signupFormModel) g.Node {
 	return shared.Page(
 		"Sign Up",
 		currentPath,
@@ -230,7 +230,7 @@ func SignupSuccess(formModel signupFormModel) g.Node {
 	)
 }
 
-func (a *UserWeb) SignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
+func (a *UserWebHandlers) SignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
 	return FormEl(
 		ID("signup_form"),
 		ghx.Post("/signup"),

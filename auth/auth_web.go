@@ -40,15 +40,15 @@ type loginParams struct {
 	redirect     string
 }
 
-type AuthWeb struct {
+type AuthWebHandlers struct {
 	config      *shared.Config
 	authService *AuthService
 	userService *user.UserService
 	tokenAuth   *jwtauth.JWTAuth
 }
 
-func NewAuthWeb(config *shared.Config, authService *AuthService, userService *user.UserService, tokenAuth *jwtauth.JWTAuth) *AuthWeb {
-	return &AuthWeb{
+func NewAuthWebHandlers(config *shared.Config, authService *AuthService, userService *user.UserService, tokenAuth *jwtauth.JWTAuth) *AuthWebHandlers {
+	return &AuthWebHandlers{
 		config:      config,
 		authService: authService,
 		userService: userService,
@@ -57,11 +57,11 @@ func NewAuthWeb(config *shared.Config, authService *AuthService, userService *us
 
 }
 
-func (a *AuthWeb) RegisterProtected(r chi.Router) {
+func (a *AuthWebHandlers) RegisterProtected(r chi.Router) {
 	r.Get("/logout", a.HandleLogoutPage())
 }
 
-func (a *AuthWeb) RegisterOpen(r chi.Router) {
+func (a *AuthWebHandlers) RegisterOpen(r chi.Router) {
 	r.Get("/login", a.HandleLoginPage())
 	r.Post("/login", a.HandleLoginForm())
 
@@ -72,7 +72,7 @@ func (a *AuthWeb) RegisterOpen(r chi.Router) {
 	r.Handle("/google/callback", a.GoogleCallbackHandler())
 }
 
-func (a *AuthWeb) HandleLoginForm() http.HandlerFunc {
+func (a *AuthWebHandlers) HandleLoginForm() http.HandlerFunc {
 	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
 	tokenAuth := a.tokenAuth
@@ -116,7 +116,7 @@ func (a *AuthWeb) HandleLoginForm() http.HandlerFunc {
 	}
 }
 
-func (a *AuthWeb) HandleLoginPage() http.HandlerFunc {
+func (a *AuthWebHandlers) HandleLoginPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		loginParams := loginParamsFromQueryParams(r.URL.Query())
 
@@ -139,7 +139,7 @@ func loginParamsFromQueryParams(params url.Values) *loginParams {
 	return loginParams
 }
 
-func (a *AuthWeb) HandleLogoutPage() http.HandlerFunc {
+func (a *AuthWebHandlers) HandleLogoutPage() http.HandlerFunc {
 	authService := a.authService
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := authService.CreateExpiredCookie()
@@ -149,22 +149,22 @@ func (a *AuthWeb) HandleLogoutPage() http.HandlerFunc {
 	}
 }
 
-func (a *AuthWeb) GithubLoginHandler() http.Handler {
+func (a *AuthWebHandlers) GithubLoginHandler() http.Handler {
 	stateConfig, oauth2Config := a.githubAuthConfig()
 	return github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil))
 }
 
-func (a *AuthWeb) GithubCallbackHandler() http.Handler {
+func (a *AuthWebHandlers) GithubCallbackHandler() http.Handler {
 	stateConfig, oauth2Config := a.githubAuthConfig()
 	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithub(), HandleTokenFailure()))
 }
 
-func (a *AuthWeb) GoogleLoginHandler() http.Handler {
+func (a *AuthWebHandlers) GoogleLoginHandler() http.Handler {
 	stateConfig, oauth2Config := a.googleAuthConfig()
 	return google.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))
 }
 
-func (a *AuthWeb) GoogleCallbackHandler() http.Handler {
+func (a *AuthWebHandlers) GoogleCallbackHandler() http.Handler {
 	stateConfig, oauth2Config := a.googleAuthConfig()
 	return google.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, a.IssueCookieForGoogle(), HandleTokenFailure()))
 }
@@ -177,7 +177,7 @@ func HandleTokenFailure() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (a *AuthWeb) IssueCookieForGithub() http.Handler {
+func (a *AuthWebHandlers) IssueCookieForGithub() http.Handler {
 	tokenAuth := a.tokenAuth
 	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
@@ -218,7 +218,7 @@ func (a *AuthWeb) IssueCookieForGithub() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (a *AuthWeb) IssueCookieForGoogle() http.Handler {
+func (a *AuthWebHandlers) IssueCookieForGoogle() http.Handler {
 	tokenAuth := a.tokenAuth
 	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
@@ -260,7 +260,7 @@ func (a *AuthWeb) IssueCookieForGoogle() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (a *AuthWeb) LoginPage(currentPath string, formModel loginFormModel, loginParams *loginParams) g.Node {
+func (a *AuthWebHandlers) LoginPage(currentPath string, formModel loginFormModel, loginParams *loginParams) g.Node {
 	return shared.Page(
 		"Sign In",
 		currentPath,
@@ -409,7 +409,7 @@ func LoginForm(formModel loginFormModel, loginParams *loginParams) g.Node {
 	)
 }
 
-func (a *AuthWeb) WebVerifier() func(http.Handler) http.Handler {
+func (a *AuthWebHandlers) WebVerifier() func(http.Handler) http.Handler {
 	tokenAuth := a.tokenAuth
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -434,7 +434,7 @@ func (a *AuthWeb) WebVerifier() func(http.Handler) http.Handler {
 	}
 }
 
-func (a *AuthWeb) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
+func (a *AuthWebHandlers) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 	stateConfig := gologin.DefaultCookieConfig
 	if !a.config.IsProduction() {
 		stateConfig = gologin.DebugOnlyCookieConfig
@@ -448,7 +448,7 @@ func (a *AuthWeb) githubAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 	return stateConfig, oauth2Config
 }
 
-func (a *AuthWeb) googleAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
+func (a *AuthWebHandlers) googleAuthConfig() (gologin.CookieConfig, *oauth2.Config) {
 	stateConfig := gologin.DefaultCookieConfig
 	if !a.config.IsProduction() {
 		stateConfig = gologin.DebugOnlyCookieConfig

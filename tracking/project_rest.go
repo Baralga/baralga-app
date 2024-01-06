@@ -33,21 +33,21 @@ type projectsModel struct {
 	Links             *hal.Links `json:"_links"`
 }
 
-type ProjectController struct {
+type ProjectRestHandlers struct {
 	config            *shared.Config
 	projectRepository ProjectRepository
 	projectService    *ProjectService
 }
 
-func NewProjectController(config *shared.Config, projectRepository ProjectRepository, projectService *ProjectService) *ProjectController {
-	return &ProjectController{
+func NewProjectController(config *shared.Config, projectRepository ProjectRepository, projectService *ProjectService) *ProjectRestHandlers {
+	return &ProjectRestHandlers{
 		config:            config,
 		projectRepository: projectRepository,
 		projectService:    projectService,
 	}
 }
 
-func (a *ProjectController) RegisterProtected(r chi.Router) {
+func (a *ProjectRestHandlers) RegisterProtected(r chi.Router) {
 	r.Get("/projects", a.HandleGetProjects())
 	r.Post("/projects", a.HandleCreateProject())
 	r.Get("/projects/{project-id}", a.HandleGetProject())
@@ -55,11 +55,11 @@ func (a *ProjectController) RegisterProtected(r chi.Router) {
 	r.Patch("/projects/{project-id}", a.HandleUpdateProject())
 }
 
-func (a *ProjectController) RegisterOpen(r chi.Router) {
+func (a *ProjectRestHandlers) RegisterOpen(r chi.Router) {
 }
 
 // HandleGetProjects reads projects
-func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
+func (a *ProjectRestHandlers) HandleGetProjects() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +102,7 @@ func (a *ProjectController) HandleGetProjects() http.HandlerFunc {
 }
 
 // HandleGetProject reads a project
-func (a *ProjectController) HandleGetProject() http.HandlerFunc {
+func (a *ProjectRestHandlers) HandleGetProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +132,7 @@ func (a *ProjectController) HandleGetProject() http.HandlerFunc {
 }
 
 // HandleCreateProject creates a project
-func (a *ProjectController) HandleCreateProject() http.HandlerFunc {
+func (a *ProjectRestHandlers) HandleCreateProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	projectService := a.projectService
@@ -177,7 +177,7 @@ func (a *ProjectController) HandleCreateProject() http.HandlerFunc {
 }
 
 // HandleUpdateProject updates a project
-func (a *ProjectController) HandleUpdateProject() http.HandlerFunc {
+func (a *ProjectRestHandlers) HandleUpdateProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	projectService := a.projectService
@@ -233,7 +233,7 @@ func (a *ProjectController) HandleUpdateProject() http.HandlerFunc {
 }
 
 // HandleDeleteProject deletes a project
-func (a *ProjectController) HandleDeleteProject() http.HandlerFunc {
+func (a *ProjectRestHandlers) HandleDeleteProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {

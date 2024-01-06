@@ -23,7 +23,7 @@ func TestHandleLogin(t *testing.T) {
 		JWTExpiry: "1h",
 	}
 
-	a := &AuthController{
+	a := &AuthRestHandlers{
 		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
@@ -55,7 +55,7 @@ func TestHandleInvalidLogin(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	a := &AuthController{
+	a := &AuthRestHandlers{
 		config:    &shared.Config{},
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
@@ -77,7 +77,7 @@ func TestHandleInvalidLogin(t *testing.T) {
 
 func TestHandleLoginWithInvalidDuration(t *testing.T) {
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	a := &AuthController{
+	a := &AuthRestHandlers{
 		config: &shared.Config{
 			JWTExpiry: "invalid",
 		},
@@ -115,7 +115,7 @@ func TestJWTPrincipalHandlerWithoutJWT(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &AuthController{
+	a := &AuthRestHandlers{
 		config: &shared.Config{},
 	}
 

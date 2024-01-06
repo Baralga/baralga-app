@@ -22,29 +22,29 @@ type loginResponseModel struct {
 	AccessToken string `json:"access_token"`
 }
 
-type AuthController struct {
+type AuthRestHandlers struct {
 	config      *shared.Config
 	authService *AuthService
 	tokenAuth   *jwtauth.JWTAuth
 }
 
-func NewAuthController(config *shared.Config, authService *AuthService, tokenAuth *jwtauth.JWTAuth) *AuthController {
-	return &AuthController{
+func NewAuthRestHandlers(config *shared.Config, authService *AuthService, tokenAuth *jwtauth.JWTAuth) *AuthRestHandlers {
+	return &AuthRestHandlers{
 		config:      config,
 		authService: authService,
 		tokenAuth:   tokenAuth,
 	}
 }
 
-func (a *AuthController) RegisterProtected(r chi.Router) {
+func (a *AuthRestHandlers) RegisterProtected(r chi.Router) {
 }
 
-func (a *AuthController) RegisterOpen(r chi.Router) {
+func (a *AuthRestHandlers) RegisterOpen(r chi.Router) {
 	r.Post("/auth/login", a.HandleLogin())
 }
 
 // HandleLogin handles the authentication request of a user
-func (a *AuthController) HandleLogin() http.HandlerFunc {
+func (a *AuthRestHandlers) HandleLogin() http.HandlerFunc {
 	tokenAuth := a.tokenAuth
 	expiryDuration := a.config.ExpiryDuration()
 	authService := a.authService
@@ -70,12 +70,12 @@ func (a *AuthController) HandleLogin() http.HandlerFunc {
 	}
 }
 
-func (a *AuthController) JWTVerifier() func(next http.Handler) http.Handler {
+func (a *AuthRestHandlers) JWTVerifier() func(next http.Handler) http.Handler {
 	return jwtauth.Verifier(a.tokenAuth)
 }
 
 // JWTPrincipalHandler sets up the user principal from the JWT
-func (a *AuthController) JWTPrincipalHandler() func(next http.Handler) http.Handler {
+func (a *AuthRestHandlers) JWTPrincipalHandler() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, claims, _ := jwtauth.FromContext(r.Context())

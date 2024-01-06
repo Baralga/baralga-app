@@ -17,7 +17,7 @@ func TestHandleLoginPage(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &AuthWeb{
+	a := &AuthWebHandlers{
 		config: &shared.Config{},
 	}
 
@@ -38,7 +38,7 @@ func TestHandleLoginFormWithSuccessfullLogin(t *testing.T) {
 	config := &shared.Config{}
 
 	userRepository := user.NewInMemUserRepository()
-	a := &AuthWeb{
+	a := &AuthWebHandlers{
 		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
@@ -66,7 +66,7 @@ func TestHandleLoginFormWithSuccessfullLoginAndRedirect(t *testing.T) {
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 	config := &shared.Config{}
 
-	a := &AuthWeb{
+	a := &AuthWebHandlers{
 		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
@@ -96,7 +96,7 @@ func TestHandleLoginFormWithInvalidLogin(t *testing.T) {
 	config := &shared.Config{}
 
 	userRepository := user.NewInMemUserRepository()
-	a := &AuthWeb{
+	a := &AuthWebHandlers{
 		config:    config,
 		tokenAuth: tokenAuth,
 		authService: &AuthService{
@@ -124,7 +124,7 @@ func TestHandleLoginFormWithInvalidFormData(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	a := &AuthWeb{
+	a := &AuthWebHandlers{
 		config:      &shared.Config{},
 		tokenAuth:   tokenAuth,
 		userService: user.NewInMemUserService(),
@@ -148,7 +148,7 @@ func TestHandleLoginFormWithInvalidBodyData(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	a := &AuthWeb{
+	a := &AuthWebHandlers{
 		config:      &shared.Config{},
 		tokenAuth:   tokenAuth,
 		userService: user.NewInMemUserService(),

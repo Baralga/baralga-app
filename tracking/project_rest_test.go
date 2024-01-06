@@ -93,7 +93,7 @@ func TestHandleGetProjects(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -114,7 +114,7 @@ func TestHandleGetProjectWithInvalidId(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -134,7 +134,7 @@ func TestHandleGetProject(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -159,7 +159,7 @@ func TestHandleGetNonExistingProject(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -180,7 +180,7 @@ func TestHandleUpdateProject(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	projectRepository := NewInMemProjectRepository()
-	c := &ProjectController{
+	c := &ProjectRestHandlers{
 		config: &shared.Config{},
 		projectService: &ProjectService{
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
@@ -218,7 +218,7 @@ func TestHandleUpdateInvalidProject(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -248,7 +248,7 @@ func TestHandleUpdateProjectAsUser(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -277,7 +277,7 @@ func TestHandleUpdateNonExistingProject(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	projectRepository := NewInMemProjectRepository()
-	c := &ProjectController{
+	c := &ProjectRestHandlers{
 		config: &shared.Config{},
 		projectService: &ProjectService{
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
@@ -311,7 +311,7 @@ func TestHandleUpdateProjectWithInvalidBody(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -338,7 +338,7 @@ func TestHandleUpdateWithIdNotValid(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -367,7 +367,7 @@ func TestHandleCreateProject(t *testing.T) {
 
 	repo := NewInMemProjectRepository()
 
-	c := &ProjectController{
+	c := &ProjectRestHandlers{
 		config: &shared.Config{},
 		projectService: &ProjectService{
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
@@ -399,7 +399,7 @@ func TestHandleInvalidCreateProject(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemProjectRepository()
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: repo,
 	}
@@ -424,7 +424,7 @@ func TestHandleCreateProjectAsUser(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -447,7 +447,7 @@ func TestHandleCreateProjectWithInvalidBody(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ProjectController{
+	a := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -471,7 +471,7 @@ func TestHandleDeleteProjectAsAdmin(t *testing.T) {
 
 	repo := NewInMemProjectRepository()
 
-	c := &ProjectController{
+	c := &ProjectRestHandlers{
 		config: &shared.Config{},
 		projectService: &ProjectService{
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
@@ -501,7 +501,7 @@ func TestHandleDeleteProjectAsUser(t *testing.T) {
 
 	repo := NewInMemProjectRepository()
 
-	c := &ProjectController{
+	c := &ProjectRestHandlers{
 		config: &shared.Config{},
 		projectService: &ProjectService{
 			repositoryTxer:    shared.NewInMemRepositoryTxer(),
@@ -528,7 +528,7 @@ func TestHandleDeleteProjectIdNotValid(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	c := &ProjectController{
+	c := &ProjectRestHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
