@@ -89,8 +89,8 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	// Auth
 	tokenAuth := jwtauth.New("HS256", []byte(config.JWTSecret), nil)
 	authService := auth.NewAuthService(&config, userRepository)
-	authController := auth.NewAuthController(&config, authService, tokenAuth)
-	authWeb := auth.NewAuthWeb(&config, authService, userService, tokenAuth)
+	authController := auth.NewAuthRestHandlers(&config, authService, tokenAuth)
+	authWeb := auth.NewAuthWebHandlers(&config, authService, userService, tokenAuth)
 
 	apiHandlers := []shared.DomainHandler{
 		authController,
@@ -126,7 +126,7 @@ func registerHealthcheck(config *shared.Config, router *chi.Mux) {
 	router.Get("/health", h.HandlerFunc)
 }
 
-func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthController, authWeb *auth.AuthWeb, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
+func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthRestHandlers, authWeb *auth.AuthWebHandlers, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Compress(5))
@@ -135,7 +135,7 @@ func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth
 	registerWebRoutes(config, router, authController, authWeb, webHandlers)
 }
 
-func apiRouteHandler(authController *auth.AuthController, apiHandlers []shared.DomainHandler) http.Handler {
+func apiRouteHandler(authController *auth.AuthRestHandlers, apiHandlers []shared.DomainHandler) http.Handler {
 	r := chi.NewRouter()
 
 	for _, apiHandler := range apiHandlers {
@@ -154,7 +154,7 @@ func apiRouteHandler(authController *auth.AuthController, apiHandlers []shared.D
 	return r
 }
 
-func registerWebRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthController, authWeb *auth.AuthWeb, webHandlers []shared.DomainHandler) {
+func registerWebRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthRestHandlers, authWeb *auth.AuthWebHandlers, webHandlers []shared.DomainHandler) {
 	assetsDir, _ := fs.Sub(assets, "shared")
 	router.Mount("/assets/", etag.Handler(http.FileServer(http.FS(assetsDir)), true))
 	router.Get("/manifest.webmanifest", shared.HandleWebManifest())

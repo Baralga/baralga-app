@@ -80,7 +80,7 @@ func TestHandleGetActivity(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}
@@ -100,7 +100,7 @@ func TestHandleGetActivityNotFound(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}
@@ -120,7 +120,7 @@ func TestHandleGetActivityIdNotValid(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}
@@ -141,7 +141,7 @@ func TestHandleGetActivitiesWithUrlParams(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	activityRepository := NewInMemActivityRepository()
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		actitivityService: &ActitivityService{
@@ -166,7 +166,7 @@ func TestHandleGetActivitiesWithTimespanUrlParams(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	activityRepository := NewInMemActivityRepository()
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		actitivityService: &ActitivityService{
@@ -191,7 +191,7 @@ func TestHandleGetActivitiesWithTimespanUrlParamsAsCSV(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	activityRepository := NewInMemActivityRepository()
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		actitivityService: &ActitivityService{
@@ -216,7 +216,7 @@ func TestHandleGetActivitiesWithTimespanUrlParamsAsExcel(t *testing.T) {
 
 	repo := NewInMemActivityRepository()
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -239,7 +239,7 @@ func TestHandleCreateActivity(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	config := &shared.Config{}
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -276,7 +276,7 @@ func TestHandleCreateInvalidActivity(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemActivityRepository()
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 	}
@@ -309,7 +309,7 @@ func TestHandleDeleteActivityAsAdmin(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	config := &shared.Config{}
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -340,7 +340,7 @@ func TestHandleDeleteActivityAsMatchingUser(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	config := &shared.Config{}
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -367,7 +367,7 @@ func TestHandleDeleteActivityIdNotValid(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}
@@ -387,7 +387,7 @@ func TestHandleCreateActivityWithInvalidBody(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}
@@ -411,7 +411,7 @@ func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
 
 	repo := NewInMemActivityRepository()
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -440,7 +440,7 @@ func TestHandleUpdateActivity(t *testing.T) {
 
 	repo := NewInMemActivityRepository()
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -485,7 +485,7 @@ func TestHandleUpdateInvalidActivity(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemActivityRepository()
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 	}
@@ -523,7 +523,7 @@ func TestHandleUpdateActivityAsUser(t *testing.T) {
 
 	repo := NewInMemActivityRepository()
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -569,7 +569,7 @@ func TestHandleUpdateActivityWithNonMatchingUser(t *testing.T) {
 
 	repo := NewInMemActivityRepository()
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 		actitivityService: &ActitivityService{
@@ -609,7 +609,7 @@ func TestHandleUpdateActivityWithInvalidBody(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	c := &ActivityController{
+	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}
@@ -637,7 +637,7 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityController{
+	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 	}

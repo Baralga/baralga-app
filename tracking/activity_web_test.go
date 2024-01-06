@@ -18,7 +18,7 @@ func TestHandleTrackingPage(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	activityRepository := NewInMemActivityRepository()
-	a := &ActivityWeb{
+	a := &ActivityWebHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		projectRepository:  NewInMemProjectRepository(),
@@ -41,7 +41,7 @@ func TestHandleActivityAddPage(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityWeb{
+	a := &ActivityWebHandlers{
 		config:            &shared.Config{},
 		projectRepository: NewInMemProjectRepository(),
 	}
@@ -60,7 +60,7 @@ func TestHandleActivityEditPage(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityWeb{
+	a := &ActivityWebHandlers{
 		config:             &shared.Config{},
 		activityRepository: NewInMemActivityRepository(),
 		projectRepository:  NewInMemProjectRepository(),
@@ -87,7 +87,7 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 	repo := NewInMemActivityRepository()
 	config := &shared.Config{}
 
-	w := &ActivityWeb{
+	w := &ActivityWebHandlers{
 		config:             config,
 		activityRepository: repo,
 		projectRepository:  NewInMemProjectRepository(),
@@ -123,7 +123,7 @@ func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	repo := NewInMemActivityRepository()
-	a := &ActivityWeb{
+	a := &ActivityWebHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
 		projectRepository:  NewInMemProjectRepository(),
@@ -153,7 +153,7 @@ func TestHandleStartTimeValidation(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityWeb{
+	a := &ActivityWebHandlers{
 		config: &shared.Config{},
 	}
 
@@ -176,7 +176,7 @@ func TestHandleEndTimeValidation(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
 
-	a := &ActivityWeb{
+	a := &ActivityWebHandlers{
 		config: &shared.Config{},
 	}
 

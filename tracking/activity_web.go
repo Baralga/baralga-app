@@ -45,15 +45,15 @@ type activityTrackFormModel struct {
 	Description  string
 }
 
-type ActivityWeb struct {
+type ActivityWebHandlers struct {
 	config             *shared.Config
 	activityService    *ActitivityService
 	activityRepository ActivityRepository
 	projectRepository  ProjectRepository
 }
 
-func NewActivityWeb(config *shared.Config, activityService *ActitivityService, activityRepository ActivityRepository, projectRepository ProjectRepository) *ActivityWeb {
-	return &ActivityWeb{
+func NewActivityWeb(config *shared.Config, activityService *ActitivityService, activityRepository ActivityRepository, projectRepository ProjectRepository) *ActivityWebHandlers {
+	return &ActivityWebHandlers{
 		config:             config,
 		activityService:    activityService,
 		activityRepository: activityRepository,
@@ -61,7 +61,7 @@ func NewActivityWeb(config *shared.Config, activityService *ActitivityService, a
 	}
 }
 
-func (a *ActivityWeb) RegisterProtected(r chi.Router) {
+func (a *ActivityWebHandlers) RegisterProtected(r chi.Router) {
 	r.Get("/", a.HandleTrackingPage())
 	r.Get("/activities/new", a.HandleActivityAddPage())
 	r.Post("/activities/validate-start-time", a.HandleStartTimeValidation())
@@ -72,7 +72,7 @@ func (a *ActivityWeb) RegisterProtected(r chi.Router) {
 	r.Post("/activities/track", a.HandleActivityTrackForm())
 }
 
-func (a *ActivityWeb) RegisterOpen(r chi.Router) {
+func (a *ActivityWebHandlers) RegisterOpen(r chi.Router) {
 }
 
 func newActivityFormModel() activityFormModel {
@@ -84,7 +84,7 @@ func newActivityFormModel() activityFormModel {
 	}
 }
 
-func (a *ActivityWeb) HandleTrackingPage() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleTrackingPage() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	activityService := a.activityService
 	projectRepository := a.projectRepository
@@ -135,7 +135,7 @@ func (a *ActivityWeb) HandleTrackingPage() http.HandlerFunc {
 	}
 }
 
-func (a *ActivityWeb) HandleActivityAddPage() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleActivityAddPage() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -173,7 +173,7 @@ func (a *ActivityWeb) HandleActivityAddPage() http.HandlerFunc {
 	}
 }
 
-func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleActivityEditPage() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	activityRepository := a.activityRepository
 	projectRepository := a.projectRepository
@@ -224,7 +224,7 @@ func (a *ActivityWeb) HandleActivityEditPage() http.HandlerFunc {
 	}
 }
 
-func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleActivityTrackForm() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	activityService := a.activityService
 	projectRepository := a.projectRepository
@@ -328,7 +328,7 @@ func (a *ActivityWeb) HandleActivityTrackForm() http.HandlerFunc {
 	}
 }
 
-func (a *ActivityWeb) HandleActivityForm() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleActivityForm() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	validator := validator.New()
 	activityService := a.activityService
@@ -398,7 +398,7 @@ func (a *ActivityWeb) HandleActivityForm() http.HandlerFunc {
 	}
 }
 
-func (a *ActivityWeb) HandleStartTimeValidation() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleStartTimeValidation() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -417,7 +417,7 @@ func (a *ActivityWeb) HandleStartTimeValidation() http.HandlerFunc {
 	}
 }
 
-func (a *ActivityWeb) HandleEndTimeValidation() http.HandlerFunc {
+func (a *ActivityWebHandlers) HandleEndTimeValidation() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -1025,7 +1025,7 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 	)
 }
 
-func (a *ActivityWeb) renderActivityAddView(w http.ResponseWriter, r *http.Request, principal *shared.Principal, isProduction bool, formModel activityFormModel) {
+func (a *ActivityWebHandlers) renderActivityAddView(w http.ResponseWriter, r *http.Request, principal *shared.Principal, isProduction bool, formModel activityFormModel) {
 	pageParams := &paged.PageParams{
 		Page: 0,
 		Size: 50,
