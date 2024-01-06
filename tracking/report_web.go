@@ -23,7 +23,7 @@ type ReportWeb struct {
 	activityService *ActitivityService
 }
 
-func NewReportWeb(config *shared.Config, activityService *ActitivityService) *ReportWeb {
+func NewReportWebHandlers(config *shared.Config, activityService *ActitivityService) *ReportWeb {
 	return &ReportWeb{
 		config:          config,
 		activityService: activityService,

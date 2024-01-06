@@ -52,7 +52,7 @@ type ActivityWebHandlers struct {
 	projectRepository  ProjectRepository
 }
 
-func NewActivityWeb(config *shared.Config, activityService *ActitivityService, activityRepository ActivityRepository, projectRepository ProjectRepository) *ActivityWebHandlers {
+func NewActivityWebHandlers(config *shared.Config, activityService *ActitivityService, activityRepository ActivityRepository, projectRepository ProjectRepository) *ActivityWebHandlers {
 	return &ActivityWebHandlers{
 		config:             config,
 		activityService:    activityService,

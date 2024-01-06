@@ -16,14 +16,14 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// DbUserRepository is a SQL database repository for users
+// DbActivityRepository is a SQL database repository for activities
 type DbActivityRepository struct {
 	connPool *pgxpool.Pool
 }
 
 var _ ActivityRepository = (*DbActivityRepository)(nil)
 
-// NewDbActivityRepository creates a new SQL database repository for users
+// NewDbActivityRepository creates a new SQL database repository for activities
 func NewDbActivityRepository(connPool *pgxpool.Pool) *DbActivityRepository {
 	return &DbActivityRepository{
 		connPool: connPool,

@@ -70,15 +70,15 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	// Tracking
 	projectRepository := tracking.NewDbProjectRepository(connPool)
 	projectService := tracking.NewProjectService(repositoryTxer, projectRepository)
-	projectWeb := tracking.NewProjectWeb(&config, projectService, projectRepository)
-	projectController := tracking.NewProjectController(&config, projectRepository, projectService)
+	projectRestHandlers := tracking.NewProjectController(&config, projectRepository, projectService)
+	projectWebHandlers := tracking.NewProjectWebHandlers(&config, projectService, projectRepository)
 
 	activityRepository := tracking.NewDbActivityRepository(connPool)
 	activityService := tracking.NewActitivityService(repositoryTxer, activityRepository)
-	activityController := tracking.NewActivityController(&config, activityService, activityRepository)
-	activityWeb := tracking.NewActivityWeb(&config, activityService, activityRepository, projectRepository)
+	activityRestHandlers := tracking.NewActivityRestHandlers(&config, activityService, activityRepository)
+	activityWebHandlers := tracking.NewActivityWebHandlers(&config, activityService, activityRepository, projectRepository)
 
-	reportWeb := tracking.NewReportWeb(&config, activityService)
+	reportWebHandlers := tracking.NewReportWebHandlers(&config, activityService)
 
 	// User
 	userRepository := user.NewDbUserRepository(connPool)
@@ -94,15 +94,15 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 
 	apiHandlers := []shared.DomainHandler{
 		authController,
-		activityController,
-		projectController,
+		activityRestHandlers,
+		projectRestHandlers,
 	}
 	webHandlers := []shared.DomainHandler{
 		userWeb,
-		activityWeb,
+		activityWebHandlers,
 		authWeb,
-		projectWeb,
-		reportWeb,
+		projectWebHandlers,
+		reportWebHandlers,
 	}
 
 	router := chi.NewRouter()

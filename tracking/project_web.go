@@ -31,7 +31,7 @@ type ProjectWeb struct {
 	projectRepository ProjectRepository
 }
 
-func NewProjectWeb(config *shared.Config, projectService *ProjectService, projectRepository ProjectRepository) *ProjectWeb {
+func NewProjectWebHandlers(config *shared.Config, projectService *ProjectService, projectRepository ProjectRepository) *ProjectWeb {
 	return &ProjectWeb{
 		config:            config,
 		projectService:    projectService,

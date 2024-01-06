@@ -54,7 +54,7 @@ type ActivityRestHandlers struct {
 	activityRepository ActivityRepository
 }
 
-func NewActivityController(config *shared.Config, actitivityService *ActitivityService, activityRepository ActivityRepository) *ActivityRestHandlers {
+func NewActivityRestHandlers(config *shared.Config, actitivityService *ActitivityService, activityRepository ActivityRepository) *ActivityRestHandlers {
 	return &ActivityRestHandlers{
 		config:             config,
 		actitivityService:  actitivityService,
