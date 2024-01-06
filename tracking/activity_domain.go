@@ -3,7 +3,6 @@ package tracking
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -102,7 +101,7 @@ type ActivityRepository interface {
 
 // DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
 func (i *ActivityTimeReportItem) DurationFormatted() string {
-	return FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
+	return time_utils.FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
 }
 
 type ActivityProjectReportItem struct {
@@ -113,7 +112,7 @@ type ActivityProjectReportItem struct {
 
 // DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
 func (i *ActivityProjectReportItem) DurationFormatted() string {
-	return FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
+	return time_utils.FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
 }
 
 // AsTime returns the report item as time.Time
@@ -299,34 +298,29 @@ func (f *ActivityFilter) NewValue() string {
 }
 
 // DurationHours is the activity duration in hours (e.g. 3)
-func (ad *Activity) DurationHours() int {
-	return int(ad.duration().Hours())
+func (a *Activity) DurationHours() int {
+	return int(a.duration().Hours())
 }
 
 // DurationMinutes is the activity duration in minutes of unfinished hour (e.g. 15)
-func (ad *Activity) DurationMinutes() int {
-	m := int(ad.duration().Minutes())
+func (a *Activity) DurationMinutes() int {
+	m := int(a.duration().Minutes())
 	return m % 60
 }
 
 // DurationMinutesTotal is the activity duration in minutes in total (unrounded)
-func (ad *Activity) DurationMinutesTotal() int {
-	return int(ad.duration().Minutes())
+func (a *Activity) DurationMinutesTotal() int {
+	return int(a.duration().Minutes())
 }
 
 // DurationDecimal is the activity duration as decimal (e.g. 0.75)
-func (ad *Activity) DurationDecimal() float64 {
-	return ad.duration().Minutes() / 60.0
+func (a *Activity) DurationDecimal() float64 {
+	return a.duration().Minutes() / 60.0
 }
 
 // DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
-func (ad *Activity) DurationFormatted() string {
-	return FormatMinutesAsDuration(float64(ad.DurationMinutesTotal()))
-}
-
-// FormatMinutesAsDuration formates the duration in minutes as formatted string (e.g. 1:15 h)
-func FormatMinutesAsDuration(minutes float64) string {
-	return fmt.Sprintf("%v:%02d h", math.Floor(minutes/60), int(minutes)%60)
+func (a *Activity) DurationFormatted() string {
+	return time_utils.FormatMinutesAsDuration(float64(a.DurationMinutesTotal()))
 }
 
 func (a *Activity) duration() time.Duration {

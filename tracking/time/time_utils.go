@@ -33,6 +33,11 @@ func ParseDateTimeForm(dateTime string) (*time.Time, error) {
 	return &t, nil
 }
 
+// FormatMinutesAsDuration formates the duration in minutes as formatted string (e.g. 1:15 h)
+func FormatMinutesAsDuration(minutes float64) string {
+	return fmt.Sprintf("%v:%02d h", math.Floor(minutes/60), int(minutes)%60)
+}
+
 func FormatTime(dateTime time.Time) string {
 	return dateTime.Format(timeFormat)
 }
