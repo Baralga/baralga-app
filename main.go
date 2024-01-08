@@ -144,7 +144,7 @@ func apiRouteHandler(authController *auth.AuthRestHandlers, apiHandlers []shared
 
 	r.Group(func(r chi.Router) {
 		r.Use(authController.JWTVerifier())
-		r.Use(authController.JWTPrincipalHandler())
+		r.Use(authController.JWTPrincipalMiddleware())
 
 		for _, apiHandler := range apiHandlers {
 			apiHandler.RegisterProtected(r)
@@ -183,7 +183,7 @@ func registerWebRoutes(config *shared.Config, router *chi.Mux, authController *a
 	CSRF := csrf.Protect([]byte(config.CSRFSecret), csrf.CookieName(cookieName), csrf.FieldName("CSRFToken"), csrf.Secure(config.IsProduction()))
 	router.Group(func(r chi.Router) {
 		r.Use(authWeb.WebVerifier())
-		r.Use(authController.JWTPrincipalHandler())
+		r.Use(authController.JWTPrincipalMiddleware())
 		r.Use(CSRF)
 		r.Use(secureMiddleware.Handler)
 

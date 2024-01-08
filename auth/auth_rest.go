@@ -74,8 +74,8 @@ func (a *AuthRestHandlers) JWTVerifier() func(next http.Handler) http.Handler {
 	return jwtauth.Verifier(a.tokenAuth)
 }
 
-// JWTPrincipalHandler sets up the user principal from the JWT
-func (a *AuthRestHandlers) JWTPrincipalHandler() func(next http.Handler) http.Handler {
+// JWTPrincipalMiddleware sets up the user principal from the JWT
+func (a *AuthRestHandlers) JWTPrincipalMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, claims, _ := jwtauth.FromContext(r.Context())

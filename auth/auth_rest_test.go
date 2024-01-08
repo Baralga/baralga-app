@@ -122,7 +122,7 @@ func TestJWTPrincipalHandlerWithoutJWT(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/api/projects", nil)
 	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
 
-	a.JWTPrincipalHandler()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	a.JWTPrincipalMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusIMUsed)
 	})).ServeHTTP(httpRec, r)
 
