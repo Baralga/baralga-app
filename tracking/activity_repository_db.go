@@ -460,7 +460,7 @@ func (r *DbActivityRepository) DeleteActivityByID(ctx context.Context, organizat
 }
 
 func (r *DbActivityRepository) DeleteActivityByIDAndUsername(ctx context.Context, organizationID, activityID uuid.UUID, username string) error {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	row := tx.QueryRow(ctx,
 		`DELETE 
@@ -487,7 +487,7 @@ func (r *DbActivityRepository) DeleteActivityByIDAndUsername(ctx context.Context
 }
 
 func (r *DbActivityRepository) UpdateActivity(ctx context.Context, organizationID uuid.UUID, activity *Activity) (*Activity, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	row := tx.QueryRow(ctx,
 		`UPDATE activities 
@@ -512,7 +512,7 @@ func (r *DbActivityRepository) UpdateActivity(ctx context.Context, organizationI
 }
 
 func (r *DbActivityRepository) UpdateActivityByUsername(ctx context.Context, organizationID uuid.UUID, activity *Activity, username string) (*Activity, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	row := tx.QueryRow(ctx,
 		`UPDATE activities 
@@ -537,7 +537,7 @@ func (r *DbActivityRepository) UpdateActivityByUsername(ctx context.Context, org
 }
 
 func (r *DbActivityRepository) InsertActivity(ctx context.Context, activity *Activity) (*Activity, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	_, err := tx.Exec(
 		ctx,

@@ -10,7 +10,7 @@ type contextKey int
 
 const (
 	contextKeyPrincipal contextKey = 0
-	ContextKeyTx        contextKey = 1
+	contextKeyTx        contextKey = 1
 )
 
 type Principal struct {

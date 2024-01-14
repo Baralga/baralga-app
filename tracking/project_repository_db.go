@@ -159,7 +159,7 @@ func (r *DbProjectRepository) FindProjectByID(ctx context.Context, organizationI
 }
 
 func (r *DbProjectRepository) InsertProject(ctx context.Context, project *Project) (*Project, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	_, err := tx.Exec(
 		ctx,
@@ -181,7 +181,7 @@ func (r *DbProjectRepository) InsertProject(ctx context.Context, project *Projec
 }
 
 func (r *DbProjectRepository) UpdateProject(ctx context.Context, organizationID uuid.UUID, project *Project) (*Project, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	row := tx.QueryRow(ctx,
 		`UPDATE projects 
@@ -206,7 +206,7 @@ func (r *DbProjectRepository) UpdateProject(ctx context.Context, organizationID 
 }
 
 func (r *DbProjectRepository) DeleteProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	_, err := tx.Exec(
 		ctx,
@@ -243,7 +243,7 @@ func (r *DbProjectRepository) DeleteProjectByID(ctx context.Context, organizatio
 }
 
 func (r *DbProjectRepository) ArchiveProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) error {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	row := tx.QueryRow(ctx,
 		`UPDATE projects 

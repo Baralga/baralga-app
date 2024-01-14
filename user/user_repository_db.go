@@ -40,7 +40,7 @@ func (r *DbUserRepository) insertConfirmation(ctx context.Context, tx pgx.Tx, us
 }
 
 func (r *DbUserRepository) InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	enabled := 0
 	if confirmationID == uuid.Nil {
@@ -116,7 +116,7 @@ func (r *DbUserRepository) FindUserIDByConfirmationID(ctx context.Context, confi
 }
 
 func (r *DbUserRepository) ConfirmUser(ctx context.Context, userID uuid.UUID) error {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	_, err := tx.Exec(
 		ctx,

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/baralga/shared"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,7 +22,7 @@ func NewDbOrganizationRepository(connPool *pgxpool.Pool) *DbOrganizationReposito
 }
 
 func (r *DbOrganizationRepository) InsertOrganization(ctx context.Context, organization *Organization) (*Organization, error) {
-	tx := ctx.Value(shared.ContextKeyTx).(pgx.Tx)
+	tx := shared.MustTxFromContext(ctx)
 
 	_, err := tx.Exec(
 		ctx,

@@ -11,6 +11,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -42,6 +43,20 @@ type DbRepositoryTxer struct {
 
 var _ RepositoryTxer = (*DbRepositoryTxer)(nil)
 
+// MustTxFromContext reads the current transaction from the context or panics if not present
+func MustTxFromContext(ctx context.Context) pgx.Tx {
+	tx, ok := ctx.Value(contextKeyTx).(pgx.Tx)
+	if !ok {
+		panic("no tx found in context")
+	}
+
+	return tx
+}
+
+func toContextWithTx(ctx context.Context, tx pgx.Tx) context.Context {
+	return context.WithValue(ctx, contextKeyTx, tx)
+}
+
 func NewDbRepositoryTxer(connPool *pgxpool.Pool) *DbRepositoryTxer {
 	return &DbRepositoryTxer{
 		connPool: connPool,
@@ -54,7 +69,7 @@ func (txer *DbRepositoryTxer) InTx(ctx context.Context, txFuncs ...func(ctxWithT
 		return err
 	}
 
-	ctxWithTx := context.WithValue(ctx, ContextKeyTx, tx)
+	ctxWithTx := toContextWithTx(ctx, tx)
 
 	for _, txFunc := range txFuncs {
 		err = txFunc(ctxWithTx)
