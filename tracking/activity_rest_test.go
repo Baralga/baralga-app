@@ -86,7 +86,7 @@ func TestHandleGetActivity(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
@@ -106,7 +106,7 @@ func TestHandleGetActivityNotFound(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities/d9fbfab6-2750-4703-8a7b-77498756d64a", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("activity-id", "d9fbfab6-2750-4703-8a7b-77498756d64a")
@@ -126,7 +126,7 @@ func TestHandleGetActivityIdNotValid(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities/not-a-uuid", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("activity-id", "not-a-uuid")
@@ -150,7 +150,7 @@ func TestHandleGetActivitiesWithUrlParams(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?start=2021-10-01&end=2022-10-01", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleGetActivities()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -175,7 +175,7 @@ func TestHandleGetActivitiesWithTimespanUrlParams(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleGetActivities()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -201,7 +201,7 @@ func TestHandleGetActivitiesWithTimespanUrlParamsAsCSV(t *testing.T) {
 
 	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
 	r.Header.Set("Content-Type", "text/csv")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleGetActivities()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -226,7 +226,7 @@ func TestHandleGetActivitiesWithTimespanUrlParamsAsExcel(t *testing.T) {
 
 	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
 	r.Header.Set("Content-Type", "application/vnd.ms-excel")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	c.HandleGetActivities()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -264,7 +264,7 @@ func TestHandleCreateActivity(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	c.HandleCreateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusCreated)
@@ -296,7 +296,7 @@ func TestHandleCreateInvalidActivity(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleCreateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
@@ -319,7 +319,7 @@ func TestHandleDeleteActivityAsAdmin(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "admin",
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
@@ -350,7 +350,7 @@ func TestHandleDeleteActivityAsMatchingUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "user1",
 	}))
 
@@ -373,7 +373,7 @@ func TestHandleDeleteActivityIdNotValid(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/not-a-uuid", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("activity-id", "not-a-uuid")
@@ -399,7 +399,7 @@ func TestHandleCreateActivityWithInvalidBody(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleCreateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
@@ -421,7 +421,7 @@ func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "otherUser",
 	}))
 
@@ -464,7 +464,7 @@ func TestHandleUpdateActivity(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -505,7 +505,7 @@ func TestHandleUpdateInvalidActivity(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -547,7 +547,7 @@ func TestHandleUpdateActivityAsUser(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "user1",
 	}))
 
@@ -593,7 +593,7 @@ func TestHandleUpdateActivityWithNonMatchingUser(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "otherUser",
 	}))
 
@@ -621,7 +621,7 @@ func TestHandleUpdateActivityWithInvalidBody(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "otherUser",
 	}))
 
@@ -657,7 +657,7 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/activities/not-a-uuid", strings.NewReader(body))
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("activity-id", "not-a-uuid")

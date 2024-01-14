@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,7 @@ func TestHandleWebManifest(t *testing.T) {
 	httpRec := httptest.NewRecorder()
 
 	r, _ := http.NewRequest("GET", "/manifest.webmanifest", nil)
-	r = r.WithContext(context.WithValue(r.Context(), ContextKeyPrincipal, &Principal{}))
+	r = r.WithContext(ToContextWithPrincipal(r.Context(), &Principal{}))
 
 	HandleWebManifest()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)

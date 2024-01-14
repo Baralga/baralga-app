@@ -9,7 +9,7 @@ import (
 type contextKey int
 
 const (
-	ContextKeyPrincipal contextKey = 0
+	contextKeyPrincipal contextKey = 0
 	ContextKeyTx        contextKey = 1
 )
 
@@ -18,6 +18,21 @@ type Principal struct {
 	Username       string
 	OrganizationID uuid.UUID
 	Roles          []string
+}
+
+// MustPrincipalFromContext reads the current principal from the context or panics if not present
+func MustPrincipalFromContext(ctx context.Context) *Principal {
+	principal, ok := ctx.Value(contextKeyPrincipal).(*Principal)
+	if !ok {
+		panic("no principal found in context")
+	}
+
+	return principal
+}
+
+// ToContextWithPrincipal creates a new context with the principal as value
+func ToContextWithPrincipal(ctx context.Context, principal *Principal) context.Context {
+	return context.WithValue(ctx, contextKeyPrincipal, principal)
 }
 
 func (p *Principal) HasRole(role string) bool {

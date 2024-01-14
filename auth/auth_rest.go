@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -85,7 +84,7 @@ func (a *AuthRestHandlers) JWTPrincipalMiddleware() func(next http.Handler) http
 			}
 
 			principal := mapPrincipalFromClaims(claims)
-			ctx := context.WithValue(r.Context(), shared.ContextKeyPrincipal, principal)
+			ctx := shared.ToContextWithPrincipal(r.Context(), principal)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -120,7 +119,7 @@ func TestJWTPrincipalHandlerWithoutJWT(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/api/projects", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.JWTPrincipalMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusIMUsed)

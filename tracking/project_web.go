@@ -54,7 +54,7 @@ func (a *ProjectWeb) RegisterOpen(r chi.Router) {
 func (a *ProjectWeb) HandleProjectsPage() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		pageParams := &paged.PageParams{
 			Page: 0,
@@ -95,7 +95,7 @@ func (a *ProjectWeb) HandleProjectView() http.HandlerFunc {
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {
@@ -123,7 +123,7 @@ func (a *ProjectWeb) HandleProjectEdit() http.HandlerFunc {
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {
@@ -160,7 +160,7 @@ func (a *ProjectWeb) HandleProjectEditForm() http.HandlerFunc {
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {
@@ -214,7 +214,7 @@ func (a *ProjectWeb) HandleProjectForm() http.HandlerFunc {
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		if !principal.HasRole("ROLE_ADMIN") {
 			http.Error(w, "No permission.", http.StatusForbidden)
@@ -286,7 +286,7 @@ func (a *ProjectWeb) HandleArchiveProject() http.HandlerFunc {
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {

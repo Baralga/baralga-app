@@ -100,7 +100,7 @@ func (a *ActivityWebHandlers) HandleTrackingPage() http.HandlerFunc {
 			Size: 100,
 		}
 
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 		activitiesPage, projectsOfActivities, err := activityService.ReadActivitiesWithProjects(
 			r.Context(),
 			principal,
@@ -139,7 +139,7 @@ func (a *ActivityWebHandlers) HandleActivityAddPage() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		pageParams := &paged.PageParams{
 			Page: 0,
@@ -179,7 +179,7 @@ func (a *ActivityWebHandlers) HandleActivityEditPage() http.HandlerFunc {
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
@@ -244,7 +244,7 @@ func (a *ActivityWebHandlers) HandleActivityTrackForm() http.HandlerFunc {
 
 		actionParam := r.URL.Query().Get("action")
 
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		pageParams := &paged.PageParams{
 			Page: 0,
@@ -333,7 +333,7 @@ func (a *ActivityWebHandlers) HandleActivityForm() http.HandlerFunc {
 	validator := validator.New()
 	activityService := a.activityService
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		err := r.ParseForm()
 		if err != nil {

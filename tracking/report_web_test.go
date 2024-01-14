@@ -1,7 +1,6 @@
 package tracking
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -24,7 +23,7 @@ func TestHandleReportPage(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/reports", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleReportPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -47,7 +46,7 @@ func TestHandleReportPageWithTimeByDay(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/reports?c=time:d", nil)
 	r.Header.Add("HX-Request", "true")
 	r.Header.Add("HX-Target", "baralga__report_content")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleReportPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -70,7 +69,7 @@ func TestHandleReportPageWithTimeByWeek(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/reports?c=time:w&t=year", nil)
 	r.Header.Add("HX-Request", "true")
 	r.Header.Add("HX-Target", "baralga__report_content")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleReportPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -93,7 +92,7 @@ func TestHandleReportPageWithTimeByMonth(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/reports?c=time:m&t=year", nil)
 	r.Header.Add("HX-Request", "true")
 	r.Header.Add("HX-Target", "baralga__report_content")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleReportPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -116,7 +115,7 @@ func TestHandleReportPageWithTimeByQuarter(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/reports?c=time:q&t=year", nil)
 	r.Header.Add("HX-Request", "true")
 	r.Header.Add("HX-Target", "baralga__report_content")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleReportPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -139,7 +138,7 @@ func TestHandleReportPageWithProject(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/reports?c=project&t=year", nil)
 	r.Header.Add("HX-Request", "true")
 	r.Header.Add("HX-Target", "baralga__report_content")
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleReportPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)

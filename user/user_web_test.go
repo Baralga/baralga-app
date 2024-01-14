@@ -153,7 +153,7 @@ func TestHandleSignUpConfirmWithExistingConfirmation(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/signup/confirm/%v", shared.ConfirmationIdSample), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("confirmation-id", shared.ConfirmationIdSample.String())
@@ -185,7 +185,7 @@ func TestHandleSignUpConfirmWithoutConfirmation(t *testing.T) {
 
 	confirmationId := uuid.New()
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/signup/confirm/%v", confirmationId), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("confirmation-id", confirmationId.String())

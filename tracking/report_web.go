@@ -40,7 +40,7 @@ func (a *ReportWeb) RegisterOpen(r chi.Router) {
 func (a *ReportWeb) HandleReportPage() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 		pageContext := &shared.PageContext{
 			Ctx:          r.Context(),
 			Principal:    principal,

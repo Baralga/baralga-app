@@ -28,7 +28,7 @@ func TestHandleTrackingPage(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleTrackingPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -47,7 +47,7 @@ func TestHandleActivityAddPage(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/activities/new", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleActivityAddPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -67,7 +67,7 @@ func TestHandleActivityEditPage(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/activities/00000000-0000-0000-2222-000000000001/edit", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
@@ -109,7 +109,7 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/activities/new", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -140,7 +140,7 @@ func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/activities/new", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -163,7 +163,7 @@ func TestHandleStartTimeValidation(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/activities/validation-start-time", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleStartTimeValidation()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -186,7 +186,7 @@ func TestHandleEndTimeValidation(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/activities/validation-end-time", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleEndTimeValidation()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)

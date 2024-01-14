@@ -63,7 +63,7 @@ func (a *ProjectRestHandlers) HandleGetProjects() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 		pageParams := paged.PageParamsOf(r)
 
 		projectsPaged, err := projectRepository.FindProjects(r.Context(), principal.OrganizationID, pageParams)
@@ -107,7 +107,7 @@ func (a *ProjectRestHandlers) HandleGetProject() http.HandlerFunc {
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {
@@ -137,7 +137,7 @@ func (a *ProjectRestHandlers) HandleCreateProject() http.HandlerFunc {
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		var projectModel projectModel
 		err := json.NewDecoder(r.Body).Decode(&projectModel)
@@ -183,7 +183,7 @@ func (a *ProjectRestHandlers) HandleUpdateProject() http.HandlerFunc {
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectIDParam := chi.URLParam(r, "project-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {
@@ -244,7 +244,7 @@ func (a *ProjectRestHandlers) HandleDeleteProject() http.HandlerFunc {
 			return
 		}
 
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		if !principal.HasRole("ROLE_ADMIN") {
 			w.WriteHeader(http.StatusForbidden)

@@ -80,7 +80,7 @@ func (a *ActivityRestHandlers) HandleGetActivities() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 		pageParams := paged.PageParamsOf(r)
 
 		filter, err := filterFromQueryParams(r.URL.Query())
@@ -158,7 +158,7 @@ func (a *ActivityRestHandlers) HandleCreateActivity() http.HandlerFunc {
 			return
 		}
 
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activity, err := actitivityService.CreateActivity(r.Context(), principal, activityToCreate)
 		if err != nil {
@@ -179,7 +179,7 @@ func (a *ActivityRestHandlers) HandleGetActivity() http.HandlerFunc {
 	activityRepository := a.activityRepository
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
@@ -208,7 +208,7 @@ func (a *ActivityRestHandlers) HandleDeleteActivity() http.HandlerFunc {
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
 		if err != nil {
@@ -237,7 +237,7 @@ func (a *ActivityRestHandlers) HandleUpdateActivity() http.HandlerFunc {
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
 		activityIDParam := chi.URLParam(r, "activity-id")
-		principal := r.Context().Value(shared.ContextKeyPrincipal).(*shared.Principal)
+		principal := shared.MustPrincipalFromContext(r.Context())
 
 		var activityModel activityModel
 		err := json.NewDecoder(r.Body).Decode(&activityModel)

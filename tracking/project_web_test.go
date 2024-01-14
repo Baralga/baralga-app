@@ -24,7 +24,7 @@ func TestHandleProjectsPageAsUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/projects", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleProjectsPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
@@ -44,7 +44,7 @@ func TestHandleProjectsPageAsAdmin(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", "/projects", nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "admin",
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
@@ -75,7 +75,7 @@ func TestHandleCreateProjectWithNotValidProject(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/projects/new", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -109,7 +109,7 @@ func TestHandleCreateProjectWithValidProject(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/projects/new", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -139,7 +139,7 @@ func TestHandleCreateProjectWithValidProjectAsUser(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/projects/new", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleProjectForm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
@@ -162,7 +162,7 @@ func TestHandleCreateProjectWithInvalidProject(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/projects/new", strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -188,7 +188,7 @@ func TestHandleArchiveProjectAsAdmin(t *testing.T) {
 		},
 	}
 	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%v/archive", shared.ProjectIDSample), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -216,7 +216,7 @@ func TestHandleArchiveProjectAsUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%v/archive", shared.ProjectIDSample), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_USER"},
 	}))
 
@@ -238,7 +238,7 @@ func TestHandleProjectViewAsUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s", shared.ProjectIDSample.String()), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
@@ -261,7 +261,7 @@ func TestHandleProjectEditAsUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
@@ -281,7 +281,7 @@ func TestHandleProjectEditAsAdmin(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "admin",
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
@@ -307,7 +307,7 @@ func TestHandleProjectEditFormAsUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{}))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
@@ -338,7 +338,7 @@ func TestHandleProjectEditFormAsAdmin(t *testing.T) {
 	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), strings.NewReader(data.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	r = r.WithContext(context.WithValue(r.Context(), shared.ContextKeyPrincipal, &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "admin",
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
