@@ -25,7 +25,7 @@ func HandleWebManifest() http.HandlerFunc {
 	manifest := []byte(`
 	{
 		"short_name": "Baralga",
-		"name": "Baralga time tracker",
+		"name": "Baralga Time Tracker",
 		"icons": [
 		  {
 			"src": "assets/favicon.png",
