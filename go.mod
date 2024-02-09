@@ -17,7 +17,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.3
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.19
-	github.com/maragudk/gomponents v0.20.1
+	github.com/maragudk/gomponents v0.20.2
 	github.com/maragudk/gomponents-htmx v0.4.0
 	github.com/matryer/is v1.4.1
 	github.com/ory/dockertest/v3 v3.10.0
