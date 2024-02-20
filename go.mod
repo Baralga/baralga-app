@@ -16,7 +16,7 @@ require (
 	github.com/jackc/pgtype v1.14.2
 	github.com/jackc/pgx/v5 v5.5.3
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/lestrrat-go/jwx/v2 v2.0.19
+	github.com/lestrrat-go/jwx/v2 v2.0.20
 	github.com/maragudk/gomponents v0.20.2
 	github.com/maragudk/gomponents-htmx v0.4.0
 	github.com/matryer/is v1.4.1
