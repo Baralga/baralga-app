@@ -25,7 +25,7 @@ require (
 	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.14.0
 	github.com/xuri/excelize/v2 v2.8.1
-	golang.org/x/crypto v0.20.0
+	golang.org/x/crypto v0.21.0
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/oauth2 v0.17.0
 	schneider.vip/problem v1.9.1
@@ -110,7 +110,7 @@ require (
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	google.golang.org/api v0.166.0 // indirect
