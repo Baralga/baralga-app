@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: magnetikonline/action-golang-cache@v4
+        uses: magnetikonline/action-golang-cache@v5
         with:
           go-version-file: go.mod
       - name: golangci-lint
