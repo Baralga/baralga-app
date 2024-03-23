@@ -13,7 +13,7 @@ require (
 	github.com/gorilla/csrf v1.7.2
 	github.com/gorilla/schema v1.2.1
 	github.com/hellofresh/health-go/v5 v5.5.3
-	github.com/jackc/pgtype v1.14.2
+	github.com/jackc/pgtype v1.14.3
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.21
