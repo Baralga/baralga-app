@@ -8,7 +8,7 @@ require (
 	github.com/go-chi/jwtauth/v5 v5.3.1
 	github.com/go-http-utils/etag v0.0.0-20161124023236-513ea8f21eb1
 	github.com/go-playground/validator/v10 v10.19.0
-	github.com/golang-migrate/migrate/v4 v4.17.0
+	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/csrf v1.7.2
 	github.com/gorilla/schema v1.3.0
@@ -43,7 +43,7 @@ require (
 	github.com/containerd/continuity v0.4.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/docker/cli v24.0.5+incompatible // indirect
-	github.com/docker/docker v24.0.7+incompatible // indirect
+	github.com/docker/docker v24.0.9+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -86,6 +86,7 @@ require (
 	github.com/lestrrat-go/httprc v1.0.5 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
