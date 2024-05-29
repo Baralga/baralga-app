@@ -26,7 +26,7 @@ require (
 	github.com/unrolled/secure v1.14.0
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/crypto v0.23.0
-	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d
+	golang.org/x/exp v0.0.0-20240529005216-23cca8864a10
 	golang.org/x/oauth2 v0.20.0
 	schneider.vip/problem v1.9.1
 )
