@@ -16,7 +16,7 @@ require (
 	github.com/jackc/pgtype v1.14.3
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/lestrrat-go/jwx/v2 v2.0.21
+	github.com/lestrrat-go/jwx/v2 v2.1.0
 	github.com/maragudk/gomponents v0.20.3
 	github.com/maragudk/gomponents-htmx v0.5.0
 	github.com/matryer/is v1.4.1
@@ -41,7 +41,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/containerd/continuity v0.4.1 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/docker/cli v24.0.5+incompatible // indirect
 	github.com/docker/docker v24.0.9+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
