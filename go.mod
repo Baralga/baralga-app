@@ -16,7 +16,7 @@ require (
 	github.com/jackc/pgtype v1.14.3
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/lestrrat-go/jwx/v2 v2.1.0
+	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/maragudk/gomponents v0.20.4
 	github.com/maragudk/gomponents-htmx v0.5.0
 	github.com/matryer/is v1.4.1
@@ -83,7 +83,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc v1.0.5 // indirect
+	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lib/pq v1.10.9 // indirect
