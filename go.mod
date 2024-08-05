@@ -1,6 +1,6 @@
 module github.com/baralga
 
-go 1.21
+go 1.22
 
 require (
 	github.com/dghubble/gologin/v2 v2.5.0
