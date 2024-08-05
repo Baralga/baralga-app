@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx"
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -181,7 +181,7 @@ func migrateDb(dbURL string) error {
 		return err
 	}
 
-	m, err := migrate.NewWithSourceInstance("iofs", source, strings.Replace(dbURL, "postgres://", "pgx://", 1))
+	m, err := migrate.NewWithSourceInstance("iofs", source, strings.Replace(dbURL, "postgres://", "pgx5://", 1))
 	if err != nil {
 		return err
 	}
