@@ -9,7 +9,6 @@ import (
 	"github.com/baralga/shared"
 	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
-	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
@@ -327,7 +326,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	for rows.Next() {
 		var (
 			id             string
-			description    pgtype.Varchar
+			description    string
 			startTime      time.Time
 			endTime        time.Time
 			username       string
@@ -345,7 +344,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 
 		activity := &Activity{
 			ID:             uuid.MustParse(id),
-			Description:    description.String,
+			Description:    description,
 			Start:          startTime,
 			End:            endTime,
 			Username:       username,
@@ -404,7 +403,7 @@ func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID,
 
 	var (
 		id          string
-		description pgtype.Varchar
+		description string
 		startTime   time.Time
 		endTime     time.Time
 		username    string
@@ -423,7 +422,7 @@ func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID,
 
 	activity := &Activity{
 		ID:             uuid.MustParse(id),
-		Description:    description.String,
+		Description:    description,
 		Start:          startTime,
 		End:            endTime,
 		Username:       username,
