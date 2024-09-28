@@ -24,7 +24,7 @@ require (
 	github.com/ory/dockertest/v3 v3.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/snabb/isoweek v1.0.3
-	github.com/unrolled/secure v1.15.0
+	github.com/unrolled/secure v1.16.0
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/crypto v0.27.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
