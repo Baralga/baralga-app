@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"net/url"
 
-	g "github.com/maragudk/gomponents"
-	ghx "github.com/maragudk/gomponents-htmx"
-	c "github.com/maragudk/gomponents/components"
-	. "github.com/maragudk/gomponents/html"
+	g "maragu.dev/gomponents"
+	ghx "maragu.dev/gomponents-htmx"
+	c "maragu.dev/gomponents/components"
+	. "maragu.dev/gomponents/html"
 )
 
 type PageContext struct {

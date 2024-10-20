@@ -11,10 +11,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
-	g "github.com/maragudk/gomponents"
-	ghx "github.com/maragudk/gomponents-htmx"
-	. "github.com/maragudk/gomponents/html"
 	"github.com/pkg/errors"
+	g "maragu.dev/gomponents"
+	ghx "maragu.dev/gomponents-htmx"
+	. "maragu.dev/gomponents/html"
 )
 
 type signupFormModel struct {
