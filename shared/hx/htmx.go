@@ -3,7 +3,7 @@ package hx
 import (
 	"net/http"
 
-	ghttp "github.com/maragudk/gomponents-htmx/http"
+	ghttp "maragu.dev/gomponents-htmx/http"
 )
 
 func IsHXRequest(r *http.Request) bool {

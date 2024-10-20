@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	g "github.com/maragudk/gomponents"
-	. "github.com/maragudk/gomponents/html"
 	"github.com/matryer/is"
+	g "maragu.dev/gomponents"
+	. "maragu.dev/gomponents/html"
 )
 
 func TestHandleWebManifest(t *testing.T) {
