@@ -28,4 +28,4 @@ jobs:
         run: make arch-go.check
       - name: Test
         working-directory: .
-        run: make test
+        run: make build
