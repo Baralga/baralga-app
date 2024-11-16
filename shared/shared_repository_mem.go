@@ -2,8 +2,6 @@ package shared
 
 import (
 	"context"
-
-	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 )
 
 type InMemRepositoryTxer struct {
