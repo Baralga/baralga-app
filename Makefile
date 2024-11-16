@@ -5,7 +5,7 @@ BUILD_DIR = $(PWD)/build
 MIGRATIONS_FOLDER = $(PWD)/shared/migrations
 DATABASE_URL = postgres://postgres:postgres@localhost:5432/baralga?sslmode=disable
 
-HTMX_VERSION = 2.0.2
+HTMX_VERSION = 2.0.3
 
 clean:
 	rm -rf ./build
