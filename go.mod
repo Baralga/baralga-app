@@ -2,8 +2,6 @@ module github.com/baralga
 
 go 1.23
 
-toolchain go1.23.3
-
 require (
 	github.com/dghubble/gologin/v2 v2.5.0
 	github.com/go-chi/chi/v5 v5.1.0
