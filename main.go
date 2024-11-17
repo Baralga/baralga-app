@@ -123,7 +123,7 @@ func registerHealthcheck(config *shared.Config, router *chi.Mux) {
 			}),
 		},
 	))
-	router.Get("/health", h.HandlerFunc)
+	router.HandleFunc("GET /health", h.HandlerFunc)
 }
 
 func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthRestHandlers, authWeb *auth.AuthWebHandlers, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
