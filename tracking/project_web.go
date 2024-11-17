@@ -42,10 +42,10 @@ func NewProjectWebHandlers(config *shared.Config, projectService *ProjectService
 func (a *ProjectWeb) RegisterProtected(r chi.Router) {
 	r.Handle("GET /projects", a.HandleProjectsPage())
 	r.Handle("POST /projects/new", a.HandleProjectForm())
-	r.Handle("GET /projects/{project-id}/archive", a.HandleArchiveProject())
-	r.Handle("GET /projects/{project-id}", a.HandleProjectView())
-	r.Handle("GET /projects/{project-id}/edit", a.HandleProjectEdit())
-	r.Handle("POST /projects/{project-id}/edit", a.HandleProjectEditForm())
+	r.Handle("GET /projects/{projectID}/archive", a.HandleArchiveProject())
+	r.Handle("GET /projects/{projectID}", a.HandleProjectView())
+	r.Handle("GET /projects/{projectID}/edit", a.HandleProjectEdit())
+	r.Handle("POST /projects/{projectID}/edit", a.HandleProjectEditForm())
 }
 
 func (a *ProjectWeb) RegisterOpen(r chi.Router) {
@@ -94,7 +94,7 @@ func (a *ProjectWeb) HandleProjectView() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
@@ -122,7 +122,7 @@ func (a *ProjectWeb) HandleProjectEdit() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
@@ -159,7 +159,7 @@ func (a *ProjectWeb) HandleProjectEditForm() http.HandlerFunc {
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
@@ -285,7 +285,7 @@ func (a *ProjectWeb) HandleArchiveProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
