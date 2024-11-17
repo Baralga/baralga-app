@@ -46,7 +46,7 @@ func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
 	r.Handle("GET /signup", a.HandleSignUpPage())
 	r.Handle("POST /signup", a.HandleSignUpForm())
 	r.Handle("POST /signup/validate", a.HandleSignUpFormValidate())
-	r.Handle("GET /signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
+	r.Handle("GET /signup/confirm/{confirmationID}", a.HandleSignUpConfirm())
 }
 
 func (a *UserWebHandlers) signupFormValidator(incomplete bool) func(ctx context.Context, formModel signupFormModel) (map[string]string, error) {
@@ -86,7 +86,7 @@ func (a *UserWebHandlers) HandleSignUpConfirm() http.HandlerFunc {
 	userService := a.userService
 	userRepository := a.userRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		confirmationIDParam := r.PathValue("confirmation-id")
+		confirmationIDParam := r.PathValue("confirmationID")
 
 		userID, err := userRepository.FindUserIDByConfirmationID(r.Context(), confirmationIDParam)
 		if errors.Is(err, ErrUserNotFound) {
