@@ -39,7 +39,7 @@ func (a *AuthRestHandlers) RegisterProtected(r chi.Router) {
 }
 
 func (a *AuthRestHandlers) RegisterOpen(r chi.Router) {
-	r.Post("/auth/login", a.HandleLogin())
+	r.Handle("POST /auth/login", a.HandleLogin())
 }
 
 // HandleLogin handles the authentication request of a user
