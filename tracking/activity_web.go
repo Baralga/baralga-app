@@ -62,14 +62,14 @@ func NewActivityWebHandlers(config *shared.Config, activityService *ActitivitySe
 }
 
 func (a *ActivityWebHandlers) RegisterProtected(r chi.Router) {
-	r.Get("/", a.HandleTrackingPage())
-	r.Get("/activities/new", a.HandleActivityAddPage())
-	r.Post("/activities/validate-start-time", a.HandleStartTimeValidation())
-	r.Post("/activities/validate-end-time", a.HandleEndTimeValidation())
-	r.Get("/activities/{activity-id}/edit", a.HandleActivityEditPage())
-	r.Post("/activities/new", a.HandleActivityForm())
-	r.Post("/activities/{activity-id}", a.HandleActivityForm())
-	r.Post("/activities/track", a.HandleActivityTrackForm())
+	r.Handle("GET /", a.HandleTrackingPage())
+	r.Handle("GET /activities/new", a.HandleActivityAddPage())
+	r.Handle("POST /activities/validate-start-time", a.HandleStartTimeValidation())
+	r.Handle("POST /activities/validate-end-time", a.HandleEndTimeValidation())
+	r.Handle("GET /activities/{activity-id}/edit", a.HandleActivityEditPage())
+	r.Handle("POST /activities/new", a.HandleActivityForm())
+	r.Handle("POST /activities/{activity-id}", a.HandleActivityForm())
+	r.Handle("POST /activities/track", a.HandleActivityTrackForm())
 }
 
 func (a *ActivityWebHandlers) RegisterOpen(r chi.Router) {
@@ -178,7 +178,7 @@ func (a *ActivityWebHandlers) HandleActivityEditPage() http.HandlerFunc {
 	activityRepository := a.activityRepository
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := chi.URLParam(r, "activity-id")
+		activityIDParam := r.PathValue("activity-id")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
