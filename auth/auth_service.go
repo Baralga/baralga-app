@@ -81,7 +81,7 @@ func (a *AuthService) AuthenticateTrusted(ctx context.Context, username string) 
 
 func (a *AuthService) CreateCookie(tokenAuth *jwtauth.JWTAuth, expiryDuration time.Duration, principal *shared.Principal) http.Cookie {
 	claims := mapPrincipalToClaims(principal)
-	claims[jwt.ExpirationKey] = expiryDuration
+	claims[jwt.ExpirationKey] = jwtauth.ExpireIn(expiryDuration)
 
 	_, tokenString, _ := tokenAuth.Encode(claims)
 
