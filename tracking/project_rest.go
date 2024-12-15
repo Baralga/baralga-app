@@ -50,9 +50,9 @@ func NewProjectController(config *shared.Config, projectRepository ProjectReposi
 func (a *ProjectRestHandlers) RegisterProtected(r chi.Router) {
 	r.Handle("GET /projects", a.HandleGetProjects())
 	r.Handle("POST /projects", a.HandleCreateProject())
-	r.Handle("GET /projects/{project-id}", a.HandleGetProject())
-	r.Handle("DELETE /projects/{project-id}", a.HandleDeleteProject())
-	r.Handle("PATCH /projects/{project-id}", a.HandleUpdateProject())
+	r.Handle("GET /projects/{projectID}", a.HandleGetProject())
+	r.Handle("DELETE /projects/{projectID}", a.HandleDeleteProject())
+	r.Handle("PATCH /projects/{projectID}", a.HandleUpdateProject())
 }
 
 func (a *ProjectRestHandlers) RegisterOpen(r chi.Router) {
@@ -106,7 +106,7 @@ func (a *ProjectRestHandlers) HandleGetProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectRepository := a.projectRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
@@ -182,7 +182,7 @@ func (a *ProjectRestHandlers) HandleUpdateProject() http.HandlerFunc {
 	validator := validator.New()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		projectID, err := uuid.Parse(projectIDParam)
@@ -237,7 +237,7 @@ func (a *ProjectRestHandlers) HandleDeleteProject() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	projectService := a.projectService
 	return func(w http.ResponseWriter, r *http.Request) {
-		projectIDParam := r.PathValue("project-id")
+		projectIDParam := r.PathValue("projectID")
 		projectID, err := uuid.Parse(projectIDParam)
 		if err != nil {
 			http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusNotAcceptable)
