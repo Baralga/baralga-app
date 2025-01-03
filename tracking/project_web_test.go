@@ -1,7 +1,6 @@
 package tracking
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/baralga/shared"
-	"github.com/go-chi/chi/v5"
 	"github.com/matryer/is"
 )
 
@@ -187,16 +185,15 @@ func TestHandleArchiveProjectAsAdmin(t *testing.T) {
 			projectRepository: repo,
 		},
 	}
-	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%v/archive", shared.ProjectIDSample), nil)
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%v/archive", shared.ProjectIDSample), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}/archive", w.HandleArchiveProject())
+	mux.ServeHTTP(httpRec, r)
 
-	w.HandleArchiveProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 }
 
@@ -215,16 +212,15 @@ func TestHandleArchiveProjectAsUser(t *testing.T) {
 		},
 	}
 
-	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%v/archive", shared.ProjectIDSample), nil)
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%v/archive", shared.ProjectIDSample), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_USER"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}/archive", w.HandleArchiveProject())
+	mux.ServeHTTP(httpRec, r)
 
-	w.HandleArchiveProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 }
 
@@ -240,11 +236,10 @@ func TestHandleProjectViewAsUser(t *testing.T) {
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s", shared.ProjectIDSample.String()), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}", a.HandleProjectView())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleProjectView()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
@@ -263,11 +258,10 @@ func TestHandleProjectEditAsUser(t *testing.T) {
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}/edit", a.HandleProjectEdit())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleProjectEdit()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 }
 
@@ -286,11 +280,10 @@ func TestHandleProjectEditAsAdmin(t *testing.T) {
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}/edit", a.HandleProjectEdit())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleProjectEdit()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
@@ -309,11 +302,10 @@ func TestHandleProjectEditFormAsUser(t *testing.T) {
 	r, _ := http.NewRequest("POST", fmt.Sprintf("/projects/%s/edit", shared.ProjectIDSample.String()), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /projects/{projectID}/edit", a.HandleProjectEditForm())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleProjectEditForm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 }
 
@@ -343,11 +335,10 @@ func TestHandleProjectEditFormAsAdmin(t *testing.T) {
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /projects/{projectID}/edit", a.HandleProjectEditForm())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleProjectEditForm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()
