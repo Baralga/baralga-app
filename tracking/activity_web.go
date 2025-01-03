@@ -488,7 +488,6 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 				H2(
 					Span(
 						StyleAttr("white-space: nowrap;"),
-
 						g.Text(
 							filter.StringFormatted(),
 						),
@@ -503,12 +502,6 @@ func ActivitiesInWeekView(filter *ActivityFilter, activitiesPage *ActivitiesPage
 						StyleAttr("white-space: nowrap;"),
 						Class("text-muted"),
 						g.Text("My Week "),
-						g.If(len(activitiesPage.Activities) > 0,
-							Span(
-								Class("badge rounded-pill bg-secondary fw-normal"),
-								g.Text(time_utils.FormatMinutesAsDuration(durationWeekTotal)),
-							),
-						),
 					),
 				),
 			),
