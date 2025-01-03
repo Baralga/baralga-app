@@ -321,7 +321,7 @@ func TestHandleUpdateProjectWithInvalidBody(t *testing.T) {
 	}))
 
 	mux := &http.ServeMux{}
-	mux.Handle("PATCH /projects/{projectID}", a.HandleUpdateProject())
+	mux.Handle("PATCH /api/projects/{projectID}", a.HandleUpdateProject())
 	mux.ServeHTTP(httpRec, r)
 
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
@@ -346,11 +346,10 @@ func TestHandleUpdateWithIdNotValid(t *testing.T) {
 	r, _ := http.NewRequest("PATCH", "/api/projects/not-a-uuid", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /api/projects/{projectID}", a.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
 }
 
@@ -383,6 +382,7 @@ func TestHandleCreateProject(t *testing.T) {
 	}))
 
 	c.HandleCreateProject()(httpRec, r)
+
 	is.Equal(httpRec.Result().StatusCode, http.StatusCreated)
 	is.Equal(countBefore+1, len(repo.projects))
 }
@@ -479,11 +479,10 @@ func TestHandleDeleteProjectAsAdmin(t *testing.T) {
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/projects/{projectID}", c.HandleDeleteProject())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(0, len(repo.projects))
 }
@@ -508,11 +507,10 @@ func TestHandleDeleteProjectAsUser(t *testing.T) {
 		Username: "user1",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/projects/{projectID}", c.HandleDeleteProject())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 	is.Equal(1, len(repo.projects))
 }
@@ -531,10 +529,9 @@ func TestHandleDeleteProjectIdNotValid(t *testing.T) {
 		Username: "user1",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-
-	c.HandleDeleteProject()(httpRec, r)
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/projects/{projectID}", c.HandleDeleteProject())
+	mux.ServeHTTP(httpRec, r)
+	
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
 }
