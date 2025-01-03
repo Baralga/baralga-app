@@ -1,7 +1,6 @@
 package tracking
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/baralga/shared"
-	"github.com/go-chi/chi/v5"
 	"github.com/matryer/is"
 )
 
@@ -69,11 +67,10 @@ func TestHandleActivityEditPage(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/activities/00000000-0000-0000-2222-000000000001/edit", nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /activities/{activityID}/edit", a.HandleActivityEditPage())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleActivityEditPage()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()

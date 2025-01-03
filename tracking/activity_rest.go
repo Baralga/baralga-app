@@ -178,7 +178,7 @@ func (a *ActivityRestHandlers) HandleGetActivity() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	activityRepository := a.activityRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := r.PathValue("activity-id")
+		activityIDParam := r.PathValue("activityID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
@@ -207,7 +207,7 @@ func (a *ActivityRestHandlers) HandleDeleteActivity() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := r.PathValue("activity-id")
+		activityIDParam := r.PathValue("activityID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
@@ -236,7 +236,7 @@ func (a *ActivityRestHandlers) HandleUpdateActivity() http.HandlerFunc {
 	validator := validator.New()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := r.PathValue("activity-id")
+		activityIDParam := r.PathValue("activityID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		var activityModel activityModel
