@@ -11,7 +11,7 @@ automatic_scaling:
 
 env_variables:
   BARALGA_ENV: "production"
-  BARALGA_DB: "{{ .BARALGA_DB }}"
+  BARALGA_DB: "{{ .BARALGA_DB_NEON }}"
   BARALGA_JWTSECRET: "{{ .BARALGA_JWTSECRET }}"
   BARALGA_CSRFSECRET: "{{ .BARALGA_CSRFSECRET }}"
   BARALGA_WEBROOT: "{{ .BARALGA_WEBROOT }}"
