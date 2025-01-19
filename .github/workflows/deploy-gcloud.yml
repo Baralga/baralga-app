@@ -28,7 +28,7 @@ jobs:
         working-directory: .
         run: make app.yaml
         env:
-          BARALGA_DB: ${{ secrets.BARALGA_DB }}
+          BARALGA_DB: ${{ secrets.BARALGA_DB_NEON }}
           BARALGA_DBMAXCONNS: ${{ secrets.BARALGA_DBMAXCONNS }}
           BARALGA_JWTSECRET: ${{ secrets.BARALGA_JWTSECRET }}
           BARALGA_CSRFSECRET: ${{ secrets.BARALGA_CSRFSECRET }}
