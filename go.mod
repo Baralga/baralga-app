@@ -1,8 +1,8 @@
 module github.com/baralga
 
-go 1.23
+go 1.23.0
 
-toolchain go1.23.5
+toolchain go1.24.0
 
 require (
 	github.com/dghubble/gologin/v2 v2.5.0
@@ -24,7 +24,7 @@ require (
 	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.17.0
 	github.com/xuri/excelize/v2 v2.9.0
-	golang.org/x/crypto v0.32.0
+	golang.org/x/crypto v0.34.0
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 	golang.org/x/oauth2 v0.26.0
 	maragu.dev/gomponents v1.0.0
@@ -102,9 +102,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/api v0.214.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
 	google.golang.org/grpc v1.69.2 // indirect
