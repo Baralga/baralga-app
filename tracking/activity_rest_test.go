@@ -12,7 +12,6 @@ import (
 
 	"github.com/baralga/shared"
 	"github.com/baralga/shared/hal"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/matryer/is"
 )
@@ -88,11 +87,10 @@ func TestHandleGetActivity(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /api/activities/{activityID}", a.HandleGetActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleGetActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 }
 
@@ -108,11 +106,10 @@ func TestHandleGetActivityNotFound(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/api/activities/d9fbfab6-2750-4703-8a7b-77498756d64a", nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "d9fbfab6-2750-4703-8a7b-77498756d64a")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /api/activities/{activityID}", a.HandleGetActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleGetActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotFound)
 }
 
@@ -128,11 +125,10 @@ func TestHandleGetActivityIdNotValid(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/api/activities/not-a-uuid", nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /api/activities/{activityID}", a.HandleGetActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleGetActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
@@ -153,6 +149,7 @@ func TestHandleGetActivitiesWithUrlParams(t *testing.T) {
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleGetActivities()(httpRec, r)
+
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	activitiesModel := &activitiesModel{}
@@ -324,11 +321,10 @@ func TestHandleDeleteActivityAsAdmin(t *testing.T) {
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/activities/{activityID}", c.HandleDeleteActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(0, len(repo.activities))
 }
@@ -354,11 +350,10 @@ func TestHandleDeleteActivityAsMatchingUser(t *testing.T) {
 		Username: "user1",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/activities/{activityID}", c.HandleDeleteActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(0, len(repo.activities))
 }
@@ -375,11 +370,10 @@ func TestHandleDeleteActivityIdNotValid(t *testing.T) {
 	r, _ := http.NewRequest("DELETE", "/api/activities/not-a-uuid", nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/activities/{activityID}", a.HandleDeleteActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleDeleteActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
@@ -402,6 +396,7 @@ func TestHandleCreateActivityWithInvalidBody(t *testing.T) {
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
 	a.HandleCreateActivity()(httpRec, r)
+
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
@@ -425,11 +420,10 @@ func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
 		Username: "otherUser",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/activities/{activityID}", c.HandleDeleteActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotFound)
 	is.Equal(1, len(repo.activities))
 }
@@ -463,16 +457,15 @@ func TestHandleUpdateActivity(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r, _ := http.NewRequest("POST", "/api/activities/00000000-0000-0000-2222-000000000001", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /api/activities/{activityID}", c.HandleUpdateActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	activityUpdate, err := repo.FindActivityByID(context.Background(), uuid.MustParse("00000000-0000-0000-2222-000000000001"), shared.OrganizationIDSample)
@@ -504,16 +497,15 @@ func TestHandleUpdateInvalidActivity(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r, _ := http.NewRequest("POST", "/api/activities/00000000-0000-0000-2222-000000000001", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /api/activities/{activityID}", c.HandleUpdateActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
@@ -546,16 +538,15 @@ func TestHandleUpdateActivityAsUser(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r, _ := http.NewRequest("POST", "/api/activities/00000000-0000-0000-2222-000000000001", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "user1",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /api/activities/{activityID}", c.HandleUpdateActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	activityUpdate, err := repo.FindActivityByID(context.Background(), uuid.MustParse("00000000-0000-0000-2222-000000000001"), shared.OrganizationIDSample)
@@ -592,16 +583,15 @@ func TestHandleUpdateActivityWithNonMatchingUser(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r, _ := http.NewRequest("POST", "/api/activities/00000000-0000-0000-2222-000000000001", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "otherUser",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /api/activities/{activityID}", c.HandleUpdateActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotFound)
 }
 
@@ -620,16 +610,15 @@ func TestHandleUpdateActivityWithInvalidBody(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("POST", "/api/activities", strings.NewReader(body))
+	r, _ := http.NewRequest("POST", "/api/activities/00000000-0000-0000-2222-000000000001", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "otherUser",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "00000000-0000-0000-2222-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /api/activities/{activityID}", c.HandleUpdateActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
@@ -659,11 +648,10 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/api/activities/not-a-uuid", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("activity-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("POST /api/activities/{activityID}", a.HandleUpdateActivity())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
