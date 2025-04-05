@@ -26,7 +26,7 @@ require (
 	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/crypto v0.35.0
 	golang.org/x/exp v0.0.0-20250228200357-dead58393ab7
-	golang.org/x/oauth2 v0.28.0
+	golang.org/x/oauth2 v0.29.0
 	maragu.dev/gomponents v1.1.0
 	maragu.dev/gomponents-htmx v0.6.1
 	schneider.vip/problem v1.9.1
