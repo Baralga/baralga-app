@@ -155,11 +155,10 @@ func TestHandleSignUpConfirmWithExistingConfirmation(t *testing.T) {
 	r, _ := http.NewRequest("GET", fmt.Sprintf("/signup/confirm/%v", shared.ConfirmationIdSample), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("confirmation-id", shared.ConfirmationIdSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /signup/confirm/{confirmationID}", w.HandleSignUpConfirm())
+	mux.ServeHTTP(httpRec, r)
 
-	w.HandleSignUpConfirm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusFound)
 
 	l, err := httpRec.Result().Location()

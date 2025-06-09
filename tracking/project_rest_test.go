@@ -139,14 +139,13 @@ func TestHandleGetProject(t *testing.T) {
 		projectRepository: NewInMemProjectRepository(),
 	}
 
-	r, _ := http.NewRequest("GET", fmt.Sprintf("/api/projects/%v", shared.ProjectIDSample), nil)
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/projects/%v", shared.ProjectIDSample), nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}", a.HandleGetProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleGetProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	projectModel := &projectModel{}
@@ -164,14 +163,13 @@ func TestHandleGetNonExistingProject(t *testing.T) {
 		projectRepository: NewInMemProjectRepository(),
 	}
 
-	r, _ := http.NewRequest("GET", "/api/projects/897b7f44-1f31-4c95-80cb-bbb43e4dcf05", nil)
+	r, _ := http.NewRequest("GET", "/projects/897b7f44-1f31-4c95-80cb-bbb43e4dcf05", nil)
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "897b7f44-1f31-4c95-80cb-bbb43e4dcf05")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("GET /projects/{projectID}", a.HandleGetProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleGetProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotFound)
 }
 
@@ -197,16 +195,15 @@ func TestHandleUpdateProject(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("PATCH", fmt.Sprintf("/api/projects/%v", shared.ProjectIDSample), strings.NewReader(body))
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r, _ := http.NewRequest("PATCH", fmt.Sprintf("/projects/%v", shared.ProjectIDSample), strings.NewReader(body))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /projects/{projectID}", c.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	projectsModel := &projectsModel{}
@@ -231,16 +228,15 @@ func TestHandleUpdateInvalidProject(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("PATCH", "/api/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r, _ := http.NewRequest("PATCH", "/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /projects/{projectID}", a.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
@@ -261,14 +257,13 @@ func TestHandleUpdateProjectAsUser(t *testing.T) {
 	 }
 	`
 
-	r, _ := http.NewRequest("PATCH", "/api/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
+	r, _ := http.NewRequest("PATCH", "/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /projects/{projectID}", a.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 }
 
@@ -295,15 +290,14 @@ func TestHandleUpdateNonExistingProject(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("PATCH", "/api/projects/897b7f44-1f31-4c95-80cb-bbb43e4dcf05", strings.NewReader(body))
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "897b7f44-1f31-4c95-80cb-bbb43e4dcf05")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /projects/{projectID}", c.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotFound)
 }
 
@@ -322,15 +316,14 @@ func TestHandleUpdateProjectWithInvalidBody(t *testing.T) {
 	 }
 	`
 	r, _ := http.NewRequest("PATCH", "/api/projects/00000000-0000-0000-1111-000000000001", strings.NewReader(body))
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /api/projects/{projectID}", a.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
 }
 
@@ -353,11 +346,10 @@ func TestHandleUpdateWithIdNotValid(t *testing.T) {
 	r, _ := http.NewRequest("PATCH", "/api/projects/not-a-uuid", strings.NewReader(body))
 	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("PATCH /api/projects/{projectID}", a.HandleUpdateProject())
+	mux.ServeHTTP(httpRec, r)
 
-	a.HandleUpdateProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
 }
 
@@ -385,11 +377,12 @@ func TestHandleCreateProject(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/projects", strings.NewReader(body))
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
 	c.HandleCreateProject()(httpRec, r)
+
 	is.Equal(httpRec.Result().StatusCode, http.StatusCreated)
 	is.Equal(countBefore+1, len(repo.projects))
 }
@@ -412,7 +405,7 @@ func TestHandleInvalidCreateProject(t *testing.T) {
 	`
 
 	r, _ := http.NewRequest("POST", "/api/projects", strings.NewReader(body))
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Roles: []string{"ROLE_ADMIN"},
 	}))
 
@@ -481,16 +474,15 @@ func TestHandleDeleteProjectAsAdmin(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/projects/%v", shared.ProjectIDSample), nil)
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "admin",
 		Roles:    []string{"ROLE_ADMIN"},
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", shared.ProjectIDSample.String())
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/projects/{projectID}", c.HandleDeleteProject())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(0, len(repo.projects))
 }
@@ -511,15 +503,14 @@ func TestHandleDeleteProjectAsUser(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/projects/00000000-0000-0000-1111-000000000001", nil)
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "user1",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "00000000-0000-0000-1111-000000000001")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/projects/{projectID}", c.HandleDeleteProject())
+	mux.ServeHTTP(httpRec, r)
 
-	c.HandleDeleteProject()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusForbidden)
 	is.Equal(1, len(repo.projects))
 }
@@ -534,14 +525,13 @@ func TestHandleDeleteProjectIdNotValid(t *testing.T) {
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/projects/not-a-uuid", nil)
-	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(),  &shared.Principal{
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
 		Username: "user1",
 	}))
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("project-id", "not-a-uuid")
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-
-	c.HandleDeleteProject()(httpRec, r)
+	mux := &http.ServeMux{}
+	mux.Handle("DELETE /api/projects/{projectID}", c.HandleDeleteProject())
+	mux.ServeHTTP(httpRec, r)
+	
 	is.Equal(httpRec.Result().StatusCode, http.StatusNotAcceptable)
 }

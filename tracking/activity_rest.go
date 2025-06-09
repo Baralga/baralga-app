@@ -66,11 +66,11 @@ func (a *ActivityRestHandlers) RegisterOpen(r chi.Router) {
 }
 
 func (a *ActivityRestHandlers) RegisterProtected(r chi.Router) {
-	r.Get("/activities", a.HandleGetActivities())
-	r.Post("/activities", a.HandleCreateActivity())
-	r.Get("/activities/{activity-id}", a.HandleGetActivity())
-	r.Delete("/activities/{activity-id}", a.HandleDeleteActivity())
-	r.Patch("/activities/{activity-id}", a.HandleUpdateActivity())
+	r.Handle("GET /activities", a.HandleGetActivities())
+	r.Handle("POST /activities", a.HandleCreateActivity())
+	r.Handle("GET /activities/{activity-id}", a.HandleGetActivity())
+	r.Handle("DELETE /activities/{activity-id}", a.HandleDeleteActivity())
+	r.Handle("PATCH /activities/{activity-id}", a.HandleUpdateActivity())
 }
 
 // HandleGetActivities reads activities
@@ -178,7 +178,7 @@ func (a *ActivityRestHandlers) HandleGetActivity() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	activityRepository := a.activityRepository
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := chi.URLParam(r, "activity-id")
+		activityIDParam := r.PathValue("activityID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
@@ -207,7 +207,7 @@ func (a *ActivityRestHandlers) HandleDeleteActivity() http.HandlerFunc {
 	isProduction := a.config.IsProduction()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := chi.URLParam(r, "activity-id")
+		activityIDParam := r.PathValue("activityID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		activityID, err := uuid.Parse(activityIDParam)
@@ -236,7 +236,7 @@ func (a *ActivityRestHandlers) HandleUpdateActivity() http.HandlerFunc {
 	validator := validator.New()
 	actitivityService := a.actitivityService
 	return func(w http.ResponseWriter, r *http.Request) {
-		activityIDParam := chi.URLParam(r, "activity-id")
+		activityIDParam := r.PathValue("activityID")
 		principal := shared.MustPrincipalFromContext(r.Context())
 
 		var activityModel activityModel

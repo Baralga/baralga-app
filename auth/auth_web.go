@@ -18,13 +18,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
-	g "maragu.dev/gomponents"
-	ghx "maragu.dev/gomponents-htmx"
-	. "maragu.dev/gomponents/html"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	githubOAuth2 "golang.org/x/oauth2/github"
 	googleOAuth2 "golang.org/x/oauth2/google"
+	g "maragu.dev/gomponents"
+	ghx "maragu.dev/gomponents-htmx"
+	. "maragu.dev/gomponents/html"
 )
 
 type loginFormModel struct {
@@ -58,12 +58,12 @@ func NewAuthWebHandlers(config *shared.Config, authService *AuthService, userSer
 }
 
 func (a *AuthWebHandlers) RegisterProtected(r chi.Router) {
-	r.Get("/logout", a.HandleLogoutPage())
+	r.HandleFunc("GET /logout", a.HandleLogoutPage())
 }
 
 func (a *AuthWebHandlers) RegisterOpen(r chi.Router) {
-	r.Get("/login", a.HandleLoginPage())
-	r.Post("/login", a.HandleLoginForm())
+	r.Handle("GET /login", a.HandleLoginPage())
+	r.Handle("POST /login", a.HandleLoginForm())
 
 	r.Handle("/github/login", a.GithubLoginHandler())
 	r.Handle("/github/callback", a.GithubCallbackHandler())
