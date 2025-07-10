@@ -24,7 +24,7 @@ require (
 	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.17.0
 	github.com/xuri/excelize/v2 v2.9.1
-	golang.org/x/crypto v0.38.0
+	golang.org/x/crypto v0.40.0
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 	golang.org/x/oauth2 v0.30.0
 	maragu.dev/gomponents v1.1.0
@@ -102,10 +102,10 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	google.golang.org/api v0.228.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250409194420-de1ac958c67a // indirect
 	google.golang.org/grpc v1.71.1 // indirect
