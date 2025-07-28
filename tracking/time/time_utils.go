@@ -73,10 +73,10 @@ func Quarter(time time.Time) int {
 func CompleteTimeValue(time string) string {
 	completedTime := time
 
-	completedTime = strings.Replace(completedTime, ",,", ":", -1)
-	completedTime = strings.Replace(completedTime, "/", ":", -1)
-	completedTime = strings.Replace(completedTime, ";", ",", -1)
-	completedTime = strings.Replace(completedTime, ".", ":", -1)
+	completedTime = strings.ReplaceAll(completedTime, ",,", ":")
+	completedTime = strings.ReplaceAll(completedTime, "/", ":")
+	completedTime = strings.ReplaceAll(completedTime, ";", ",")
+	completedTime = strings.ReplaceAll(completedTime, ".", ":")
 
 	// Treat 11,25 as 11:15
 	// Treat 11,75 as 11:45

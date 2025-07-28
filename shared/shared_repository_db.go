@@ -185,7 +185,7 @@ func migrateDb(dbURL string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
+	defer m.Close() //nolint:all
 
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {

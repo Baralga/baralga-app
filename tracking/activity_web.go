@@ -19,7 +19,7 @@ import (
 	"github.com/snabb/isoweek"
 	g "maragu.dev/gomponents"
 	ghx "maragu.dev/gomponents-htmx"
-	. "maragu.dev/gomponents/html"
+	. "maragu.dev/gomponents/html" //nolint:all
 )
 
 type activityFormModel struct {

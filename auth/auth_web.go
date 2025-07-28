@@ -18,13 +18,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
-	g "maragu.dev/gomponents"
-	ghx "maragu.dev/gomponents-htmx"
-	. "maragu.dev/gomponents/html"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	githubOAuth2 "golang.org/x/oauth2/github"
 	googleOAuth2 "golang.org/x/oauth2/google"
+	g "maragu.dev/gomponents"
+	ghx "maragu.dev/gomponents-htmx"
+	. "maragu.dev/gomponents/html" //nolint:all
 )
 
 type loginFormModel struct {

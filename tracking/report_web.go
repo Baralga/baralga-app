@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	g "maragu.dev/gomponents"
 	ghx "maragu.dev/gomponents-htmx"
-	. "maragu.dev/gomponents/html"
+	. "maragu.dev/gomponents/html" //nolint:all
 )
 
 type ReportWeb struct {
@@ -829,7 +829,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 								}),
 							),
 							g.If(
-								!(pageIndex == activitiesPage.Page.Number),
+								pageIndex != activitiesPage.Page.Number,
 								g.Group([]g.Node{
 									Class("page-item"),
 									A(
@@ -864,7 +864,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							),
 						),
 						g.If(
-							!(activitiesPage.Page.TotalPages-1 > activitiesPage.Page.Number),
+							!(activitiesPage.Page.TotalPages-1 > activitiesPage.Page.Number),  //nolint:all
 							Span(
 								Class("page-link active"),
 								g.Raw("&raquo;"),

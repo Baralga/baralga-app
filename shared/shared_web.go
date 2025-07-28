@@ -10,7 +10,7 @@ import (
 	g "maragu.dev/gomponents"
 	ghx "maragu.dev/gomponents-htmx"
 	c "maragu.dev/gomponents/components"
-	. "maragu.dev/gomponents/html"
+	. "maragu.dev/gomponents/html" //nolint:all
 )
 
 type PageContext struct {

@@ -40,14 +40,14 @@ func (a *ActitivityService) ReadActivitiesWithProjects(ctx context.Context, prin
 func (a *ActitivityService) TimeReports(ctx context.Context, principal *shared.Principal, filter *ActivityFilter, aggregateBy string) ([]*ActivityTimeReportItem, error) {
 	activitiesFilter := toFilter(principal, filter)
 
-	switch {
-	case aggregateBy == "week":
+	switch aggregateBy {
+	case "week":
 		return a.activityRepository.TimeReportByWeek(ctx, activitiesFilter)
-	case aggregateBy == "month":
+	case "month":
 		return a.activityRepository.TimeReportByMonth(ctx, activitiesFilter)
-	case aggregateBy == "quarter":
+	case "quarter":
 		return a.activityRepository.TimeReportByQuarter(ctx, activitiesFilter)
-	case aggregateBy == "day":
+	case "day":
 		return a.activityRepository.TimeReportByDay(ctx, activitiesFilter)
 	default:
 		return a.activityRepository.TimeReportByDay(ctx, activitiesFilter)
