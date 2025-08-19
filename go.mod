@@ -27,7 +27,7 @@ require (
 	golang.org/x/crypto v0.40.0
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
 	golang.org/x/oauth2 v0.30.0
-	maragu.dev/gomponents v1.1.0
+	maragu.dev/gomponents v1.2.0
 	maragu.dev/gomponents-htmx v0.6.1
 	schneider.vip/problem v1.9.1
 )
