@@ -46,6 +46,7 @@ type ActivityFilter struct {
 	sortOrder string
 	start     time.Time
 	end       time.Time
+	tags      []string // tag names to filter by
 }
 
 type ActivityTimeReportItem struct {
@@ -178,10 +179,28 @@ func (f *ActivityFilter) End() time.Time {
 	}
 }
 
+// Tags returns the filter's tag names
+func (f *ActivityFilter) Tags() []string {
+	return f.tags
+}
+
+// WithTags returns a new filter with the specified tags
+func (f *ActivityFilter) WithTags(tags []string) *ActivityFilter {
+	return &ActivityFilter{
+		Timespan:  f.Timespan,
+		sortBy:    f.sortBy,
+		sortOrder: f.sortOrder,
+		start:     f.start,
+		end:       f.end,
+		tags:      tags,
+	}
+}
+
 func (f *ActivityFilter) Home() *ActivityFilter {
 	return &ActivityFilter{
 		Timespan: f.Timespan,
 		start:    time.Now(),
+		tags:     f.tags,
 	}
 }
 
@@ -190,6 +209,7 @@ func (f *ActivityFilter) Next() *ActivityFilter {
 		Timespan: f.Timespan,
 		start:    f.start,
 		end:      f.end,
+		tags:     f.tags,
 	}
 
 	switch nextFilter.Timespan {
@@ -218,6 +238,7 @@ func (f *ActivityFilter) Previous() *ActivityFilter {
 		Timespan: f.Timespan,
 		start:    f.start,
 		end:      f.end,
+		tags:     f.tags,
 	}
 
 	switch previousFilter.Timespan {
@@ -247,6 +268,7 @@ func (f *ActivityFilter) WithSortToggle(sortBy string) *ActivityFilter {
 		sortBy:   sortBy,
 		start:    f.start,
 		end:      f.end,
+		tags:     f.tags,
 	}
 
 	if f.sortOrder == "desc" {

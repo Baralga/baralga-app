@@ -17,13 +17,15 @@ type ActitivityService struct {
 	repositoryTxer     shared.RepositoryTxer
 	activityRepository ActivityRepository
 	tagRepository      TagRepository
+	tagService         *TagService
 }
 
-func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository, tagRepository TagRepository) *ActitivityService {
+func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository, tagRepository TagRepository, tagService *TagService) *ActitivityService {
 	return &ActitivityService{
 		repositoryTxer:     repositoryTxer,
 		activityRepository: activityRepository,
 		tagRepository:      tagRepository,
+		tagService:         tagService,
 	}
 }
 
@@ -66,6 +68,18 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	activity.ID = uuid.New()
 	activity.OrganizationID = principal.OrganizationID
 	activity.Username = principal.Username
+
+	// Normalize and validate tags using TagService
+	normalizedTags := make([]string, len(activity.Tags))
+	for i, tag := range activity.Tags {
+		normalizedTags[i] = a.tagService.NormalizeTagName(tag)
+	}
+	activity.Tags = normalizedTags
+
+	// Validate tags
+	if err := a.tagService.ValidateTags(activity.Tags); err != nil {
+		return nil, err
+	}
 
 	var newActivity *Activity
 	err := a.repositoryTxer.InTx(
@@ -112,6 +126,18 @@ func (a *ActitivityService) DeleteActivityByID(ctx context.Context, principal *s
 
 // UpdateActivity updates an activity
 func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *shared.Principal, activity *Activity) (*Activity, error) {
+	// Normalize and validate tags using TagService
+	normalizedTags := make([]string, len(activity.Tags))
+	for i, tag := range activity.Tags {
+		normalizedTags[i] = a.tagService.NormalizeTagName(tag)
+	}
+	activity.Tags = normalizedTags
+
+	// Validate tags
+	if err := a.tagService.ValidateTags(activity.Tags); err != nil {
+		return nil, err
+	}
+
 	var activityUpdate *Activity
 	if principal.HasRole("ROLE_ADMIN") {
 		err := a.repositoryTxer.InTx(
@@ -261,6 +287,21 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 	return f.Write(w)
 }
 
+// ParseTagsFromString parses a comma/space separated string of tags into a normalized slice
+func (a *ActitivityService) ParseTagsFromString(tagString string) []string {
+	return a.tagService.ParseTagsFromString(tagString)
+}
+
+// ValidateTags validates a slice of tag names
+func (a *ActitivityService) ValidateTags(tags []string) error {
+	return a.tagService.ValidateTags(tags)
+}
+
+// GetTagsForAutocomplete returns matching tags for autocomplete within organization
+func (a *ActitivityService) GetTagsForAutocomplete(ctx context.Context, principal *shared.Principal, query string) ([]*Tag, error) {
+	return a.tagService.GetTagsForAutocomplete(ctx, principal.OrganizationID, query)
+}
+
 func toFilter(principal *shared.Principal, filter *ActivityFilter) *ActivitiesFilter {
 	activitiesFilter := &ActivitiesFilter{
 		Start:          filter.Start(),
@@ -268,6 +309,7 @@ func toFilter(principal *shared.Principal, filter *ActivityFilter) *ActivitiesFi
 		SortBy:         filter.sortBy,
 		SortOrder:      filter.sortOrder,
 		OrganizationID: principal.OrganizationID,
+		Tags:           filter.Tags(),
 	}
 
 	if !principal.HasRole("ROLE_ADMIN") {

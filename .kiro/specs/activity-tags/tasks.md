@@ -37,7 +37,7 @@
   - Implement ValidateTags method for tag validation (max 10 tags, length limits)
   - _Requirements: 2.1, 2.2, 3.1, 3.3, 3.5_
 
-- [ ] 6. Extend ActivityService to handle tags
+- [x] 6. Extend ActivityService to handle tags
   - Modify existing activity CRUD methods in tracking/activity_service.go to handle tag synchronization
   - Integrate TagService for tag normalization and validation
   - Update activity filtering to support tag-based queries
