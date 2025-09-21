@@ -29,7 +29,7 @@
   - Add tag filtering support to FindActivities method with JOIN queries
   - _Requirements: 1.1, 1.4, 4.1, 4.2_
 
-- [ ] 5. Create TagService for business logic
+- [x] 5. Create TagService for business logic
   - Create tracking/tag_service.go with TagService struct
   - Implement GetTagsForAutocomplete method with fuzzy matching within organization
   - Implement NormalizeTagName method for case-insensitive handling
