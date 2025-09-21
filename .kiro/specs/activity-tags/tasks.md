@@ -22,7 +22,7 @@
   - Implement DeleteUnusedTags cleanup method for organization-level cleanup
   - _Requirements: 1.1, 1.3, 2.1, 3.1, 3.2_
 
-- [ ] 4. Extend activity repository to handle tags
+- [x] 4. Extend activity repository to handle tags
   - Modify FindActivities method in tracking/activity_repository_db.go to load tags for each activity
   - Modify InsertActivity method to sync tags after creation using TagRepository
   - Modify UpdateActivity methods to sync tags after updates using TagRepository
