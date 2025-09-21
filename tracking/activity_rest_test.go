@@ -808,3 +808,121 @@ func TestFilterFromQueryParams(t *testing.T) {
 	})
 
 }
+func TestHandleGetTagsAutocomplete(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	// Create test data
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	// Add some test tags
+	orgID := uuid.New()
+	ctx := context.Background()
+	tagRepo.FindOrCreateTag(ctx, "meeting", orgID)
+	tagRepo.FindOrCreateTag(ctx, "development", orgID)
+	tagRepo.FindOrCreateTag(ctx, "testing", orgID)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete?q=meet", nil)
+	principal := &shared.Principal{OrganizationID: orgID}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(httpRec.Header().Get("Content-Type"), "application/json")
+
+	var response tagsAutocompleteResponse
+	err := json.NewDecoder(httpRec.Body).Decode(&response)
+	is.NoErr(err)
+	is.True(len(response.Tags) > 0)
+	is.Equal("meeting", response.Tags[0].Name)
+}
+
+func TestHandleGetTagsAutocompleteEmptyQuery(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete", nil)
+	principal := &shared.Principal{OrganizationID: uuid.New()}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	var response tagsAutocompleteResponse
+	err := json.NewDecoder(httpRec.Body).Decode(&response)
+	is.NoErr(err)
+	is.Equal(0, len(response.Tags))
+}
+
+func TestHandleGetTagsAutocompleteLongQuery(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	// Create a query that's too long (over 100 characters)
+	longQuery := strings.Repeat("a", 101)
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete?q="+longQuery, nil)
+	principal := &shared.Principal{OrganizationID: uuid.New()}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
+}
+
+func TestHandleGetTagsAutocompleteNoResults(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete?q=nonexistent", nil)
+	principal := &shared.Principal{OrganizationID: uuid.New()}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	var response tagsAutocompleteResponse
+	err := json.NewDecoder(httpRec.Body).Decode(&response)
+	is.NoErr(err)
+	is.Equal(0, len(response.Tags))
+}

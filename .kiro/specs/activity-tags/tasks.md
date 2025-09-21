@@ -44,7 +44,7 @@
   - Add TagService dependency to ActivityService constructor
   - _Requirements: 1.1, 1.4, 1.5, 4.1, 4.2_
 
-- [ ] 7. Create tag autocomplete API endpoint
+- [x] 7. Create tag autocomplete API endpoint
   - Add GET /api/tags/autocomplete endpoint to tracking/activity_rest.go
   - Implement query parameter handling for tag search within organization
   - Return JSON response with matching tag suggestions from organization
