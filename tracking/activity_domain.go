@@ -28,6 +28,15 @@ type Activity struct {
 	ProjectID      uuid.UUID
 	OrganizationID uuid.UUID
 	Username       string
+	Tags           []string // slice of tag names for easy handling
+}
+
+// Tag represents a tag that can be associated with activities
+type Tag struct {
+	ID             uuid.UUID
+	Name           string    // normalized (lowercase)
+	OrganizationID uuid.UUID
+	CreatedAt      time.Time
 }
 
 // ActivityFilter reprensents a filter for activities
@@ -60,6 +69,7 @@ type ActivitiesFilter struct {
 	SortOrder      string
 	Username       string
 	OrganizationID uuid.UUID
+	Tags           []string // tag names to filter by (OR logic)
 }
 
 func IsValidActivitySortField(f string) bool {
@@ -97,6 +107,16 @@ type ActivityRepository interface {
 	DeleteActivityByIDAndUsername(ctx context.Context, organizationID, activityID uuid.UUID, username string) error
 	UpdateActivity(ctx context.Context, organizationID uuid.UUID, activity *Activity) (*Activity, error)
 	UpdateActivityByUsername(ctx context.Context, organizationID uuid.UUID, activity *Activity, username string) (*Activity, error)
+}
+
+// TagRepository manages tag CRUD operations
+type TagRepository interface {
+	// FindTagsByOrganization returns all tags for a specific organization for autocomplete
+	FindTagsByOrganization(ctx context.Context, organizationID uuid.UUID, query string) ([]*Tag, error)
+	// FindOrCreateTag gets existing or creates new tag for organization
+	FindOrCreateTag(ctx context.Context, name string, organizationID uuid.UUID) (*Tag, error)
+	// SyncTagsForActivity creates/updates tag relationships when activity is saved
+	SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tagNames []string) error
 }
 
 // DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
