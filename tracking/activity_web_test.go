@@ -13,6 +13,16 @@ import (
 	"github.com/matryer/is"
 )
 
+// Helper function to create a properly initialized ActivityService for web tests
+func createTestActivityServiceForWeb(repo ActivityRepository) *ActitivityService {
+	tagRepo := NewInMemTagRepository()
+	return &ActitivityService{
+		repositoryTxer:     shared.NewInMemRepositoryTxer(),
+		activityRepository: repo,
+		tagRepository:      tagRepo,
+	}
+}
+
 func TestHandleTrackingPage(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
@@ -22,9 +32,7 @@ func TestHandleTrackingPage(t *testing.T) {
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		projectRepository:  NewInMemProjectRepository(),
-		activityService: &ActitivityService{
-			activityRepository: activityRepository,
-		},
+		activityService:    createTestActivityServiceForWeb(activityRepository),
 	}
 
 	r, _ := http.NewRequest("GET", "/", nil)
@@ -91,10 +99,7 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 		config:             config,
 		activityRepository: repo,
 		projectRepository:  NewInMemProjectRepository(),
-		activityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		activityService:    createTestActivityServiceForWeb(repo),
 	}
 
 	countBefore := len(repo.activities)

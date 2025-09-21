@@ -73,8 +73,9 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	projectRestHandlers := tracking.NewProjectController(&config, projectRepository, projectService)
 	projectWebHandlers := tracking.NewProjectWebHandlers(&config, projectService, projectRepository)
 
+	tagRepository := tracking.NewDbTagRepository(connPool)
 	activityRepository := tracking.NewDbActivityRepository(connPool)
-	activityService := tracking.NewActitivityService(repositoryTxer, activityRepository)
+	activityService := tracking.NewActitivityService(repositoryTxer, activityRepository, tagRepository)
 	activityRestHandlers := tracking.NewActivityRestHandlers(&config, activityService, activityRepository)
 	activityWebHandlers := tracking.NewActivityWebHandlers(&config, activityService, activityRepository, projectRepository)
 

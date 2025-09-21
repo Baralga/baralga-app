@@ -284,10 +284,28 @@ func (r *DbActivityRepository) ProjectReport(ctx context.Context, filter *Activi
 func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End, pageParams.Size, pageParams.Offset()}
 	filterSql := ""
+	paramIndex := 6
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $6"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	// Add tag filtering support
+	tagJoin := ""
+	if len(filter.Tags) > 0 {
+		tagJoin = `INNER JOIN activity_tags at ON a.id = at.activity_id
+				   INNER JOIN tags t ON at.tag_id = t.tag_id`
+		
+		// Create placeholders for tag names
+		tagPlaceholders := make([]string, len(filter.Tags))
+		for i, tag := range filter.Tags {
+			params = append(params, strings.ToLower(strings.TrimSpace(tag)))
+			tagPlaceholders[i] = fmt.Sprintf("$%d", paramIndex)
+			paramIndex++
+		}
+		filterSql += fmt.Sprintf(" AND t.name IN (%s)", strings.Join(tagPlaceholders, ","))
 	}
 
 	sortBy := "start"
@@ -301,16 +319,18 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT a.*, projects.title as project FROM
+		`SELECT DISTINCT a.*, projects.title as project FROM
 		   (SELECT activity_id as id, description, start_time as start, end_time as end, username, org_id, project_id
 			FROM activities 
 			WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3
 		   ) a
+		 %s
          INNER JOIN projects
 	     ON projects.project_id = a.project_id
 		 ORDER by %s %s 
 	     LIMIT $4 OFFSET $5`,
 		filterSql,
+		tagJoin,
 		sortBy,
 		sortOrder,
 	)
@@ -341,9 +361,10 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 		}
 
 		projectUUID := uuid.MustParse(projectID)
+		activityID := uuid.MustParse(id)
 
 		activity := &Activity{
-			ID:             uuid.MustParse(id),
+			ID:             activityID,
 			Description:    description,
 			Start:          startTime,
 			End:            endTime,
@@ -361,24 +382,48 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 			}
 			projectsById[projectUUID] = project
 		}
+	}
 
+	// Load tags for all activities
+	err = r.loadTagsForActivities(ctx, activities)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	projects := maps.Values(projectsById)
 
+	// Count query with same filtering logic
 	countParams := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	countFilter := ""
+	countParamIndex := 4
 
 	if filter.Username != "" {
 		countParams = append(countParams, filter.Username)
-		countFilter = " AND username = $4"
+		countFilter += fmt.Sprintf(" AND username = $%d", countParamIndex)
+		countParamIndex++
+	}
+
+	countTagJoin := ""
+	if len(filter.Tags) > 0 {
+		countTagJoin = `INNER JOIN activity_tags at ON activities.activity_id = at.activity_id
+						INNER JOIN tags t ON at.tag_id = t.tag_id`
+		
+		// Add tag parameters for count query
+		tagPlaceholders := make([]string, len(filter.Tags))
+		for i, tag := range filter.Tags {
+			countParams = append(countParams, strings.ToLower(strings.TrimSpace(tag)))
+			tagPlaceholders[i] = fmt.Sprintf("$%d", countParamIndex)
+			countParamIndex++
+		}
+		countFilter += fmt.Sprintf(" AND t.name IN (%s)", strings.Join(tagPlaceholders, ","))
 	}
 
 	countSql := fmt.Sprintf(`
-     	SELECT count(*) as total 
+     	SELECT count(DISTINCT activities.activity_id) as total 
 	    FROM activities
+		%s
 	    WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3`,
-		countFilter)
+		countTagJoin, countFilter)
 	row := r.connPool.QueryRow(ctx, countSql, countParams...)
 	var total int
 	err = row.Scan(&total)
@@ -428,6 +473,12 @@ func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID,
 		Username:       username,
 		OrganizationID: uuid.MustParse(orgID),
 		ProjectID:      uuid.MustParse(projectID),
+	}
+
+	// Load tags for this activity
+	err = r.loadTagsForActivities(ctx, []*Activity{activity})
+	if err != nil {
+		return nil, err
 	}
 
 	return activity, nil
@@ -557,4 +608,57 @@ func (r *DbActivityRepository) InsertActivity(ctx context.Context, activity *Act
 	}
 
 	return activity, nil
+}
+
+// loadTagsForActivities loads tags for a slice of activities
+func (r *DbActivityRepository) loadTagsForActivities(ctx context.Context, activities []*Activity) error {
+	if len(activities) == 0 {
+		return nil
+	}
+
+	// Create a map of activity IDs for quick lookup
+	activityMap := make(map[uuid.UUID]*Activity)
+	activityIDs := make([]interface{}, len(activities))
+	placeholders := make([]string, len(activities))
+	
+	for i, activity := range activities {
+		activityMap[activity.ID] = activity
+		activityIDs[i] = activity.ID
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+	}
+
+	// Query to get all tags for these activities
+	sql := fmt.Sprintf(`
+		SELECT at.activity_id, t.name
+		FROM activity_tags at
+		INNER JOIN tags t ON at.tag_id = t.tag_id
+		WHERE at.activity_id IN (%s)
+		ORDER BY at.activity_id, t.name`,
+		strings.Join(placeholders, ","))
+
+	rows, err := r.connPool.Query(ctx, sql, activityIDs...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	// Group tags by activity ID
+	for rows.Next() {
+		var (
+			activityID string
+			tagName    string
+		)
+
+		err = rows.Scan(&activityID, &tagName)
+		if err != nil {
+			return err
+		}
+
+		activityUUID := uuid.MustParse(activityID)
+		if activity, exists := activityMap[activityUUID]; exists {
+			activity.Tags = append(activity.Tags, tagName)
+		}
+	}
+
+	return nil
 }

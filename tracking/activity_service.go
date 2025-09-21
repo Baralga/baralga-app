@@ -16,12 +16,14 @@ import (
 type ActitivityService struct {
 	repositoryTxer     shared.RepositoryTxer
 	activityRepository ActivityRepository
+	tagRepository      TagRepository
 }
 
-func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository) *ActitivityService {
+func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository, tagRepository TagRepository) *ActitivityService {
 	return &ActitivityService{
 		repositoryTxer:     repositoryTxer,
 		activityRepository: activityRepository,
+		tagRepository:      tagRepository,
 	}
 }
 
@@ -69,11 +71,18 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	err := a.repositoryTxer.InTx(
 		ctx,
 		func(ctx context.Context) error {
-			a, err := a.activityRepository.InsertActivity(ctx, activity)
+			insertedActivity, err := a.activityRepository.InsertActivity(ctx, activity)
 			if err != nil {
 				return err
 			}
-			newActivity = a
+			newActivity = insertedActivity
+			
+			// Sync tags after activity creation
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, activity.OrganizationID, activity.Tags)
+			if err != nil {
+				return err
+			}
+			
 			return nil
 		},
 	)
@@ -108,11 +117,18 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 		err := a.repositoryTxer.InTx(
 			ctx,
 			func(ctx context.Context) error {
-				a, err := a.activityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
+				updatedActivity, err := a.activityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
 				if err != nil {
 					return err
 				}
-				activityUpdate = a
+				activityUpdate = updatedActivity
+				
+				// Sync tags after activity update
+				err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, activity.Tags)
+				if err != nil {
+					return err
+				}
+				
 				return nil
 			},
 		)
@@ -124,11 +140,18 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 	err := a.repositoryTxer.InTx(
 		ctx,
 		func(ctx context.Context) error {
-			a, err := a.activityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+			updatedActivity, err := a.activityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
 			if err != nil {
 				return err
 			}
-			activityUpdate = a
+			activityUpdate = updatedActivity
+			
+			// Sync tags after activity update
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, activity.Tags)
+			if err != nil {
+				return err
+			}
+			
 			return nil
 		},
 	)
