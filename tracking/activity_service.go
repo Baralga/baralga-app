@@ -16,12 +16,16 @@ import (
 type ActitivityService struct {
 	repositoryTxer     shared.RepositoryTxer
 	activityRepository ActivityRepository
+	tagRepository      TagRepository
+	tagService         *TagService
 }
 
-func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository) *ActitivityService {
+func NewActitivityService(repositoryTxer shared.RepositoryTxer, activityRepository ActivityRepository, tagRepository TagRepository, tagService *TagService) *ActitivityService {
 	return &ActitivityService{
 		repositoryTxer:     repositoryTxer,
 		activityRepository: activityRepository,
+		tagRepository:      tagRepository,
+		tagService:         tagService,
 	}
 }
 
@@ -65,15 +69,38 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	activity.OrganizationID = principal.OrganizationID
 	activity.Username = principal.Username
 
+	// Extract tag names from Tag objects
+	tagNames := make([]string, len(activity.Tags))
+	for i, tag := range activity.Tags {
+		tagNames[i] = tag.Name
+	}
+
+	// Validate tags
+	err := a.tagService.ValidateTags(tagNames)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepare tags with colors for repository and update activity.Tags
+	tagsWithColors := a.tagService.PrepareTagsWithColors(tagNames)
+	activity.Tags = tagsWithColors
+
 	var newActivity *Activity
-	err := a.repositoryTxer.InTx(
+	err = a.repositoryTxer.InTx(
 		ctx,
 		func(ctx context.Context) error {
-			a, err := a.activityRepository.InsertActivity(ctx, activity)
+			insertedActivity, err := a.activityRepository.InsertActivity(ctx, activity)
 			if err != nil {
 				return err
 			}
-			newActivity = a
+			newActivity = insertedActivity
+
+			// Sync tags after activity creation
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, activity.OrganizationID, tagsWithColors)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -103,16 +130,39 @@ func (a *ActitivityService) DeleteActivityByID(ctx context.Context, principal *s
 
 // UpdateActivity updates an activity
 func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *shared.Principal, activity *Activity) (*Activity, error) {
+	// Extract tag names from Tag objects
+	tagNames := make([]string, len(activity.Tags))
+	for i, tag := range activity.Tags {
+		tagNames[i] = tag.Name
+	}
+
+	// Validate tags
+	err := a.tagService.ValidateTags(tagNames)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepare tags with colors for repository and update activity.Tags
+	tagsWithColors := a.tagService.PrepareTagsWithColors(tagNames)
+	activity.Tags = tagsWithColors
+
 	var activityUpdate *Activity
 	if principal.HasRole("ROLE_ADMIN") {
 		err := a.repositoryTxer.InTx(
 			ctx,
 			func(ctx context.Context) error {
-				a, err := a.activityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
+				updatedActivity, err := a.activityRepository.UpdateActivity(ctx, principal.OrganizationID, activity)
 				if err != nil {
 					return err
 				}
-				activityUpdate = a
+				activityUpdate = updatedActivity
+
+				// Sync tags after activity update
+				err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagsWithColors)
+				if err != nil {
+					return err
+				}
+
 				return nil
 			},
 		)
@@ -121,14 +171,21 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 		}
 		return activityUpdate, nil
 	}
-	err := a.repositoryTxer.InTx(
+	err = a.repositoryTxer.InTx(
 		ctx,
 		func(ctx context.Context) error {
-			a, err := a.activityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
+			updatedActivity, err := a.activityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)
 			if err != nil {
 				return err
 			}
-			activityUpdate = a
+			activityUpdate = updatedActivity
+
+			// Sync tags after activity update
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagsWithColors)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -238,6 +295,33 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 	return f.Write(w)
 }
 
+// ParseTagsFromString parses a comma/space separated string of tags into a normalized slice
+func (a *ActitivityService) ParseTagsFromString(tagString string) []string {
+	return a.tagService.ParseTagsFromString(tagString)
+}
+
+// ValidateTags validates a slice of tag names
+func (a *ActitivityService) ValidateTags(tags []string) error {
+	return a.tagService.ValidateTags(tags)
+}
+
+// GetTagsForAutocomplete returns matching tags for autocomplete within organization
+func (a *ActitivityService) GetTagsForAutocomplete(ctx context.Context, principal *shared.Principal, query string) ([]*Tag, error) {
+	return a.tagService.GetTagsForAutocomplete(ctx, principal.OrganizationID, query)
+}
+
+// GenerateTagReports generates comprehensive tag-based reports with time breakdowns
+func (a *ActitivityService) GenerateTagReports(ctx context.Context, principal *shared.Principal, filter *ActivityFilter, aggregateBy string, selectedTags []string) (*TagReportData, error) {
+	activitiesFilter := toFilter(principal, filter)
+	return a.tagService.GenerateTagReports(ctx, principal.OrganizationID, activitiesFilter, aggregateBy, selectedTags)
+}
+
+// GetTagReportData retrieves filtered tag report data for specific date ranges and tag selections
+func (a *ActitivityService) GetTagReportData(ctx context.Context, principal *shared.Principal, filter *ActivityFilter, aggregateBy string) ([]*TagReportItem, error) {
+	activitiesFilter := toFilter(principal, filter)
+	return a.tagService.GetTagReportData(ctx, activitiesFilter, aggregateBy)
+}
+
 func toFilter(principal *shared.Principal, filter *ActivityFilter) *ActivitiesFilter {
 	activitiesFilter := &ActivitiesFilter{
 		Start:          filter.Start(),
@@ -245,6 +329,7 @@ func toFilter(principal *shared.Principal, filter *ActivityFilter) *ActivitiesFi
 		SortBy:         filter.sortBy,
 		SortOrder:      filter.sortOrder,
 		OrganizationID: principal.OrganizationID,
+		Tags:           filter.Tags(),
 	}
 
 	if !principal.HasRole("ROLE_ADMIN") {

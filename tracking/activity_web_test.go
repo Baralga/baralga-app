@@ -10,8 +10,21 @@ import (
 
 	"github.com/baralga/shared"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/matryer/is"
 )
+
+// Helper function to create a properly initialized ActivityService for web tests
+func createTestActivityServiceForWeb(repo ActivityRepository) *ActitivityService {
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	return &ActitivityService{
+		repositoryTxer:     shared.NewInMemRepositoryTxer(),
+		activityRepository: repo,
+		tagRepository:      tagRepo,
+		tagService:         tagService,
+	}
+}
 
 func TestHandleTrackingPage(t *testing.T) {
 	is := is.New(t)
@@ -22,9 +35,7 @@ func TestHandleTrackingPage(t *testing.T) {
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
 		projectRepository:  NewInMemProjectRepository(),
-		activityService: &ActitivityService{
-			activityRepository: activityRepository,
-		},
+		activityService:    createTestActivityServiceForWeb(activityRepository),
 	}
 
 	r, _ := http.NewRequest("GET", "/", nil)
@@ -54,6 +65,10 @@ func TestHandleActivityAddPage(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "<form"))
+	// Verify that the Tags input field is present
+	is.True(strings.Contains(htmlBody, `name="Tags"`))
+	is.True(strings.Contains(htmlBody, `placeholder="meeting, development, bug-fix"`))
+	is.True(strings.Contains(htmlBody, "Separate tags with commas or spaces"))
 }
 
 func TestHandleActivityEditPage(t *testing.T) {
@@ -78,6 +93,10 @@ func TestHandleActivityEditPage(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "<form"))
+	// Verify that the Tags input field is present in edit form
+	is.True(strings.Contains(htmlBody, `name="Tags"`))
+	// The sample activity should have tags "meeting, development" as defined in the in-memory repository
+	is.True(strings.Contains(htmlBody, "meeting, development"))
 }
 
 func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
@@ -91,10 +110,7 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 		config:             config,
 		activityRepository: repo,
 		projectRepository:  NewInMemProjectRepository(),
-		activityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		activityService:    createTestActivityServiceForWeb(repo),
 	}
 
 	countBefore := len(repo.activities)
@@ -116,6 +132,239 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 	w.HandleActivityForm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(countBefore+1, len(repo.activities))
+}
+
+func TestHandleCreateActivityWithTags(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	config := &shared.Config{}
+
+	w := &ActivityWebHandlers{
+		config:             config,
+		activityRepository: repo,
+		projectRepository:  NewInMemProjectRepository(),
+		activityService:    createTestActivityServiceForWeb(repo),
+	}
+
+	countBefore := len(repo.activities)
+
+	data := url.Values{}
+	data["ProjectID"] = []string{shared.ProjectIDSample.String()}
+	data["Date"] = []string{"21.12.2021"}
+	data["StartTime"] = []string{"10:00"}
+	data["EndTime"] = []string{"11:00"}
+	data["Description"] = []string{"My description"}
+	data["Tags"] = []string{"meeting, development, bug-fix"}
+
+	r, _ := http.NewRequest("POST", "/activities/new", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	w.HandleActivityForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(countBefore+1, len(repo.activities))
+
+	// Verify the activity was created with tags
+	createdActivity := repo.activities[len(repo.activities)-1]
+	is.Equal(len(createdActivity.Tags), 3)
+	is.True(containsTag(createdActivity.Tags, "meeting"))
+	is.True(containsTag(createdActivity.Tags, "development"))
+	is.True(containsTag(createdActivity.Tags, "bug-fix"))
+}
+
+func TestMapFormToActivityWithTags(t *testing.T) {
+	is := is.New(t)
+
+	formModel := activityFormModel{
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		EndTime:     "11:00",
+		Description: "My description",
+		Tags:        "meeting, development, bug-fix",
+	}
+
+	activity, err := mapFormToActivity(formModel)
+	is.NoErr(err)
+	is.Equal(len(activity.Tags), 3)
+	is.True(containsTag(activity.Tags, "meeting"))
+	is.True(containsTag(activity.Tags, "development"))
+	is.True(containsTag(activity.Tags, "bug-fix"))
+}
+
+func TestMapFormToActivityWithSpaceSeparatedTags(t *testing.T) {
+	is := is.New(t)
+
+	formModel := activityFormModel{
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		EndTime:     "11:00",
+		Description: "My description",
+		Tags:        "meeting development bug-fix",
+	}
+
+	activity, err := mapFormToActivity(formModel)
+	is.NoErr(err)
+	is.Equal(len(activity.Tags), 3)
+	is.True(containsTag(activity.Tags, "meeting"))
+	is.True(containsTag(activity.Tags, "development"))
+	is.True(containsTag(activity.Tags, "bug-fix"))
+}
+
+func TestMapFormToActivityWithDuplicateTags(t *testing.T) {
+	is := is.New(t)
+
+	formModel := activityFormModel{
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		EndTime:     "11:00",
+		Description: "My description",
+		Tags:        "meeting, Meeting, MEETING, development",
+	}
+
+	activity, err := mapFormToActivity(formModel)
+	is.NoErr(err)
+	is.Equal(len(activity.Tags), 2) // Should deduplicate case-insensitive
+	is.True(containsTag(activity.Tags, "meeting"))
+	is.True(containsTag(activity.Tags, "development"))
+}
+
+func TestMapActivityToFormWithTags(t *testing.T) {
+	is := is.New(t)
+
+	activityID := uuid.MustParse("00000000-0000-0000-2222-000000000001")
+	activity := Activity{
+		ID:          activityID,
+		ProjectID:   shared.ProjectIDSample,
+		Description: "My description",
+		Tags: []*Tag{
+			{Name: "meeting"},
+			{Name: "development"},
+			{Name: "bug-fix"},
+		},
+	}
+
+	formModel := mapActivityToForm(activity)
+	is.Equal(formModel.Tags, "meeting, development, bug-fix")
+}
+
+func TestHandleTrackingPageDisplaysTagsWithoutFiltering(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	config := &shared.Config{}
+	activityRepository := NewInMemActivityRepository()
+	projectRepository := NewInMemProjectRepository()
+	tagRepository := NewInMemTagRepository()
+	tagService := NewTagService(tagRepository)
+	repositoryTxer := shared.NewInMemRepositoryTxer()
+
+	activityService := NewActitivityService(repositoryTxer, activityRepository, tagRepository, tagService)
+
+	handlers := NewActivityWebHandlers(config, activityService, activityRepository, projectRepository)
+
+	// Create a simple request (no tag filtering on web page)
+	req := httptest.NewRequest("GET", "/", nil)
+	req = req.WithContext(shared.ToContextWithPrincipal(req.Context(), &shared.Principal{
+		OrganizationID: uuid.New(),
+		Username:       "test@example.com",
+		Roles:          []string{"ROLE_USER"},
+	}))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handlers.HandleTrackingPage()(w, req)
+
+	// Assert
+	is.Equal(w.Code, http.StatusOK)
+	// The response should not contain tag filter UI (removed from web page)
+	responseBody := w.Body.String()
+	is.True(!strings.Contains(responseBody, "Filter by tags"))
+}
+
+func TestHandleActivityTrackFormWithTags(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	config := &shared.Config{}
+
+	w := &ActivityWebHandlers{
+		config:             config,
+		activityRepository: repo,
+		projectRepository:  NewInMemProjectRepository(),
+		activityService:    createTestActivityServiceForWeb(repo),
+	}
+
+	countBefore := len(repo.activities)
+
+	data := url.Values{}
+	data["ProjectID"] = []string{shared.ProjectIDSample.String()}
+	data["Action"] = []string{"running"}
+	data["Date"] = []string{"21.12.2021"}
+	data["StartTime"] = []string{"10:00"}
+	data["Description"] = []string{"My description"}
+	data["Tags"] = []string{"meeting, development, bug-fix"}
+
+	r, _ := http.NewRequest("POST", "/activities/track", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	w.HandleActivityTrackForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(countBefore+1, len(repo.activities))
+
+	// Verify the activity was created with tags
+	createdActivity := repo.activities[len(repo.activities)-1]
+	is.Equal(len(createdActivity.Tags), 3)
+	is.True(containsTag(createdActivity.Tags, "meeting"))
+	is.True(containsTag(createdActivity.Tags, "development"))
+	is.True(containsTag(createdActivity.Tags, "bug-fix"))
+}
+
+func TestTrackPanelDisplaysTagsInput(t *testing.T) {
+	is := is.New(t)
+
+	projects := []*Project{
+		{
+			ID:    shared.ProjectIDSample,
+			Title: "Test Project",
+		},
+	}
+
+	formModel := activityTrackFormModel{
+		Action:      "running",
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		Description: "Test description",
+		Tags:        "meeting, development",
+	}
+
+	// Create a test response writer to capture the HTML
+	httpRec := httptest.NewRecorder()
+
+	// Render the track panel using the shared RenderHTML function
+	shared.RenderHTML(httpRec, TrackPanel(projects, formModel))
+
+	htmlBody := httpRec.Body.String()
+
+	// Verify that the tags input field is present
+	is.True(strings.Contains(htmlBody, `name="Tags"`))
+	is.True(strings.Contains(htmlBody, `placeholder="meeting, development, bug-fix"`))
+	is.True(strings.Contains(htmlBody, "Separate tags with commas or spaces"))
+	is.True(strings.Contains(htmlBody, "meeting, development"))
 }
 
 func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
@@ -193,4 +442,14 @@ func TestHandleEndTimeValidation(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "10:00"))
+}
+
+// Helper function to check if a tag name exists in a slice of Tag objects
+func containsTag(tags []*Tag, tagName string) bool {
+	for _, tag := range tags {
+		if tag.Name == tagName {
+			return true
+		}
+	}
+	return false
 }
