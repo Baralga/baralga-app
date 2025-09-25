@@ -1,6 +1,6 @@
 module github.com/baralga
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.5
 
@@ -26,7 +26,7 @@ require (
 	github.com/xuri/excelize/v2 v2.9.1
 	golang.org/x/crypto v0.40.0
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
-	golang.org/x/oauth2 v0.30.0
+	golang.org/x/oauth2 v0.31.0
 	maragu.dev/gomponents v1.2.0
 	maragu.dev/gomponents-htmx v0.6.1
 	schneider.vip/problem v1.9.1
