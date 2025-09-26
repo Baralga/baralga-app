@@ -2,7 +2,7 @@ module github.com/baralga
 
 go 1.24
 
-toolchain go1.24.5
+toolchain go1.25.1
 
 require (
 	github.com/dghubble/gologin/v2 v2.5.0
