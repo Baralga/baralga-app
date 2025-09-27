@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/baralga/shared"
 	"github.com/go-chi/chi/v5"
@@ -47,6 +48,8 @@ func NewUserWeb(config *shared.Config, userService *UserService, userRepository 
 func (a *UserWebHandlers) RegisterProtected(r chi.Router) {
 	r.Get("/organization/dialog", a.HandleOrganizationDialog())
 	r.Post("/organization/update", a.HandleOrganizationUpdate())
+	r.Get("/organization/invites", a.HandleOrganizationInvites())
+	r.Post("/organization/invites/generate", a.HandleGenerateInviteInDialog())
 }
 
 func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
@@ -157,6 +160,49 @@ func (a *UserWebHandlers) HandleOrganizationUpdate() http.HandlerFunc {
 		// Success - close modal and refresh page
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-hide")
 		shared.RenderHTML(w, Div())
+	}
+}
+
+func (a *UserWebHandlers) HandleOrganizationInvites() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		principal := shared.MustPrincipalFromContext(r.Context())
+
+		// Only admins can view invites
+		if !principal.HasRole("ROLE_ADMIN") {
+			http.Error(w, "Insufficient permissions", http.StatusForbidden)
+			return
+		}
+
+		// Get all invites for the organization
+		invites, err := a.userService.FindOrganizationInvites(r.Context(), principal)
+		if err != nil {
+			http.Error(w, "Failed to load invites", http.StatusInternalServerError)
+			return
+		}
+
+		shared.RenderHTML(w, OrganizationInvitesPage(principal, invites))
+	}
+}
+
+func (a *UserWebHandlers) HandleGenerateInviteInDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		principal := shared.MustPrincipalFromContext(r.Context())
+
+		// Only admins can generate invites
+		if !principal.HasRole("ROLE_ADMIN") {
+			http.Error(w, "Insufficient permissions", http.StatusForbidden)
+			return
+		}
+
+		// Generate new invite
+		invite, err := a.userService.GenerateOrganizationInvite(r.Context(), principal)
+		if err != nil {
+			http.Error(w, "Failed to generate invite", http.StatusInternalServerError)
+			return
+		}
+
+		// Return the invite link display
+		shared.RenderHTML(w, InviteLinkDisplay(invite))
 	}
 }
 
@@ -509,10 +555,49 @@ func OrganizationDialog(principal *shared.Principal, formModel organizationFormM
 					g.If(!principal.HasRole("ROLE_ADMIN"), g.Attr("readonly", "readonly")),
 					g.If(!principal.HasRole("ROLE_ADMIN"), g.Attr("placeholder", "Contact your administrator to change this")),
 				),
-				g.If(!principal.HasRole("ROLE_ADMIN"),
+			),
+			g.If(principal.HasRole("ROLE_ADMIN"),
+				Div(
+					Class("mb-3"),
+					Hr(),
 					Div(
-						Class("form-text"),
-						g.Text("Only administrators can edit the organization name."),
+						Class("d-flex justify-content-between align-items-center mb-3"),
+						Div(
+							H5(
+								Class("mb-1"),
+								I(Class("bi-people me-2")),
+								g.Text("Organization Invites"),
+							),
+							Small(
+								Class("text-muted"),
+								g.Text("Generate invite links for new users"),
+							),
+						),
+						A(
+							Href("/organization/invites"),
+							Class("btn btn-outline-primary btn-sm"),
+							I(Class("bi-arrow-right me-1")),
+							g.Text("Manage All Invites"),
+						),
+					),
+					Div(
+						ID("invite-generator"),
+						Div(
+							Class("d-flex gap-2 mb-2"),
+							Button(
+								Type("button"),
+								Class("btn btn-primary btn-sm"),
+								ghx.Post("/organization/invites/generate"),
+								ghx.Target("#invite-link-display"),
+								ghx.Swap("innerHTML"),
+								I(Class("bi-plus me-1")),
+								g.Text("Generate Invite Link"),
+							),
+						),
+						Div(
+							ID("invite-link-display"),
+							// This will be populated when invite is generated
+						),
 					),
 				),
 			),
@@ -534,6 +619,185 @@ func OrganizationDialog(principal *shared.Principal, formModel organizationFormM
 				I(Class("bi-x me-2")),
 				g.Text("Close"),
 			),
+		),
+	)
+}
+
+func OrganizationInvitesPage(principal *shared.Principal, invites []*OrganizationInvite) g.Node {
+	return shared.Page(
+		"Organization Invites",
+		"/organization/invites",
+		[]g.Node{
+			Div(
+				Class("container-fluid"),
+				Div(
+					Class("d-flex justify-content-between align-items-center mb-3"),
+					H1(
+						Class("h3 mb-0"),
+						I(Class("bi-people me-2")),
+						g.Text("Organization Invites"),
+					),
+					Button(
+						Type("button"),
+						Class("btn btn-primary"),
+						ghx.Post("/organization/invites/generate"),
+						ghx.Target("#invite-list"),
+						ghx.Swap("outerHTML"),
+						I(Class("bi-plus me-2")),
+						g.Text("Generate Invite"),
+					),
+				),
+				Div(
+					ID("invite-list"),
+					g.If(len(invites) == 0,
+						Div(
+							Class("alert alert-info"),
+							I(Class("bi-info-circle me-2")),
+							g.Text("No invites have been generated yet."),
+						),
+					),
+					g.If(len(invites) > 0,
+						func() g.Node {
+							var nodes []g.Node
+							for _, invite := range invites {
+								nodes = append(nodes, InviteCard(invite))
+							}
+							return Div(append([]g.Node{Class("row")}, nodes...)...)
+						}(),
+					),
+				),
+			),
+		},
+	)
+}
+
+func InviteCard(invite *OrganizationInvite) g.Node {
+	status := getInviteStatus(invite)
+	statusClass := getStatusClass(status)
+
+	return Div(
+		Class("col-md-6 col-lg-4 mb-3"),
+		Div(
+			Class("card h-100"),
+			Div(
+				Class("card-header d-flex justify-content-between align-items-center"),
+				Span(
+					Class("badge "+statusClass),
+					g.Text(status),
+				),
+				Small(
+					Class("text-muted"),
+					g.Text(invite.CreatedAt.Format("Jan 2, 15:04")),
+				),
+			),
+			Div(
+				Class("card-body"),
+				Div(
+					Class("mb-2"),
+					Strong(g.Text("Invite Link:")),
+				),
+				Div(
+					Class("input-group"),
+					Input(
+						Type("text"),
+						Class("form-control font-monospace"),
+						Value(getInviteURL(invite.Token)),
+						g.Attr("readonly", "readonly"),
+						ID(fmt.Sprintf("invite-url-%s", invite.ID.String())),
+					),
+					Button(
+						Type("button"),
+						Class("btn btn-outline-secondary"),
+						g.Attr("onclick", fmt.Sprintf("copyToClipboard(\"invite-url-%s\")", invite.ID.String())),
+						I(Class("bi-copy")),
+					),
+				),
+				func() g.Node {
+					if invite.UsedAt != nil {
+						return Div(
+							Class("mt-2"),
+							Small(
+								Class("text-muted"),
+								g.Textf("Used on %s", invite.UsedAt.Format("Jan 2, 15:04")),
+							),
+						)
+					}
+					return g.Text("")
+				}(),
+				g.If(invite.ExpiresAt.Before(time.Now()) && invite.UsedAt == nil,
+					Div(
+						Class("mt-2"),
+						Small(
+							Class("text-danger"),
+							g.Textf("Expired on %s", invite.ExpiresAt.Format("Jan 2, 15:04")),
+						),
+					),
+				),
+			),
+		),
+	)
+}
+
+func getInviteStatus(invite *OrganizationInvite) string {
+	if invite.UsedAt != nil {
+		return "Used"
+	}
+	if invite.ExpiresAt.Before(time.Now()) {
+		return "Expired"
+	}
+	return "Active"
+}
+
+func getStatusClass(status string) string {
+	switch status {
+	case "Used":
+		return "bg-success"
+	case "Expired":
+		return "bg-danger"
+	case "Active":
+		return "bg-primary"
+	default:
+		return "bg-secondary"
+	}
+}
+
+func getInviteURL(token string) string {
+	return fmt.Sprintf("%s/signup?invite=%s", "https://example.com", token) // TODO: Use config
+}
+
+func InviteLinkDisplay(invite *OrganizationInvite) g.Node {
+	return Div(
+		Class("alert alert-success"),
+		Div(
+			Class("d-flex justify-content-between align-items-center mb-2"),
+			Strong(
+				I(Class("bi-check-circle me-2")),
+				g.Text("Invite Link Generated!"),
+			),
+			Small(
+				Class("text-muted"),
+				g.Textf("Expires in 24 hours"),
+			),
+		),
+		Div(
+			Class("input-group"),
+			Input(
+				Type("text"),
+				Class("form-control font-monospace"),
+				Value(getInviteURL(invite.Token)),
+				g.Attr("readonly", "readonly"),
+				ID(fmt.Sprintf("dialog-invite-url-%s", invite.ID.String())),
+			),
+			Button(
+				Type("button"),
+				Class("btn btn-outline-secondary"),
+				g.Attr("onclick", fmt.Sprintf("copyToClipboard('dialog-invite-url-%s')", invite.ID.String())),
+				I(Class("bi-copy")),
+			),
+		),
+		Small(
+			Class("text-muted"),
+			g.Text("Share this link with new users to join your organization."),
 		),
 	)
 }

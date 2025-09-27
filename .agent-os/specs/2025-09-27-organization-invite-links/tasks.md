@@ -18,14 +18,14 @@
   - [x] 2.4 Implement invite validation and expiration logic
   - [x] 2.5 Verify all tests pass
 
-- [ ] 3. Admin Interface for Invite Management
-  - [ ] 3.1 Write tests for admin web handlers
-  - [ ] 3.2 Implement admin web handlers for invite management
-  - [ ] 3.3 Create HTML templates for invite management interface
-  - [ ] 3.4 Add HTMX interactions for invite generation
-  - [ ] 3.5 Integrate invite creation into organization settings page
-  - [ ] 3.6 Add proper error handling and user feedback
-  - [ ] 3.7 Verify all tests pass
+- [x] 3. Admin Interface for Invite Management
+  - [x] 3.1 Write tests for admin web handlers
+  - [x] 3.2 Implement admin web handlers for invite management
+  - [x] 3.3 Create HTML templates for invite management interface
+  - [x] 3.4 Add HTMX interactions for invite generation
+  - [x] 3.5 Integrate invite creation into organization settings page
+  - [x] 3.6 Add proper error handling and user feedback
+  - [x] 3.7 Verify all tests pass
 
 - [ ] 4. User Registration via Invite Links
   - [ ] 4.1 Write tests for invite validation in registration flow

@@ -353,3 +353,94 @@ func TestHandleSignUpConfirmWithoutConfirmation(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(l.String(), "/signup")
 }
+
+func TestHandleGenerateInviteInDialog(t *testing.T) {
+	is := is.New(t)
+
+	t.Run("AdminUser", func(t *testing.T) {
+		// Setup
+		config := &shared.Config{Webroot: "https://example.com"}
+		userRepository := NewInMemUserRepository()
+		userService := &UserService{
+			userRepository: userRepository,
+			inviteService: &OrganizationInviteService{
+				inviteRepository: NewInMemOrganizationInviteRepository(),
+				repositoryTxer:   shared.NewInMemRepositoryTxer(),
+			},
+		}
+		handlers := NewUserWeb(config, userService, userRepository)
+
+		// Create test principal with admin role
+		principal := &shared.Principal{
+			Username:       "admin@example.com",
+			OrganizationID: uuid.New(),
+			Roles:          []string{"ROLE_ADMIN"},
+		}
+
+		// Add user to repository
+		user := &User{
+			ID:       uuid.New(),
+			Name:     "Admin User",
+			Username: "admin@example.com",
+		}
+		userRepository.InsertUserWithConfirmationID(context.Background(), user, uuid.New())
+
+		// Create request with principal in context
+		req := httptest.NewRequest("POST", "/organization/invites/generate", nil)
+		req = req.WithContext(shared.ToContextWithPrincipal(req.Context(), principal))
+
+		// Create response recorder
+		w := httptest.NewRecorder()
+
+		// Execute
+		handlers.HandleGenerateInviteInDialog()(w, req)
+
+		// Verify
+		is.Equal(w.Code, http.StatusOK)
+		body := w.Body.String()
+		is.True(strings.Contains(body, "Invite Link Generated!"))
+		is.True(strings.Contains(body, "signup?invite="))
+	})
+
+	t.Run("NonAdminUser", func(t *testing.T) {
+		// Setup
+		config := &shared.Config{Webroot: "https://example.com"}
+		userRepository := NewInMemUserRepository()
+		userService := &UserService{
+			userRepository: userRepository,
+			inviteService: &OrganizationInviteService{
+				inviteRepository: NewInMemOrganizationInviteRepository(),
+				repositoryTxer:   shared.NewInMemRepositoryTxer(),
+			},
+		}
+		handlers := NewUserWeb(config, userService, userRepository)
+
+		// Create test principal without admin role
+		principal := &shared.Principal{
+			Username:       "user@example.com",
+			OrganizationID: uuid.New(),
+			Roles:          []string{"ROLE_USER"},
+		}
+
+		// Add user to repository
+		user := &User{
+			ID:       uuid.New(),
+			Name:     "Regular User",
+			Username: "user@example.com",
+		}
+		userRepository.InsertUserWithConfirmationID(context.Background(), user, uuid.New())
+
+		// Create request with principal in context
+		req := httptest.NewRequest("POST", "/organization/invites/generate", nil)
+		req = req.WithContext(shared.ToContextWithPrincipal(req.Context(), principal))
+
+		// Create response recorder
+		w := httptest.NewRecorder()
+
+		// Execute
+		handlers.HandleGenerateInviteInDialog()(w, req)
+
+		// Verify
+		is.Equal(w.Code, http.StatusForbidden)
+	})
+}
