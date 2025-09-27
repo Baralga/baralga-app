@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/baralga/shared"
+	"github.com/google/uuid"
 	"github.com/matryer/is"
 )
 
@@ -242,6 +243,117 @@ func TestHandleReportPageWithTagData(t *testing.T) {
 	// Verify that the Tag navigation is active
 	is.True(strings.Contains(htmlBody, `<a class="nav-link active"`))
 	is.True(strings.Contains(htmlBody, `<i class="bi-tags me-2"></i>Tag`))
+}
+
+func TestHandleReportPageGeneralWithTags(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	repositoryTxer := &shared.InMemRepositoryTxer{}
+
+	activityService := &ActitivityService{
+		repositoryTxer:     repositoryTxer,
+		activityRepository: activityRepo,
+		tagRepository:      tagRepo,
+		tagService:         tagService,
+	}
+
+	principal := &shared.Principal{
+		OrganizationID: shared.OrganizationIDSample,
+		Username:       "testuser",
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	a := &ReportWeb{
+		config:          &shared.Config{},
+		activityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/reports?c=general", nil)
+	r.Header.Add("HX-Request", "true")
+	r.Header.Add("HX-Target", "baralga__report_content")
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleReportPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+
+	// Verify that the Tags column header is present in both mobile and desktop views
+	is.True(strings.Contains(htmlBody, "<th>Tags</th>"))
+
+	// Verify that the tag display structure is present (even if no tags are shown)
+	// The d-flex flex-wrap gap-1 class indicates the tag container structure
+	is.True(strings.Contains(htmlBody, `class="d-flex flex-wrap gap-1"`))
+}
+
+func TestHandleReportPageGeneralTagDisplayStructure(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	// Create a custom in-memory repository with an activity that has tags
+	activityRepo := &InMemActivityRepository{
+		activities: []*Activity{
+			{
+				ID:             uuid.MustParse("00000000-0000-0000-2222-000000000001"),
+				ProjectID:      shared.ProjectIDSample,
+				OrganizationID: shared.OrganizationIDSample,
+				Username:       "user1",
+				Tags: []*Tag{
+					{Name: "meeting", Color: "#FF5733"},
+					{Name: "development", Color: "#33FF57"},
+				},
+			},
+		},
+	}
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	repositoryTxer := &shared.InMemRepositoryTxer{}
+
+	activityService := &ActitivityService{
+		repositoryTxer:     repositoryTxer,
+		activityRepository: activityRepo,
+		tagRepository:      tagRepo,
+		tagService:         tagService,
+	}
+
+	principal := &shared.Principal{
+		OrganizationID: shared.OrganizationIDSample,
+		Username:       "testuser",
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	a := &ReportWeb{
+		config:          &shared.Config{},
+		activityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/reports?c=general", nil)
+	r.Header.Add("HX-Request", "true")
+	r.Header.Add("HX-Target", "baralga__report_content")
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleReportPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+
+	// Verify that the Tags column header is present
+	is.True(strings.Contains(htmlBody, "<th>Tags</th>"))
+
+	// Verify that tag badges are displayed with colors
+	is.True(strings.Contains(htmlBody, `background-color: #FF5733`))
+	is.True(strings.Contains(htmlBody, `background-color: #33FF57`))
+	is.True(strings.Contains(htmlBody, "meeting"))
+	is.True(strings.Contains(htmlBody, "development"))
+
+	// Verify badge structure
+	is.True(strings.Contains(htmlBody, `class="badge"`))
+	is.True(strings.Contains(htmlBody, `color: white;`))
 }
 
 func TestReportViewFromQueryParams(t *testing.T) {

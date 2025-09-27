@@ -682,6 +682,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 								g.Text("Date"),
 							),
 						),
+						Th(g.Text("Tags")),
 						Th(
 							Class("text-end"),
 							g.Text("Duration"),
@@ -699,6 +700,15 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
 							Td(g.Text(time_utils.FormatDateDEShort(activity.Start))),
+							Td(
+								g.Group(g.Map(activity.Tags, func(tag *Tag) g.Node {
+									return Span(
+										Class("badge"),
+										Style(fmt.Sprintf("background-color: %s; color: white;", tag.Color)),
+										g.Text(tag.Name),
+									)
+								})),
+							),
 							Td(
 								Class("text-end"),
 								g.Text(activity.DurationFormatted()),
@@ -760,6 +770,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 						),
 						Th(g.Text("Start")),
 						Th(g.Text("End")),
+						Th(g.Text("Tags")),
 						Th(
 							Class("text-end"),
 							g.Text("Duration"),
@@ -779,6 +790,19 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							Td(g.Text(time_utils.FormatDateDE(activity.Start))),
 							Td(g.Text(time_utils.FormatTime(activity.Start))),
 							Td(g.Text(time_utils.FormatTime(activity.End))),
+							Td(
+								Div(
+									Class("d-flex flex-wrap gap-1"),
+									g.Group(g.Map(activity.Tags, func(tag *Tag) g.Node {
+
+										return Span(
+											Class("badge"),
+											Style(fmt.Sprintf("background-color: %s; color: white;", tag.Color)),
+											g.Text(tag.Name),
+										)
+									})),
+								),
+							),
 							Td(
 								Class("text-end"),
 								g.Text(activity.DurationFormatted()),

@@ -94,19 +94,7 @@
   - Maintain consistent UI patterns with existing general, time, and project report categories
   - _Requirements: 6.1, 6.2, 6.4_
 
-- [ ] 17. Implement Tag report views and data display
-  - Create Summary View showing total time and activity count per tag with visual indicators
-  - Implement Detailed View with expandable sections showing individual activities per tag
-  - Add Timeline View displaying tag usage over time with trend analysis
-  - Create Comparison View for side-by-side comparison of selected tags
-  - Display tag colors consistently throughout all report views for visual identification
+- [x] 17. Implement Tag Color in General Report
+  - Show the tags of an activity in the general report
   - _Requirements: 6.2, 6.3, 6.5_
-
-- [ ] 19. Handle edge cases for Tag reporting
-  - Implement appropriate messaging when no tagged activities are available for selected criteria
-  - Add graceful handling of empty tag data in all report views and export functions
-  - Ensure proper error handling when tag report generation fails or times out
-  - Add validation for tag report parameters (date ranges, tag selections)
-  - Test and handle scenarios with large datasets and multiple tag combinations
-  - _Requirements: 6.7_
 
