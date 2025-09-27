@@ -78,6 +78,8 @@ New repository interfaces and implementations:
 - `GetTagStatistics()`: Generate tag usage reports for organization
 - `SyncActivityTags()`: Automatically create/update/delete tags when activities change
 - `EnsureTagsExist()`: Create tags if they don't exist in organization
+- `GenerateTagReports()`: Generate comprehensive tag-based reports with time breakdowns
+- `GetTagReportData()`: Retrieve filtered tag report data for specific date ranges and tag selections
 
 ### Web Layer
 
@@ -91,11 +93,14 @@ type activityFormModel struct {
 
 **New API Endpoints**:
 - `GET /api/tags/statistics`: Tag usage statistics
+- `GET /api/reports/tags`: Tag-specific reporting data
 
 **UI Components**:
 - Tag input field for comma/space separated tag entry
 - Colored tag display badges/chips in activity views with consistent color assignment
 - Tag statistics display in reports
+- New "Tag" report category in reporting interface
+- Tag-specific report views with filtering and export capabilities
 
 ## Data Models
 
@@ -149,6 +154,10 @@ Tag filtering will support:
 - **Multiple tags (OR)**: Show activities with any of the selected tags
 - **Case-insensitive matching**: "meeting" matches "Meeting"
 
+### Tag Reporting System
+
+The Tag reporting system extends the existing reporting infrastructure to provide a dedicated "Tag" report category alongside general, time, and project reports.
+
 ## Error Handling
 
 ### Validation Rules
@@ -191,12 +200,18 @@ Tag filtering will support:
    - Case-insensitive tag matching
    - Tag management operations
    - Statistics generation
+   - Tag report generation logic
+   - Tag report data aggregation
+   - Export functionality for tag reports
 
 4. **Web Layer**:
    - Form validation with tags
    - API endpoint responses
    - Tag input parsing
    - Tag color display behavior
+   - Tag report UI components
+   - Tag report export functionality
+   - Tag selection interface for reports
 
 ### Integration Tests
 
@@ -205,6 +220,8 @@ Tag filtering will support:
    - Edit activity tags
    - Filter activities by tags
    - Tag management operations
+   - Generate tag reports with various filters
+   - Export tag reports in different formats
 
 2. **Database Integration**:
    - Tag relationship integrity
@@ -215,6 +232,9 @@ Tag filtering will support:
    - Tag autocomplete performance
    - Tag filtering accuracy
    - Error handling scenarios
+   - Tag report API endpoints
+   - Tag report data accuracy
+   - Export functionality integration
 
 ### Performance Tests
 
@@ -222,6 +242,8 @@ Tag filtering will support:
 2. **Tag Filtering**: Maintain current activity list performance
 3. **Tag Statistics**: Generate reports within acceptable time limits
 4. **Database Queries**: Ensure proper indexing for tag-related queries
+5. **Tag Report Generation**: Generate tag reports within 5 seconds for typical datasets
+6. **Tag Report Export**: Export functionality completes within 10 seconds for standard reports
 
 ## Database Indexing Strategy
 

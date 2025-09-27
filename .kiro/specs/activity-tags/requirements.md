@@ -67,3 +67,17 @@ This feature enables users to add tags to their tracked activities for better or
 4. WHEN viewing tag analytics THEN the system SHALL respect the user's organization boundaries
 5. WHEN no activities have tags THEN the system SHALL handle empty tag data gracefully
 
+### Requirement 6
+
+**User Story:** As a user, I want to access a dedicated "Tag" report category in addition to general, time, and project reports, so that I can analyze my time tracking data specifically focused on tag-based insights and patterns.
+
+#### Acceptance Criteria
+
+1. WHEN accessing the reporting section THEN the system SHALL provide a "Tag" report category alongside existing general, time, and project categories
+2. WHEN selecting the Tag report category THEN the system SHALL display reports that show data organized and filtered by specific tags
+3. WHEN viewing Tag reports THEN the system SHALL show time spent per tag with breakdown by date ranges (daily, weekly, monthly, quarterly)
+4. WHEN generating Tag reports THEN the system SHALL allow users to select specific tags to include or exclude from the report
+5. WHEN displaying Tag report data THEN the system SHALL show activities grouped by tags with total duration and activity counts
+6. WHEN exporting Tag reports THEN the system SHALL support the same export formats (CSV, Excel) as other report categories
+7. WHEN no tag data exists THEN the system SHALL display an appropriate message indicating no tagged activities are available
+
