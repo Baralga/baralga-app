@@ -134,3 +134,16 @@ func (a *UserService) UpdateOrganizationName(ctx context.Context, principal *sha
 		},
 	)
 }
+
+func (a *UserService) FindOrganizationByID(ctx context.Context, organizationID uuid.UUID) (*Organization, error) {
+	var organization *Organization
+	err := a.repositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			var err error
+			organization, err = a.organizationRepository.FindOrganizationByID(ctx, organizationID)
+			return err
+		},
+	)
+	return organization, err
+}

@@ -190,6 +190,17 @@ func Navbar(pageContext *PageContext) g.Node {
 						Class("dropdown-menu dropdown-menu-end"),
 						Li(
 							A(
+								Href("/organization/dialog"),
+								ghx.Get("/organization/dialog"),
+								ghx.Target("#baralga__main_content_modal_content"),
+								ghx.Swap("outerHTML"),
+								Class("dropdown-item"),
+								I(Class("bi-building me-2")),
+								g.Text("Organization"),
+							),
+						),
+						Li(
+							A(
 								Href("/logout"),
 								ghx.Boost(""),
 								Class("dropdown-item"),

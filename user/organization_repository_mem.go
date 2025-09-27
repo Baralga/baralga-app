@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/baralga/shared"
+	"github.com/google/uuid"
 )
 
 type InMemOrganizationRepository struct {
@@ -37,4 +38,13 @@ func (r *InMemOrganizationRepository) UpdateOrganization(ctx context.Context, or
 		}
 	}
 	return errors.New("organization not found")
+}
+
+func (r *InMemOrganizationRepository) FindOrganizationByID(ctx context.Context, organizationID uuid.UUID) (*Organization, error) {
+	for _, org := range r.organizations {
+		if org.ID == organizationID {
+			return org, nil
+		}
+	}
+	return nil, errors.New("organization not found")
 }

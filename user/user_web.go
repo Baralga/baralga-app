@@ -90,13 +90,26 @@ func (a *UserWebHandlers) signupFormValidator(incomplete bool) func(ctx context.
 }
 
 func (a *UserWebHandlers) HandleOrganizationDialog() http.HandlerFunc {
+	userService := a.userService
 	return func(w http.ResponseWriter, r *http.Request) {
 		principal := shared.MustPrincipalFromContext(r.Context())
 
+		// Get the actual organization name
+		organization, err := userService.FindOrganizationByID(r.Context(), principal.OrganizationID)
+		if err != nil {
+			// Fallback to a default name if organization not found
+			organization = &Organization{
+				ID:    principal.OrganizationID,
+				Title: "Organization",
+			}
+		}
+
 		formModel := organizationFormModel{
 			CSRFToken: csrf.Token(r),
-			Name:      "Organization Name", // This will be replaced with actual organization name
+			Name:      organization.Title,
 		}
+
+		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
 
 		shared.RenderHTML(w, OrganizationDialog(principal, formModel))
 	}
@@ -143,7 +156,6 @@ func (a *UserWebHandlers) HandleOrganizationUpdate() http.HandlerFunc {
 
 		// Success - close modal and refresh page
 		w.Header().Set("HX-Trigger", "baralga__main_content_modal-hide")
-		w.Header().Set("HX-Refresh", "true")
 		shared.RenderHTML(w, Div())
 	}
 }
@@ -484,7 +496,7 @@ func OrganizationDialog(principal *shared.Principal, formModel organizationFormM
 				Label(
 					Class("form-label"),
 					g.Attr("for", "Name"),
-					g.Text("Organization Name"),
+					g.Text("Name"),
 				),
 				Input(
 					ID("Name"),

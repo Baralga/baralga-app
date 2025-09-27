@@ -93,8 +93,16 @@ func TestHandleOrganizationDialog(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/organization/dialog", nil)
 	r = r.WithContext(ctx)
 
+	organizationRepository := NewInMemOrganizationRepository()
+	userService := &UserService{
+		config:                 &shared.Config{},
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
+		organizationRepository: organizationRepository,
+	}
+
 	userWebHandlers := &UserWebHandlers{
-		config: &shared.Config{},
+		config:      &shared.Config{},
+		userService: userService,
 	}
 
 	userWebHandlers.HandleOrganizationDialog()(httpRec, r)
@@ -180,6 +188,41 @@ func TestHandleOrganizationUpdate(t *testing.T) {
 	// Should not have success headers
 	headers = httpRec.Header()
 	is.True(!strings.Contains(headers.Get("HX-Trigger"), "baralga__main_content_modal-hide"))
+}
+
+func TestHandleOrganizationName(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	principal := &shared.Principal{
+		Name:           "Test User",
+		Username:       "test",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_USER"},
+	}
+
+	organizationRepository := NewInMemOrganizationRepository()
+	userService := &UserService{
+		config:                 &shared.Config{},
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
+		organizationRepository: organizationRepository,
+	}
+
+	userWebHandlers := &UserWebHandlers{
+		config:      &shared.Config{},
+		userService: userService,
+	}
+
+	ctx := shared.ToContextWithPrincipal(context.Background(), principal)
+	r, _ := http.NewRequest("GET", "/organization/name", nil)
+	r = r.WithContext(ctx)
+
+	userWebHandlers.HandleOrganizationName()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "Test Organization"))
+	is.True(strings.Contains(htmlBody, "organization-name"))
 }
 
 func TestHandleSignUpFormWithInvalidData(t *testing.T) {

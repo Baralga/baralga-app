@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/baralga/shared"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -48,4 +49,21 @@ func (r *DbOrganizationRepository) UpdateOrganization(ctx context.Context, organ
 		organization.ID,
 	)
 	return err
+}
+
+func (r *DbOrganizationRepository) FindOrganizationByID(ctx context.Context, organizationID uuid.UUID) (*Organization, error) {
+	tx := shared.MustTxFromContext(ctx)
+
+	var organization Organization
+	err := tx.QueryRow(
+		ctx,
+		`SELECT org_id, title FROM organizations WHERE org_id = $1`,
+		organizationID,
+	).Scan(&organization.ID, &organization.Title)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &organization, nil
 }
