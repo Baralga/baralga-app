@@ -10,7 +10,7 @@ The implementation will add a new `Tag` domain entity and establish a many-to-ma
 
 ### Database Schema Changes
 
-The design introduces two new tables to support the tagging functionality and requires the PostgreSQL `pg_trgm` extension for text search:
+The design introduces two new tables to support the tagging functionality:
 
 1. **tags table**: Stores unique tags per organization
    - `tag_id` (UUID, primary key)
@@ -49,7 +49,7 @@ type Tag struct {
 New repository interfaces and implementations:
 
 1. **TagRepository**: Manages tag CRUD operations
-   - `FindTagsByOrganization()`: Get all tags for specific organization for autocomplete
+   - `FindTagsByOrganization()`: Get all tags for specific organization
    - `FindOrCreateTag()`: Get existing or create new tag for organization
    - `FindTagsByActivity()`: Get tags for specific activity
    - `SyncTagsForActivity()`: Create/update tags when activity is saved
@@ -68,12 +68,11 @@ New repository interfaces and implementations:
 **ActivityService Extensions**:
 - Extend existing methods to handle tag operations
 - Add tag normalization logic (case-insensitive handling)
-- Implement tag autocomplete functionality
 - Add tag-based filtering and reporting
 
 **New TagService**:
-- `GetTagsForAutocomplete()`: Returns matching tags for autocomplete within organization
 - `NormalizeTagName()`: Converts tags to lowercase for storage
+- `GetTagColor()`: Generates consistent color for tag based on tag name hash
 - `GetTagStatistics()`: Generate tag usage reports for organization
 - `SyncActivityTags()`: Automatically create/update/delete tags when activities change
 - `EnsureTagsExist()`: Create tags if they don't exist in organization
@@ -89,13 +88,11 @@ type activityFormModel struct {
 ```
 
 **New API Endpoints**:
-- `GET /api/tags/autocomplete?q={query}`: Tag autocomplete
 - `GET /api/tags/statistics`: Tag usage statistics
 
 **UI Components**:
-- Tag input field with autocomplete dropdown
-- Tag filter component for activity lists
-- Tag display badges/chips in activity views
+- Tag input field for comma/space separated tag entry
+- Colored tag display badges/chips in activity views with consistent color assignment
 - Tag statistics display in reports
 
 ## Data Models
@@ -120,8 +117,9 @@ Tags will be processed as follows:
 3. Normalize to lowercase: ["meeting", "development", "bug-fix"]
 4. Remove duplicates and validate length
 5. Create new tags automatically if they don't exist in the organization
+6. Generate consistent color for each tag based on tag name hash
 
-**Design Rationale**: Automatic tag creation reduces friction for users while maintaining organization-level consistency. The comma/space separation provides flexibility in tag input methods.
+**Design Rationale**: Automatic tag creation reduces friction for users while maintaining organization-level consistency. The comma/space separation provides flexibility in tag input methods. Color assignment based on tag name hash ensures consistent visual representation across all views.
 
 ### Tag Storage Strategy
 
@@ -131,6 +129,16 @@ Tags will be processed as follows:
 - **Relationships**: Many-to-many through junction table linking activities to organization-level tags
 - **Automatic Lifecycle**: Tags are created when activities are saved, updated when activities change, and cleaned up when no longer used by any activity in the organization
 - **Cleanup**: Automatic removal of unused tags via background process at organization level
+
+### Tag Color System
+
+- **Color Generation**: Colors are generated deterministically using a hash function on the normalized tag name
+- **Consistency**: The same tag will always have the same color across all views and users within the organization
+- **Color Palette**: Use a predefined set of accessible colors with sufficient contrast ratios
+- **Algorithm**: Hash the tag name and map to one of 12-16 predefined colors for good distribution
+- **Accessibility**: All color combinations meet WCAG AA contrast requirements for text readability
+- **Fallback**: Default neutral color if color generation fails or for accessibility modes
+- Store the color for the tag and set the color when the tag is created.
 
 ### Filtering Logic
 
@@ -158,7 +166,7 @@ Tag filtering will support:
 ### Graceful Degradation
 
 - If tag service is unavailable, activities still function without tags
-- Autocomplete falls back to simple text input if API fails
+- Tag colors fall back to default styling if color generation fails
 - Tag filters gracefully handle missing or deleted tags
 
 ## Testing Strategy
@@ -177,7 +185,7 @@ Tag filtering will support:
    - Database constraint handling
 
 3. **Service Layer**:
-   - Tag autocomplete functionality
+   - Tag color generation functionality
    - Case-insensitive tag matching
    - Tag management operations
    - Statistics generation
@@ -186,7 +194,7 @@ Tag filtering will support:
    - Form validation with tags
    - API endpoint responses
    - Tag input parsing
-   - Autocomplete UI behavior
+   - Tag color display behavior
 
 ### Integration Tests
 
@@ -208,7 +216,7 @@ Tag filtering will support:
 
 ### Performance Tests
 
-1. **Autocomplete Response Time**: < 200ms for 1000+ tags
+1. **Tag Color Generation**: < 10ms for color calculation
 2. **Tag Filtering**: Maintain current activity list performance
 3. **Tag Statistics**: Generate reports within acceptable time limits
 4. **Database Queries**: Ensure proper indexing for tag-related queries
@@ -219,7 +227,6 @@ Tag filtering will support:
 
 1. **tags table**:
    - `idx_tags_org_name` on (org_id, name) - for exact lookups within organization
-   - `idx_tags_name_text` GIN index on (name gin_trgm_ops) - for autocomplete text search
    - `idx_tags_org_id` on (org_id) - for organization-wide tag queries
 
 
@@ -234,7 +241,6 @@ Tag filtering will support:
 ### Query Optimization
 
 - Use EXISTS clauses for tag filtering to leverage indexes
-- Utilize PostgreSQL trigram similarity (`%` operator) for fuzzy tag autocomplete
-- Use GIN indexes with pg_trgm for fast text search on tag names
 - Batch tag operations to minimize database round trips
-- Enable pg_trgm extension: `CREATE EXTENSION IF NOT EXISTS pg_trgm;`
+- Cache tag colors in memory to avoid recalculation
+- Use efficient hash functions for consistent color generation

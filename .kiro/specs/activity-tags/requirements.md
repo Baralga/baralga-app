@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature enables users to add tags to their tracked activities for better organization and categorization. Tags will be case-insensitive and provide autocomplete functionality to improve user experience and maintain consistency across the application. This enhancement will allow users to filter, search, and analyze their time tracking data more effectively.
+This feature enables users to add tags to their tracked activities for better organization and categorization. Tags will be case-insensitive and shared at the organization level to promote consistency. This enhancement will allow users to filter, search, and analyze their time tracking data more effectively.
 
 ## Requirements
 
@@ -20,26 +20,28 @@ This feature enables users to add tags to their tracked activities for better or
 
 ### Requirement 2
 
-**User Story:** As a user, I want tags to be case-insensitive, so that "Meeting" and "meeting" are treated as the same tag to maintain consistency.
+**User Story:** As a user, I want tags to be case-insensitive and shared within my organization, so that "Meeting" and "meeting" are treated as the same tag and all team members can use consistent tags.
 
 #### Acceptance Criteria
 
 1. WHEN a user enters a tag with any case combination THEN the system SHALL normalize the tag to lowercase for storage
 2. WHEN displaying tags THEN the system SHALL show tags in a consistent format (title case or lowercase)
-3. WHEN comparing tags for uniqueness THEN the system SHALL perform case-insensitive comparison
+3. WHEN comparing tags for uniqueness THEN the system SHALL perform case-insensitive comparison within the organization
 4. WHEN filtering by tags THEN the system SHALL perform case-insensitive matching
+5. WHEN a user creates a new tag THEN the system SHALL make it available to all users in the same organization
+
 
 ### Requirement 3
 
-**User Story:** As a user, I want autocomplete functionality for tags, so that I can quickly select from previously used tags and maintain consistency.
+**User Story:** As a user, I want tags to have distinct colors, so that I can visually distinguish between different categories and quickly identify tag types in my activity views.
 
 #### Acceptance Criteria
 
-1. WHEN a user starts typing in the tag input field THEN the system SHALL display a dropdown with matching existing tags
-2. WHEN a user selects a tag from the autocomplete dropdown THEN the system SHALL add the tag to the activity
-3. WHEN displaying autocomplete suggestions THEN the system SHALL show tags that match the current input (case-insensitive)
-4. WHEN no matching tags exist THEN the system SHALL allow the user to create a new tag
-5. WHEN showing autocomplete suggestions THEN the system SHALL limit results to tags within the current user's organization
+1. WHEN a tag is created THEN the system SHALL assign a consistent color to that tag based on the tag name
+2. WHEN displaying tags THEN the system SHALL show each tag with its assigned color as background or border
+3. WHEN the same tag appears in different views THEN the system SHALL display it with the same color consistently
+4. WHEN viewing activity lists with tags THEN the system SHALL use colors to help users quickly identify different tag categories
+5. WHEN multiple tags are displayed THEN the system SHALL ensure sufficient color contrast for accessibility
 
 ### Requirement 4
 

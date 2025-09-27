@@ -58,28 +58,47 @@
   - Update mapFormToActivity and mapActivityToForm functions to handle tags
   - _Requirements: 1.1, 1.2, 1.5, 3.1_
 
-- [x] 9. Implement tag filtering in activity list
-  - Add tag filter parameters to activity list handlers in tracking/activity_web.go
-  - Update activity list queries to support tag-based filtering
-  - Add tag filter state management in URL parameters
+- [ ] 9. Implement tag filtering in activity list UI
+  - Add tag filter input field to activity list page in tracking/activity_web.go
+  - Update HandleTrackingPage to parse tag filter parameters from URL
+  - Modify activity list queries to pass tag filters to the service layer
+  - Add tag filter state management in URL parameters for pagination
+  - Update activity list templates to show active tag filters with clear options
   - _Requirements: 4.1, 4.2, 4.4, 4.5_
 
-- [ ] 10. Add tag display to activity views
+- [x] 10. Add tag display to activity views
   - Update ActivitiesSumByDayView template to display tags for each activity
   - Add CSS styling for tag display (badges/chips) in activity list
   - Ensure tags are displayed consistently across all activity views
   - _Requirements: 1.4, 4.1_
 
-- [ ] 11. Create tag statistics reporting
+- [ ] 11. Implement tag color generation system
+  - Add GetTagColor method to TagService for consistent color generation based on tag name hash
+  - Create a predefined set of accessible colors with sufficient contrast ratios
+  - Update activity web templates to use generated colors instead of generic bg-light class
+  - Ensure the same tag always has the same color across all views and users within organization
+  - Add fallback to default neutral color if color generation fails
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [ ] 12. Write database repository tests for tag functionality
+  - Create tracking/tag_repository_db_test.go with comprehensive tests for DbTagRepository
+  - Test FindTagsByOrganization with trigram search functionality
+  - Test FindOrCreateTag with case-insensitive handling and organization isolation
+  - Test SyncTagsForActivity with proper transaction handling
+  - Test DeleteUnusedTags cleanup functionality
+  - Add integration tests using dockertest for database operations
+  - _Requirements: All requirements_
+
+- [ ] 13. Create tag statistics reporting
   - Add GET /api/tags/statistics endpoint for organization-wide tag usage data
   - Implement tag-based grouping in time reports respecting organization boundaries
   - Add tag statistics to report views and templates
   - Create database queries for organization-level tag usage analytics
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 12. Write comprehensive tests for tag functionality
+- [x] 14. Write comprehensive tests for tag functionality
   - Create unit tests for Tag domain model and validation in tracking/tag_service_test.go
-  - Write repository tests for all tag CRUD operations in tracking/tag_repository_db_test.go
+  - Write repository tests for all tag CRUD operations in tracking/tag_repository_mem_test.go
   - Add service layer tests for tag business logic
   - Create integration tests for tag API endpoints in tracking/activity_rest_test.go
   - Write web handler tests for tag form processing in tracking/activity_web_test.go
