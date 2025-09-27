@@ -34,4 +34,5 @@ type UserRepository interface {
 
 type OrganizationRepository interface {
 	InsertOrganization(ctx context.Context, organization *Organization) (*Organization, error)
+	UpdateOrganization(ctx context.Context, organization *Organization) error
 }

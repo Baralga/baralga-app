@@ -35,3 +35,17 @@ func (r *DbOrganizationRepository) InsertOrganization(ctx context.Context, organ
 	)
 	return organization, err
 }
+
+func (r *DbOrganizationRepository) UpdateOrganization(ctx context.Context, organization *Organization) error {
+	tx := shared.MustTxFromContext(ctx)
+
+	_, err := tx.Exec(
+		ctx,
+		`UPDATE organizations 
+		   SET title = $1 
+		 WHERE org_id = $2`,
+		organization.Title,
+		organization.ID,
+	)
+	return err
+}

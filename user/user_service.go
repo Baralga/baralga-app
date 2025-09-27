@@ -105,3 +105,32 @@ func (a *UserService) SetUpNewUser(ctx context.Context, user *User, confirmation
 		},
 	)
 }
+
+func (a *UserService) UpdateOrganizationName(ctx context.Context, principal *shared.Principal, newName string) error {
+	// Check if user has admin role
+	if !principal.HasRole("ROLE_ADMIN") {
+		return fmt.Errorf("insufficient permissions: only administrators can update organization name")
+	}
+
+	// Validate organization name
+	if newName == "" {
+		return fmt.Errorf("organization name cannot be empty")
+	}
+	if len(newName) > 255 {
+		return fmt.Errorf("organization name cannot exceed 255 characters")
+	}
+
+	// Create organization object with updated name
+	organization := &Organization{
+		ID:    principal.OrganizationID,
+		Title: newName,
+	}
+
+	// Update organization in database
+	return a.repositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			return a.organizationRepository.UpdateOrganization(ctx, organization)
+		},
+	)
+}

@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/baralga/shared"
 )
@@ -26,4 +27,14 @@ func NewInMemOrganizationRepository() *InMemOrganizationRepository {
 func (r *InMemOrganizationRepository) InsertOrganization(ctx context.Context, organization *Organization) (*Organization, error) {
 	r.organizations = append(r.organizations, organization)
 	return organization, nil
+}
+
+func (r *InMemOrganizationRepository) UpdateOrganization(ctx context.Context, organization *Organization) error {
+	for i, org := range r.organizations {
+		if org.ID == organization.ID {
+			r.organizations[i].Title = organization.Title
+			return nil
+		}
+	}
+	return errors.New("organization not found")
 }

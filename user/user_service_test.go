@@ -85,3 +85,49 @@ func TestSetUpNewUserWithUserRepositoryError(t *testing.T) {
 	is.True(err != nil)
 	is.Equal(len(mailResource.Mails), mailCount)
 }
+
+func TestUpdateOrganizationName(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	organizationRepository := NewInMemOrganizationRepository()
+
+	userService := &UserService{
+		config:                 &shared.Config{},
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
+		organizationRepository: organizationRepository,
+	}
+
+	adminPrincipal := &shared.Principal{
+		Name:           "Admin User",
+		Username:       "admin",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	userPrincipal := &shared.Principal{
+		Name:           "Regular User",
+		Username:       "user",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_USER"},
+	}
+
+	// Act & Assert - Admin can update organization name
+	err := userService.UpdateOrganizationName(context.Background(), adminPrincipal, "New Organization Name")
+	is.NoErr(err)
+
+	// Act & Assert - Regular user cannot update organization name
+	err = userService.UpdateOrganizationName(context.Background(), userPrincipal, "New Organization Name")
+	is.True(err != nil)
+	is.Equal(err.Error(), "insufficient permissions: only administrators can update organization name")
+
+	// Act & Assert - Empty organization name validation
+	err = userService.UpdateOrganizationName(context.Background(), adminPrincipal, "")
+	is.True(err != nil)
+	is.Equal(err.Error(), "organization name cannot be empty")
+
+	// Act & Assert - Organization name too long validation
+	longName := string(make([]byte, 256)) // 256 characters
+	err = userService.UpdateOrganizationName(context.Background(), adminPrincipal, longName)
+	is.True(err != nil)
+	is.Equal(err.Error(), "organization name cannot exceed 255 characters")
+}
