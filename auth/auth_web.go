@@ -334,7 +334,7 @@ func (a *AuthWebHandlers) IssueCookieForGithubWithInvite() http.Handler {
 		cookie := authService.CreateCookie(tokenAuth, expiryDuration, principal)
 		http.SetCookie(w, &cookie)
 
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
 }
@@ -390,7 +390,7 @@ func (a *AuthWebHandlers) IssueCookieForGoogleWithInvite() http.Handler {
 		cookie := authService.CreateCookie(tokenAuth, expiryDuration, principal)
 		http.SetCookie(w, &cookie)
 
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
 }

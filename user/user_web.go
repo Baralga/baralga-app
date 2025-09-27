@@ -329,11 +329,18 @@ func (a *UserWebHandlers) HandleInviteSignUpPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := chi.URLParam(r, "token")
 
-		// Validate the invite token
-		_, err := a.userService.ValidateInvite(r.Context(), token)
+		// Validate the invite token and get invite details
+		invite, err := a.userService.ValidateInvite(r.Context(), token)
 		if err != nil {
 			// Show error page for invalid/expired invite
 			shared.RenderHTML(w, a.InviteErrorPage("Invalid or expired invite link"))
+			return
+		}
+
+		// Fetch organization details
+		organization, err := a.userService.FindOrganizationByID(r.Context(), invite.OrgID)
+		if err != nil {
+			shared.RenderHTML(w, a.InviteErrorPage("Unable to load organization details"))
 			return
 		}
 
@@ -342,7 +349,7 @@ func (a *UserWebHandlers) HandleInviteSignUpPage() http.HandlerFunc {
 			InviteToken: token,
 		}
 
-		shared.RenderHTML(w, a.InviteSignUpPage(r.URL.Path, formModel))
+		shared.RenderHTML(w, a.InviteSignUpPage(r.URL.Path, formModel, organization))
 	}
 }
 
@@ -381,7 +388,7 @@ func (a *UserWebHandlers) SignUpPage(currentPath string, formModel signupFormMod
 	)
 }
 
-func (a *UserWebHandlers) InviteSignUpPage(currentPath string, formModel signupFormModel) g.Node {
+func (a *UserWebHandlers) InviteSignUpPage(currentPath string, formModel signupFormModel, organization *Organization) g.Node {
 	return shared.Page(
 		"Join Organization",
 		currentPath,
@@ -412,9 +419,9 @@ func (a *UserWebHandlers) InviteSignUpPage(currentPath string, formModel signupF
 					Div(
 						Class("alert alert-info"),
 						I(Class("bi-info-circle me-2")),
-						g.Text("You've been invited to join an organization. Complete your registration below."),
+						g.Textf("You've been invited to join '%s'. Complete your registration below.", organization.Title),
 					),
-					a.InviteSignupForm(formModel, "", nil),
+					a.InviteSignupForm(formModel, "", nil, organization),
 				),
 			),
 		},
@@ -624,7 +631,7 @@ func (a *UserWebHandlers) SignupForm(formModel signupFormModel, errorMessage str
 	)
 }
 
-func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
+func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string, organization *Organization) g.Node {
 	return FormEl(
 		ID("baralga__main_content_modal_content"),
 		Class("modal-content"),
@@ -634,7 +641,7 @@ func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessa
 			Class("modal-header"),
 			H2(
 				Class("modal-title"),
-				g.Text("Join Organization"),
+				g.Textf("Join %s", organization.Title),
 			),
 		),
 		Div(
@@ -654,40 +661,6 @@ func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessa
 					Class("alert alert-danger"),
 					Role("alert"),
 					g.Text(errorMessage),
-				),
-			),
-			// Social Login Options
-			Div(
-				Class("mb-4"),
-				Div(
-					Class("text-center mb-3"),
-					Small(
-						Class("text-muted"),
-						g.Text("Or sign up with your social account"),
-					),
-				),
-				Div(
-					Class("d-grid gap-2"),
-					A(
-						Href(fmt.Sprintf("/github/login/invite/%s", formModel.InviteToken)),
-						Class("btn btn-outline-dark"),
-						I(Class("bi-github me-2")),
-						g.Text("Continue with GitHub"),
-					),
-					A(
-						Href(fmt.Sprintf("/google/login/invite/%s", formModel.InviteToken)),
-						Class("btn btn-outline-primary"),
-						I(Class("bi-google me-2")),
-						g.Text("Continue with Google"),
-					),
-				),
-				Hr(Class("my-4")),
-				Div(
-					Class("text-center"),
-					Small(
-						Class("text-muted"),
-						g.Text("Or fill out the form below"),
-					),
 				),
 			),
 			Div(
@@ -807,10 +780,34 @@ func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessa
 		),
 		Div(
 			Class("modal-footer"),
-			Button(
-				Type("submit"),
-				Class("btn btn-primary"),
-				g.Text("Join Organization"),
+			Div(
+				Class("d-flex justify-content-between align-items-center w-100"),
+				Div(
+					Class("d-flex gap-2"),
+					g.If(
+						a.config.GithubClientId != "",
+						A(
+							Class("btn btn-secondary btn-sm"),
+							Href(fmt.Sprintf("/github/login/invite/%s", formModel.InviteToken)),
+							I(Class("bi-github")),
+							g.Text(" GitHub"),
+						),
+					),
+					g.If(
+						a.config.GoogleClientId != "",
+						A(
+							Class("btn btn-secondary btn-sm"),
+							Href(fmt.Sprintf("/google/login/invite/%s", formModel.InviteToken)),
+							I(Class("bi-google")),
+							g.Text(" Google"),
+						),
+					),
+				),
+				Button(
+					Type("submit"),
+					Class("btn btn-primary"),
+					g.Text("Join Organization"),
+				),
 			),
 		),
 	)

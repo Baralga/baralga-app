@@ -113,13 +113,8 @@ func (s *OrganizationInviteService) UseInvite(ctx context.Context, token string,
 	invite.UsedBy = &userID
 	invite.Active = false
 
-	err = s.repositoryTxer.InTx(
-		ctx,
-		func(ctx context.Context) error {
-			return s.inviteRepository.UpdateInvite(ctx, invite)
-		},
-	)
-
+	// Update the invite directly (assumes we're already in a transaction)
+	err = s.inviteRepository.UpdateInvite(ctx, invite)
 	if err != nil {
 		return errors.Wrap(err, "failed to mark invite as used")
 	}

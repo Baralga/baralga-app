@@ -17,18 +17,18 @@ type Config struct {
 	JWTExpiry  string `default:"24h"`
 	CSRFSecret string `default:"CSRFsecret"`
 
-	SMTPServername string `default:"smtp.server:465"`
+	SMTPServername string `default:"localhost:1025"`
 	SMTPFrom       string `default:"smtp.from@baralga.com"`
 	SMTPUser       string `default:"smtp.user@baralga.com"`
 	SMTPPassword   string `default:"SMTPPassword"`
 
 	DataProtectionURL string `default:"#"`
 
-	GithubClientId     string `default:""`
+	GithubClientId     string `default:"asdfasdf"`
 	GithubClientSecret string `default:""`
 	GithubRedirectURL  string `default:"http://localhost:8080/github/callback"`
 
-	GoogleClientId     string `default:""`
+	GoogleClientId     string `default:"asfdasf"`
 	GoogleClientSecret string `default:""`
 	GoogleRedirectURL  string `default:"http://localhost:8080/google/callback"`
 }
