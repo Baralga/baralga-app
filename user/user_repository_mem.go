@@ -49,6 +49,14 @@ func (r *InMemUserRepository) InsertUserWithConfirmationID(ctx context.Context, 
 	return user, nil
 }
 
+func (r *InMemUserRepository) InsertUserWithConfirmationIDAndRole(ctx context.Context, user *User, confirmationID uuid.UUID, role string) (*User, error) {
+	if confirmationID == shared.ConfirmationIDError {
+		return nil, errors.New("error for tests")
+	}
+	r.users = append(r.users, user)
+	return user, nil
+}
+
 func (r *InMemUserRepository) FindUserIDByConfirmationID(ctx context.Context, confirmationID string) (uuid.UUID, error) {
 	if confirmationID == shared.ConfirmationIdSample.String() {
 		return r.users[0].ID, nil

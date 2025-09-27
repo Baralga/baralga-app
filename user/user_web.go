@@ -24,6 +24,7 @@ type signupFormModel struct {
 	EMail            string `validate:"required,email"`
 	Password         string `validate:"required,min=8,max=100"`
 	AcceptConditions bool
+	InviteToken      string
 }
 
 type organizationFormModel struct {
@@ -57,6 +58,7 @@ func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
 	r.Post("/signup", a.HandleSignUpForm())
 	r.Post("/signup/validate", a.HandleSignUpFormValidate())
 	r.Get("/signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
+	r.Get("/signup/invite/{token}", a.HandleInviteSignUpPage())
 }
 
 func (a *UserWebHandlers) signupFormValidator(incomplete bool) func(ctx context.Context, formModel signupFormModel) (map[string]string, error) {
@@ -300,14 +302,47 @@ func (a *UserWebHandlers) HandleSignUpForm() http.HandlerFunc {
 		}
 
 		user := mapSignUpFormToUser(formModel, userService.EncryptPassword(formModel.Password))
-		confirmationID := uuid.New()
-		err = userService.SetUpNewUser(r.Context(), &user, confirmationID)
-		if err != nil {
-			shared.RenderProblemHTML(w, isProduction, err)
-			return
+
+		// Check if this is an invite-based registration
+		if formModel.InviteToken != "" {
+			// Use invite-based registration
+			err = userService.SetUpNewUserWithInvite(r.Context(), &user, formModel.InviteToken)
+			if err != nil {
+				shared.RenderProblemHTML(w, isProduction, err)
+				return
+			}
+		} else {
+			// Use regular registration (creates new organization)
+			confirmationID := uuid.New()
+			err = userService.SetUpNewUser(r.Context(), &user, confirmationID)
+			if err != nil {
+				shared.RenderProblemHTML(w, isProduction, err)
+				return
+			}
 		}
 
 		shared.RenderHTML(w, SignupSuccess(formModel))
+	}
+}
+
+func (a *UserWebHandlers) HandleInviteSignUpPage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := chi.URLParam(r, "token")
+
+		// Validate the invite token
+		_, err := a.userService.ValidateInvite(r.Context(), token)
+		if err != nil {
+			// Show error page for invalid/expired invite
+			shared.RenderHTML(w, a.InviteErrorPage("Invalid or expired invite link"))
+			return
+		}
+
+		formModel := signupFormModel{
+			CSRFToken:   csrf.Token(r),
+			InviteToken: token,
+		}
+
+		shared.RenderHTML(w, a.InviteSignUpPage(r.URL.Path, formModel))
 	}
 }
 
@@ -340,6 +375,93 @@ func (a *UserWebHandlers) SignUpPage(currentPath string, formModel signupFormMod
 						),
 					),
 					a.SignupForm(formModel, "", nil),
+				),
+			),
+		},
+	)
+}
+
+func (a *UserWebHandlers) InviteSignUpPage(currentPath string, formModel signupFormModel) g.Node {
+	return shared.Page(
+		"Join Organization",
+		currentPath,
+		[]g.Node{
+			Section(
+				Class("full-center"),
+				Div(
+					Class("container"),
+					Div(
+						Class("d-flex justify-content-center align-items-center mt-2 mb-3"),
+						Img(
+							Alt("Baralga"),
+							Class("img-responsive"),
+							Src("/assets/baralga_192.png"),
+						),
+						Div(
+							Class("ms-4"),
+							H2(
+								g.Text("Baralga"),
+								Small(
+									Class("text-muted"),
+									StyleAttr("display: block; font-size: 70%;"),
+									g.Text("project time tracking"),
+								),
+							),
+						),
+					),
+					Div(
+						Class("alert alert-info"),
+						I(Class("bi-info-circle me-2")),
+						g.Text("You've been invited to join an organization. Complete your registration below."),
+					),
+					a.InviteSignupForm(formModel, "", nil),
+				),
+			),
+		},
+	)
+}
+
+func (a *UserWebHandlers) InviteErrorPage(message string) g.Node {
+	return shared.Page(
+		"Invalid Invite",
+		"/signup/invite",
+		[]g.Node{
+			Section(
+				Class("full-center"),
+				Div(
+					Class("container"),
+					Div(
+						Class("d-flex justify-content-center align-items-center mt-2 mb-3"),
+						Img(
+							Alt("Baralga"),
+							Class("img-responsive"),
+							Src("/assets/baralga_192.png"),
+						),
+						Div(
+							Class("ms-4"),
+							H2(
+								g.Text("Baralga"),
+								Small(
+									Class("text-muted"),
+									StyleAttr("display: block; font-size: 70%;"),
+									g.Text("project time tracking"),
+								),
+							),
+						),
+					),
+					Div(
+						Class("alert alert-danger"),
+						I(Class("bi-exclamation-triangle me-2")),
+						g.Text(message),
+					),
+					Div(
+						Class("text-center"),
+						A(
+							Href("/signup"),
+							Class("btn btn-primary"),
+							g.Text("Create New Account"),
+						),
+					),
 				),
 			),
 		},
@@ -497,6 +619,164 @@ func (a *UserWebHandlers) SignupForm(formModel signupFormModel, errorMessage str
 			),
 			Div(
 				Class("col-4 text-center"),
+			),
+		),
+	)
+}
+
+func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessage string, fieldErrors map[string]string) g.Node {
+	return FormEl(
+		ID("baralga__main_content_modal_content"),
+		Class("modal-content"),
+		ghx.Post("/signup"),
+
+		Div(
+			Class("modal-header"),
+			H2(
+				Class("modal-title"),
+				g.Text("Join Organization"),
+			),
+		),
+		Div(
+			Class("modal-body"),
+			Input(
+				Type("hidden"),
+				Name("CSRFToken"),
+				Value(formModel.CSRFToken),
+			),
+			Input(
+				Type("hidden"),
+				Name("InviteToken"),
+				Value(formModel.InviteToken),
+			),
+			g.If(errorMessage != "",
+				Div(
+					Class("alert alert-danger"),
+					Role("alert"),
+					g.Text(errorMessage),
+				),
+			),
+			Div(
+				Class("form-floating mb-3"),
+				Input(
+					ID("name"),
+					Required(),
+					Type("text"),
+					Name("Name"),
+					MinLength("5"),
+					MaxLength("50"),
+					Value(formModel.Name),
+					g.If(
+						fieldErrors["Name"] != "",
+						Class("form-control is-invalid"),
+					),
+					g.If(
+						fieldErrors["Name"] == "",
+						Class("form-control"),
+					),
+					g.Attr("placeholder", "John Doe"),
+				),
+				Label(
+					g.Attr("for", "name"),
+					g.Text("Name"),
+				),
+				g.If(
+					fieldErrors["Name"] != "",
+					Div(
+						Class("invalid-feedback"),
+						g.Text(fieldErrors["Name"]),
+					),
+				),
+			),
+			Div(
+				Class("form-floating mb-3"),
+				Input(
+					ID("email"),
+					Required(),
+					Type("email"),
+					Name("EMail"),
+					Value(formModel.EMail),
+					g.If(
+						fieldErrors["EMail"] != "",
+						Class("form-control is-invalid"),
+					),
+					g.If(
+						fieldErrors["EMail"] == "",
+						Class("form-control"),
+					),
+					g.Attr("placeholder", "john@example.com"),
+				),
+				Label(
+					g.Attr("for", "email"),
+					g.Text("Email"),
+				),
+				g.If(
+					fieldErrors["EMail"] != "",
+					Div(
+						Class("invalid-feedback"),
+						g.Text(fieldErrors["EMail"]),
+					),
+				),
+			),
+			Div(
+				Class("form-floating mb-3"),
+				Input(
+					ID("password"),
+					Required(),
+					Type("password"),
+					Name("Password"),
+					MinLength("8"),
+					MaxLength("100"),
+					Value(formModel.Password),
+					g.If(
+						fieldErrors["Password"] != "",
+						Class("form-control is-invalid"),
+					),
+					g.If(
+						fieldErrors["Password"] == "",
+						Class("form-control"),
+					),
+					g.Attr("placeholder", "***"),
+				),
+				Label(
+					g.Attr("for", "password"),
+					g.Text("Password"),
+				),
+				g.If(
+					fieldErrors["Password"] != "",
+					Div(
+						Class("invalid-feedback"),
+						g.Text(fieldErrors["Password"]),
+					),
+				),
+			),
+			Div(
+				Class("form-check mb-3"),
+				Input(
+					ID("acceptConditions"),
+					Required(),
+					Type("checkbox"),
+					Name("AcceptConditions"),
+					Class("form-check-input"),
+					g.If(formModel.AcceptConditions, Value("true")),
+				),
+				Label(
+					g.Attr("for", "acceptConditions"),
+					g.Raw(
+						fmt.Sprintf("Ich bin mit den <a href=\"%v\">Datenschutzbestimmungen</a> einverstanden. I accept the <a href=\"%v\">data protection rules</a>.",
+							a.config.DataProtectionURL,
+							a.config.DataProtectionURL,
+						),
+					),
+				),
+			),
+		),
+		Div(
+			Class("modal-footer"),
+			Button(
+				Type("submit"),
+				Class("btn btn-primary"),
+				g.Text("Join Organization"),
 			),
 		),
 	)

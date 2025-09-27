@@ -114,6 +114,54 @@ func (a *UserService) SetUpNewUser(ctx context.Context, user *User, confirmation
 	)
 }
 
+func (a *UserService) SetUpNewUserWithInvite(ctx context.Context, user *User, inviteToken string) error {
+	// Validate the invite token
+	invite, err := a.inviteService.ValidateInvite(ctx, inviteToken)
+	if err != nil {
+		return err
+	}
+
+	// Set user details
+	user.ID = uuid.New()
+	user.OrganizationID = invite.OrgID
+
+	// Send email confirmation link
+	confirmationID := uuid.New()
+	subject := "Confirm your Email address"
+	body := fmt.Sprintf(
+		`Confirm your Email address at %v/signup/confirm/%v to activate your account.`,
+		a.config.Webroot,
+		confirmationID,
+	)
+
+	return a.repositoryTxer.InTx(
+		ctx,
+		// Create User with ROLE_USER (not ROLE_ADMIN)
+		func(ctx context.Context) error {
+			_, err := a.userRepository.InsertUserWithConfirmationIDAndRole(ctx, user, confirmationID, "ROLE_USER")
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		// Mark invite as used
+		func(ctx context.Context) error {
+			return a.inviteService.UseInvite(ctx, invite.Token, user.ID)
+		},
+		// Send email confirmation link
+		func(ctx context.Context) error {
+			if user.EMail == "" {
+				return nil
+			}
+			return a.mailResource.SendMail(user.EMail, subject, body)
+		},
+	)
+}
+
+func (a *UserService) ValidateInvite(ctx context.Context, token string) (*OrganizationInvite, error) {
+	return a.inviteService.ValidateInvite(ctx, token)
+}
+
 func (a *UserService) UpdateOrganizationName(ctx context.Context, principal *shared.Principal, newName string) error {
 	// Check if user has admin role
 	if !principal.HasRole("ROLE_ADMIN") {

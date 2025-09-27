@@ -211,5 +211,5 @@ func (h *OrganizationInviteWebHandlers) getStatusClass(status string) string {
 }
 
 func (h *OrganizationInviteWebHandlers) getInviteURL(token string) string {
-	return fmt.Sprintf("%s/signup?invite=%s", h.config.Webroot, token)
+	return fmt.Sprintf("%s/signup/invite/%s", h.config.Webroot, token)
 }

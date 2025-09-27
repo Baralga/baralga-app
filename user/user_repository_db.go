@@ -91,6 +91,59 @@ func (r *DbUserRepository) InsertUserWithConfirmationID(ctx context.Context, use
 	return user, nil
 }
 
+func (r *DbUserRepository) InsertUserWithConfirmationIDAndRole(ctx context.Context, user *User, confirmationID uuid.UUID, role string) (*User, error) {
+	tx := shared.MustTxFromContext(ctx)
+
+	enabled := 0
+	if confirmationID == uuid.Nil {
+		enabled = 1
+	}
+
+	_, err := tx.Exec(
+		ctx,
+		`INSERT INTO users 
+		   (user_id, username, email, name, password, enabled, org_id, origin) 
+		 VALUES 
+		   ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		user.ID,
+		user.Username,
+		user.EMail,
+		user.Name,
+		user.Password,
+		enabled,
+		user.OrganizationID,
+		user.Origin,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO roles 
+		   (user_id, role, org_id) 
+		 VALUES 
+		   ($1, $2, $3)`,
+		user.ID,
+		role,
+		user.OrganizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if confirmationID == uuid.Nil {
+		return user, nil
+	}
+
+	_, err = r.insertConfirmation(ctx, tx, user, confirmationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (r *DbUserRepository) FindUserIDByConfirmationID(ctx context.Context, confirmationID string) (uuid.UUID, error) {
 	row := r.connPool.QueryRow(
 		ctx,

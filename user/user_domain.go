@@ -44,6 +44,7 @@ type UserRepository interface {
 	ConfirmUser(ctx context.Context, userID uuid.UUID) error
 	FindUserIDByConfirmationID(ctx context.Context, confirmationID string) (uuid.UUID, error)
 	InsertUserWithConfirmationID(ctx context.Context, user *User, confirmationID uuid.UUID) (*User, error)
+	InsertUserWithConfirmationIDAndRole(ctx context.Context, user *User, confirmationID uuid.UUID, role string) (*User, error)
 	FindUserByUsername(ctx context.Context, username string) (*User, error)
 	FindRolesByUserID(ctx context.Context, organizationID, userID uuid.UUID) ([]string, error)
 }
