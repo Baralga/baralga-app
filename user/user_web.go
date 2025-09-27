@@ -51,6 +51,7 @@ func (a *UserWebHandlers) RegisterProtected(r chi.Router) {
 	r.Post("/organization/update", a.HandleOrganizationUpdate())
 	r.Get("/organization/invites", a.HandleOrganizationInvites())
 	r.Post("/organization/invites/generate", a.HandleGenerateInviteInDialog())
+	r.Get("/signup/invite/{token}", a.HandleInviteSignUpPage())
 }
 
 func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
@@ -58,7 +59,6 @@ func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
 	r.Post("/signup", a.HandleSignUpForm())
 	r.Post("/signup/validate", a.HandleSignUpFormValidate())
 	r.Get("/signup/confirm/{confirmation-id}", a.HandleSignUpConfirm())
-	r.Get("/signup/invite/{token}", a.HandleInviteSignUpPage())
 }
 
 func (a *UserWebHandlers) signupFormValidator(incomplete bool) func(ctx context.Context, formModel signupFormModel) (map[string]string, error) {
@@ -329,6 +329,14 @@ func (a *UserWebHandlers) HandleInviteSignUpPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := chi.URLParam(r, "token")
 
+		// Check if user is already logged in
+		principal := a.getPrincipalFromContext(r.Context())
+		if principal != nil {
+			// User is logged in, show logout message
+			shared.RenderHTML(w, a.InviteLogoutRequiredPage(principal.Username))
+			return
+		}
+
 		// Validate the invite token and get invite details
 		invite, err := a.userService.ValidateInvite(r.Context(), token)
 		if err != nil {
@@ -467,6 +475,53 @@ func (a *UserWebHandlers) InviteErrorPage(message string) g.Node {
 							Href("/signup"),
 							Class("btn btn-primary"),
 							g.Text("Create New Account"),
+						),
+					),
+				),
+			),
+		},
+	)
+}
+
+func (a *UserWebHandlers) InviteLogoutRequiredPage(username string) g.Node {
+	return shared.Page(
+		"Logout Required",
+		"/signup/invite",
+		[]g.Node{
+			Section(
+				Class("full-center"),
+				Div(
+					Class("container"),
+					Div(
+						Class("d-flex justify-content-center align-items-center mt-2 mb-3"),
+						Img(
+							Alt("Baralga"),
+							Class("img-responsive"),
+							Src("/assets/baralga_192.png"),
+						),
+						Div(
+							Class("ms-4"),
+							H2(
+								g.Text("Baralga"),
+								Small(
+									Class("text-muted"),
+									StyleAttr("display: block; font-size: 70%;"),
+									g.Text("project time tracking"),
+								),
+							),
+						),
+					),
+					Div(
+						Class("alert alert-warning"),
+						I(Class("bi-exclamation-triangle me-2")),
+						g.Textf("You are currently logged in. Please logout first before using an invite link."),
+					),
+					Div(
+						Class("text-center"),
+						A(
+							Href("/logout"),
+							Class("btn btn-primary me-2"),
+							g.Text("Logout"),
 						),
 					),
 				),
@@ -1111,4 +1166,13 @@ func InviteLinkDisplay(config *shared.Config, invite *OrganizationInvite) g.Node
 			g.Text("Share this link with new users to join your organization."),
 		),
 	)
+}
+
+// getPrincipalFromContext safely gets the principal from context without panicking
+func (a *UserWebHandlers) getPrincipalFromContext(ctx context.Context) *shared.Principal {
+	defer func() {
+		// Ignore panic - means no principal found
+		recover()
+	}()
+	return shared.MustPrincipalFromContext(ctx)
 }
