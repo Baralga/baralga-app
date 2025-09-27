@@ -137,7 +137,8 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 	}
 
 	// Validate tags
-	if err := a.tagService.ValidateTags(tagNames); err != nil {
+	err := a.tagService.ValidateTags(tagNames)
+	if err != nil {
 		return nil, err
 	}
 
