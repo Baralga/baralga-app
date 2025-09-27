@@ -190,6 +190,17 @@ func Navbar(pageContext *PageContext) g.Node {
 						Class("dropdown-menu dropdown-menu-end"),
 						Li(
 							A(
+								Href("/profile/organization"),
+								ghx.Get("/profile/organization"),
+								ghx.Target("#organizationModal"),
+								ghx.Trigger("click"),
+								Class("dropdown-item"),
+								I(Class("bi-building me-2")),
+								g.Text("Organization"),
+							),
+						),
+						Li(
+							A(
 								Href("/logout"),
 								ghx.Boost(""),
 								Class("dropdown-item"),
@@ -201,6 +212,10 @@ func Navbar(pageContext *PageContext) g.Node {
 					),
 				),
 			),
+		),
+		// Organization Modal placeholder
+		Div(
+			ID("organizationModal"),
 		),
 	)
 }

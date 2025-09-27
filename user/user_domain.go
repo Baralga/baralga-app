@@ -34,4 +34,8 @@ type UserRepository interface {
 
 type OrganizationRepository interface {
 	InsertOrganization(ctx context.Context, organization *Organization) (*Organization, error)
+	FindByID(ctx context.Context, orgID uuid.UUID) (*Organization, error)
+	Update(ctx context.Context, organization *Organization) error
+	Exists(ctx context.Context, orgID uuid.UUID) (bool, error)
+	FindByName(ctx context.Context, name string) (*Organization, error)
 }

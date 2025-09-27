@@ -88,6 +88,10 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	userService := user.NewUserService(&config, repositoryTxer, mailResource, userRepository, organizationRepository, projectService.OrganizationInitializer())
 	userWeb := user.NewUserWeb(&config, userService, userRepository)
 
+	// Organization
+	organizationService := user.NewOrganizationService(organizationRepository)
+	organizationWebHandlers := user.NewOrganizationWebHandlers(&config, organizationService)
+
 	// Auth
 	tokenAuth := jwtauth.New("HS256", []byte(config.JWTSecret), nil)
 	authService := auth.NewAuthService(&config, userRepository)
@@ -105,6 +109,7 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 		authWeb,
 		projectWebHandlers,
 		reportWebHandlers,
+		organizationWebHandlers,
 	}
 
 	router := chi.NewRouter()

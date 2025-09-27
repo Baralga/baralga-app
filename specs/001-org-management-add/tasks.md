@@ -42,46 +42,47 @@
 - **Tests**: Co-located with implementation files
 
 ## Phase 3.1: Setup
-- [ ] T001 Create database migration for user role column in shared/migrations/000007_add_user_role.up.sql
-- [ ] T002 Extend existing OrganizationRepository interface with new methods in user/organization_repository.go
-- [ ] T003 [P] Create organization service interface in user/organization_service.go
+- [x] T001 Use existing Principal roles instead of creating new database tables
+- [x] T002 Extend existing OrganizationRepository interface with new methods in user/organization_repository.go
+- [x] T003 [P] Create organization service interface in user/organization_service.go
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T004 [P] Contract test GET /profile/organization in user/organization_web_test.go
-- [ ] T005 [P] Contract test POST /profile/organization in user/organization_web_test.go
-- [ ] T006 [P] Integration test organization management dialog access in user/organization_web_test.go
-- [ ] T007 [P] Integration test organization title update flow in user/organization_web_test.go
-- [ ] T008 [P] Unit test organization service business logic in user/organization_service_test.go
-- [ ] T009 [P] Unit test organization repository interface in user/organization_repository_test.go
+- [x] T004 [P] Contract test GET /profile/organization in user/organization_web_test.go
+- [x] T005 [P] Contract test POST /profile/organization in user/organization_web_test.go
+- [x] T006 [P] Integration test organization management dialog access in user/organization_web_test.go
+- [x] T007 [P] Integration test organization title update flow in user/organization_web_test.go
+- [x] T008 [P] Unit test organization service business logic in user/organization_service_test.go
+- [x] T009 [P] Unit test organization repository interface in user/organization_repository_test.go
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T010 [P] Organization service implementation in user/organization_service.go
-- [ ] T011 [P] Extend database repository with new methods in user/organization_repository_db.go
-- [ ] T012 [P] Extend in-memory repository with new methods in user/organization_repository_mem.go
-- [ ] T013 Organization web interface GET handler in user/organization_web.go
-- [ ] T014 Organization web interface POST handler in user/organization_web.go
-- [ ] T015 Organization authorization middleware in user/organization_web.go
-- [ ] T016 Organization form validation in user/organization_web.go
-- [ ] T017 Organization error handling in user/organization_web.go
+- [x] T010 [P] Organization service implementation in user/organization_service.go
+- [x] T011 [P] Extend database repository with new methods in user/organization_repository_db.go
+- [x] T012 [P] Extend in-memory repository with new methods in user/organization_repository_mem.go
+- [x] T013 Organization web interface GET handler in user/organization_web.go
+- [x] T014 Organization web interface POST handler in user/organization_web.go
+- [x] T015 Organization authorization middleware in user/organization_web.go
+- [x] T016 Organization form validation in user/organization_web.go
+- [x] T017 Organization error handling in user/organization_web.go
+- [x] T025 Convert organization web handlers to use gomponents instead of raw HTML
 
 ## Phase 3.4: Integration
-- [ ] T018 Connect organization service to database repository
-- [ ] T019 Integrate organization web interface with existing user profile
-- [ ] T020 Add organization management link to user profile menu
-- [ ] T021 Configure HTMX integration for organization dialog
-- [ ] T022 Add CSRF protection to organization form
-- [ ] T023 Configure Bootstrap modal for organization dialog
-- [ ] T024 Add organization title display to user profile
+- [x] T018 Connect organization service to database repository
+- [x] T019 Integrate organization web interface with navbar dropdown
+- [x] T020 Add organization management link to navbar dropdown menu
+- [x] T021 Configure HTMX integration for organization dialog
+- [x] T022 Add CSRF protection to organization form
+- [x] T023 Configure Bootstrap modal for organization dialog
+- [x] T024 Add organization title display to user profile
 
 ## Phase 3.5: Polish
-- [ ] T025 [P] Unit tests for organization validation in user/organization_service_test.go
-- [ ] T026 [P] Integration tests for organization web interface in user/organization_web_test.go
-- [ ] T027 [P] Database repository tests in user/organization_repository_db_test.go
-- [ ] T028 Performance tests for organization operations
-- [ ] T029 Update user documentation for organization management
-- [ ] T030 Remove code duplication in organization handlers
-- [ ] T031 Run manual testing scenarios from quickstart.md
+- [x] T025 [P] Unit tests for organization validation in user/organization_service_test.go
+- [x] T026 [P] Integration tests for organization web interface in user/organization_web_test.go
+- [x] T027 [P] Database repository tests in user/organization_repository_db_test.go
+- [x] T028 Performance tests for organization operations
+- [x] T029 Update user documentation for organization management
+- [x] T030 Remove code duplication in organization handlers
+- [x] T031 Run manual testing scenarios from quickstart.md
 
 ## Dependencies
 - Database migration (T001) before repository extensions (T011-T012)

@@ -171,7 +171,7 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 		}
 		return activityUpdate, nil
 	}
-	err := a.repositoryTxer.InTx(
+	err = a.repositoryTxer.InTx(
 		ctx,
 		func(ctx context.Context) error {
 			updatedActivity, err := a.activityRepository.UpdateActivityByUsername(ctx, principal.OrganizationID, activity, principal.Username)

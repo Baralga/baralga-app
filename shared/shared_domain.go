@@ -2,6 +2,7 @@ package shared
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 )
@@ -51,3 +52,10 @@ type RepositoryTxer interface {
 type MailResource interface {
 	SendMail(to, subject, body string) error
 }
+
+// Common error types
+var (
+	ErrNotFound   = errors.New("not found")
+	ErrValidation = func(message string) error { return errors.New(message) }
+	ErrConflict   = func(message string) error { return errors.New(message) }
+)

@@ -40,6 +40,7 @@ func NewUserWeb(config *shared.Config, userService *UserService, userRepository 
 }
 
 func (a *UserWebHandlers) RegisterProtected(r chi.Router) {
+	// Profile page removed - organization management is now in navbar dropdown
 }
 
 func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
