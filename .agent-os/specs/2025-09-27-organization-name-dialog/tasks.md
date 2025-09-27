@@ -11,14 +11,14 @@
   - [ ] 1.6 Implement UpdateOrganizationName in UserService with role validation
   - [ ] 1.7 Verify all tests pass
 
-- [ ] 2. **Create Organization Dialog Web Handlers**
-  - [ ] 2.1 Write tests for organization web handlers
-  - [ ] 2.2 Create organizationFormModel struct for form handling
-  - [ ] 2.3 Add HandleOrganizationDialog handler for displaying organization dialog
-  - [ ] 2.4 Add HandleOrganizationUpdate handler for processing organization name updates
-  - [ ] 2.5 Implement organization dialog HTML template with role-based input field
-  - [ ] 2.6 Add CSRF protection to organization update form
-  - [ ] 2.7 Verify all tests pass
+- [x] 2. **Create Organization Dialog Web Handlers**
+  - [x] 2.1 Write tests for organization web handlers
+  - [x] 2.2 Create organizationFormModel struct for form handling
+  - [x] 2.3 Add HandleOrganizationDialog handler for displaying organization dialog
+  - [x] 2.4 Add HandleOrganizationUpdate handler for processing organization name updates
+  - [x] 2.5 Implement organization dialog HTML template with role-based input field
+  - [x] 2.6 Add CSRF protection to organization update form
+  - [x] 2.7 Verify all tests pass
 
 - [ ] 3. **Integrate Organization Dialog into Navbar**
   - [ ] 3.1 Write tests for navbar organization dialog integration

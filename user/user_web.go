@@ -25,6 +25,11 @@ type signupFormModel struct {
 	AcceptConditions bool
 }
 
+type organizationFormModel struct {
+	CSRFToken string
+	Name      string `validate:"required,min=1,max=255"`
+}
+
 type UserWebHandlers struct {
 	config         *shared.Config
 	userService    *UserService
@@ -40,6 +45,8 @@ func NewUserWeb(config *shared.Config, userService *UserService, userRepository 
 }
 
 func (a *UserWebHandlers) RegisterProtected(r chi.Router) {
+	r.Get("/organization/dialog", a.HandleOrganizationDialog())
+	r.Post("/organization/update", a.HandleOrganizationUpdate())
 }
 
 func (a *UserWebHandlers) RegisterOpen(r chi.Router) {
@@ -79,6 +86,65 @@ func (a *UserWebHandlers) signupFormValidator(incomplete bool) func(ctx context.
 		}
 
 		return fieldErrors, nil
+	}
+}
+
+func (a *UserWebHandlers) HandleOrganizationDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		principal := shared.MustPrincipalFromContext(r.Context())
+
+		formModel := organizationFormModel{
+			CSRFToken: csrf.Token(r),
+			Name:      "Organization Name", // This will be replaced with actual organization name
+		}
+
+		shared.RenderHTML(w, OrganizationDialog(principal, formModel))
+	}
+}
+
+func (a *UserWebHandlers) HandleOrganizationUpdate() http.HandlerFunc {
+	userService := a.userService
+	return func(w http.ResponseWriter, r *http.Request) {
+		principal := shared.MustPrincipalFromContext(r.Context())
+
+		err := r.ParseForm()
+		if err != nil {
+			formModel := organizationFormModel{
+				CSRFToken: csrf.Token(r),
+			}
+			shared.RenderHTML(w, OrganizationDialog(principal, formModel))
+			return
+		}
+
+		var formModel organizationFormModel
+		err = schema.NewDecoder().Decode(&formModel, r.PostForm)
+		if err != nil {
+			formModel.CSRFToken = csrf.Token(r)
+			shared.RenderHTML(w, OrganizationDialog(principal, formModel))
+			return
+		}
+
+		// Validate form
+		validator := validator.New()
+		err = validator.Struct(formModel)
+		if err != nil {
+			formModel.CSRFToken = csrf.Token(r)
+			shared.RenderHTML(w, OrganizationDialog(principal, formModel))
+			return
+		}
+
+		// Update organization name
+		err = userService.UpdateOrganizationName(r.Context(), principal, formModel.Name)
+		if err != nil {
+			formModel.CSRFToken = csrf.Token(r)
+			shared.RenderHTML(w, OrganizationDialog(principal, formModel))
+			return
+		}
+
+		// Success - close modal and refresh page
+		w.Header().Set("HX-Trigger", "baralga__main_content_modal-hide")
+		w.Header().Set("HX-Refresh", "true")
+		shared.RenderHTML(w, Div())
 	}
 }
 
@@ -386,4 +452,76 @@ func mapSignUpFormToUser(formModel signupFormModel, encryptedPassword string) Us
 		Password: encryptedPassword,
 		Origin:   "baralga",
 	}
+}
+
+func OrganizationDialog(principal *shared.Principal, formModel organizationFormModel) g.Node {
+	return FormEl(
+		ID("baralga__main_content_modal_content"),
+		Class("modal-content"),
+		ghx.Post("/organization/update"),
+
+		Div(
+			Class("modal-header"),
+			H2(
+				Class("modal-title"),
+				g.Text("Organization Settings"),
+			),
+			Button(
+				Type("button"),
+				Class("btn-close"),
+				g.Attr("data-bs-dismiss", "modal"),
+			),
+		),
+		Div(
+			Class("modal-body"),
+			Input(
+				Type("hidden"),
+				Name("CSRFToken"),
+				Value(formModel.CSRFToken),
+			),
+			Div(
+				Class("mb-3"),
+				Label(
+					Class("form-label"),
+					g.Attr("for", "Name"),
+					g.Text("Organization Name"),
+				),
+				Input(
+					ID("Name"),
+					Type("text"),
+					Name("Name"),
+					Value(formModel.Name),
+					Class("form-control"),
+					g.Attr("required", "required"),
+					g.Attr("maxlength", "255"),
+					g.If(!principal.HasRole("ROLE_ADMIN"), g.Attr("readonly", "readonly")),
+					g.If(!principal.HasRole("ROLE_ADMIN"), g.Attr("placeholder", "Contact your administrator to change this")),
+				),
+				g.If(!principal.HasRole("ROLE_ADMIN"),
+					Div(
+						Class("form-text"),
+						g.Text("Only administrators can edit the organization name."),
+					),
+				),
+			),
+		),
+		Div(
+			Class("modal-footer"),
+			g.If(principal.HasRole("ROLE_ADMIN"),
+				Button(
+					Type("submit"),
+					Class("btn btn-primary"),
+					I(Class("bi-save me-2")),
+					g.Text("Update"),
+				),
+			),
+			Button(
+				Type("button"),
+				Class("btn btn-secondary"),
+				g.Attr("data-bs-dismiss", "modal"),
+				I(Class("bi-x me-2")),
+				g.Text("Close"),
+			),
+		),
+	)
 }

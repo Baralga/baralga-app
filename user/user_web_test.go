@@ -70,6 +70,118 @@ func TestHandleSignUpFormWithSuccessfullSignUp(t *testing.T) {
 	is.True(organizationInitializerCalled)
 }
 
+func TestHandleOrganizationDialog(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	adminPrincipal := &shared.Principal{
+		Name:           "Admin User",
+		Username:       "admin",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	userPrincipal := &shared.Principal{
+		Name:           "Regular User",
+		Username:       "user",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_USER"},
+	}
+
+	// Test admin user
+	ctx := shared.ToContextWithPrincipal(context.Background(), adminPrincipal)
+	r, _ := http.NewRequest("GET", "/organization/dialog", nil)
+	r = r.WithContext(ctx)
+
+	userWebHandlers := &UserWebHandlers{
+		config: &shared.Config{},
+	}
+
+	userWebHandlers.HandleOrganizationDialog()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "Organization Settings"))
+	is.True(strings.Contains(htmlBody, "Update")) // Admin should see update button
+
+	// Test regular user
+	httpRec = httptest.NewRecorder()
+	ctx = shared.ToContextWithPrincipal(context.Background(), userPrincipal)
+	r, _ = http.NewRequest("GET", "/organization/dialog", nil)
+	r = r.WithContext(ctx)
+
+	userWebHandlers.HandleOrganizationDialog()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody = httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "Organization Settings"))
+	is.True(strings.Contains(htmlBody, "readonly")) // Regular user should see readonly field
+	is.True(!strings.Contains(htmlBody, "Update"))  // Regular user should not see update button
+}
+
+func TestHandleOrganizationUpdate(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	adminPrincipal := &shared.Principal{
+		Name:           "Admin User",
+		Username:       "admin",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	userPrincipal := &shared.Principal{
+		Name:           "Regular User",
+		Username:       "user",
+		OrganizationID: shared.OrganizationIDSample,
+		Roles:          []string{"ROLE_USER"},
+	}
+
+	organizationRepository := NewInMemOrganizationRepository()
+	userService := &UserService{
+		config:                 &shared.Config{},
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
+		organizationRepository: organizationRepository,
+	}
+
+	userWebHandlers := &UserWebHandlers{
+		config:      &shared.Config{},
+		userService: userService,
+	}
+
+	// Test successful update by admin
+	data := url.Values{}
+	data["Name"] = []string{"Updated Organization Name"}
+	data["CSRFToken"] = []string{"test-token"}
+
+	ctx := shared.ToContextWithPrincipal(context.Background(), adminPrincipal)
+	r, _ := http.NewRequest("POST", "/organization/update", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r = r.WithContext(ctx)
+
+	userWebHandlers.HandleOrganizationUpdate()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	// Check for HTMX headers indicating success
+	headers := httpRec.Header()
+	is.True(strings.Contains(headers.Get("HX-Trigger"), "baralga__main_content_modal-hide"))
+	is.True(strings.Contains(headers.Get("HX-Refresh"), "true"))
+
+	// Test regular user (should fail)
+	httpRec = httptest.NewRecorder()
+	ctx = shared.ToContextWithPrincipal(context.Background(), userPrincipal)
+	r, _ = http.NewRequest("POST", "/organization/update", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r = r.WithContext(ctx)
+
+	userWebHandlers.HandleOrganizationUpdate()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	// Should not have success headers
+	headers = httpRec.Header()
+	is.True(!strings.Contains(headers.Get("HX-Trigger"), "baralga__main_content_modal-hide"))
+}
+
 func TestHandleSignUpFormWithInvalidData(t *testing.T) {
 	is := is.New(t)
 	httpRec := httptest.NewRecorder()
