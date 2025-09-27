@@ -933,7 +933,6 @@ func (a *ReportWeb) reportTagView(pageContext *shared.PageContext, view *reportV
 			Class("row mb-3"),
 			Div(
 				Class("col-12"),
-				H6(g.Text("Filter by Tags")),
 				Div(
 					Class("d-flex flex-wrap gap-2 mb-2"),
 					g.Group(g.Map(allTags, func(tag *Tag) g.Node {
@@ -992,7 +991,7 @@ func (a *ReportWeb) reportTagView(pageContext *shared.PageContext, view *reportV
 				THead(
 					Tr(
 						Th(g.Text("Tag")),
-						Th(g.Text("Activities")),
+						Th(g.Text("Activity Count")),
 						Th(
 							Class("text-end"),
 							g.Text("Duration"),
@@ -1017,16 +1016,6 @@ func (a *ReportWeb) reportTagView(pageContext *shared.PageContext, view *reportV
 						)
 					})),
 				),
-			),
-		),
-		// Summary information
-		g.If(len(selectedTags) > 0 || tagReportData.TotalTags > 0,
-			Div(
-				Class("mt-3 text-muted small"),
-				g.If(len(selectedTags) > 0,
-					g.Text(fmt.Sprintf("Showing %d activities for %d selected tags. ", len(tagReportData.Items), len(selectedTags))),
-				),
-				g.Text(fmt.Sprintf("Total: %d tags, %s", tagReportData.TotalTags, time_utils.FormatMinutesAsDuration(float64(tagReportData.TotalTime)))),
 			),
 		),
 	}), nil
