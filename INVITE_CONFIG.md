@@ -14,6 +14,12 @@ This means invite links will be generated as:
 http://localhost:8080/signup/invite/{token}
 ```
 
+The invite page also supports social logins:
+```
+http://localhost:8080/github/login/invite/{token}
+http://localhost:8080/google/login/invite/{token}
+```
+
 ## Production Configuration
 
 For production deployment, set the `WEBROOT` environment variable to your production domain:
@@ -33,6 +39,12 @@ environment:
 This will generate invite links as:
 ```
 https://your-domain.com/signup/invite/{token}
+```
+
+And social login invite URLs as:
+```
+https://your-domain.com/github/login/invite/{token}
+https://your-domain.com/google/login/invite/{token}
 ```
 
 ## Environment Variables
@@ -64,5 +76,14 @@ To test invite links locally:
 5. Generate an invite link
 6. Copy the generated link (e.g., `http://localhost:8080/signup/invite/abc123`)
 7. Open the link in a new browser/incognito window
-8. Complete the registration form
-9. The new user will be added to your organization with `ROLE_USER` permissions
+8. **Option A**: Complete the registration form manually
+9. **Option B**: Use social login buttons (GitHub/Google) for quick registration
+10. The new user will be added to your organization with `ROLE_USER` permissions
+
+### Social Login Testing
+
+For social login testing, you can also use these direct URLs:
+- `http://localhost:8080/github/login/invite/{token}`
+- `http://localhost:8080/google/login/invite/{token}`
+
+These will redirect users directly to the OAuth provider with the invite token preserved.

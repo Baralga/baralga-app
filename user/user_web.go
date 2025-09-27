@@ -656,6 +656,40 @@ func (a *UserWebHandlers) InviteSignupForm(formModel signupFormModel, errorMessa
 					g.Text(errorMessage),
 				),
 			),
+			// Social Login Options
+			Div(
+				Class("mb-4"),
+				Div(
+					Class("text-center mb-3"),
+					Small(
+						Class("text-muted"),
+						g.Text("Or sign up with your social account"),
+					),
+				),
+				Div(
+					Class("d-grid gap-2"),
+					A(
+						Href(fmt.Sprintf("/github/login/invite/%s", formModel.InviteToken)),
+						Class("btn btn-outline-dark"),
+						I(Class("bi-github me-2")),
+						g.Text("Continue with GitHub"),
+					),
+					A(
+						Href(fmt.Sprintf("/google/login/invite/%s", formModel.InviteToken)),
+						Class("btn btn-outline-primary"),
+						I(Class("bi-google me-2")),
+						g.Text("Continue with Google"),
+					),
+				),
+				Hr(Class("my-4")),
+				Div(
+					Class("text-center"),
+					Small(
+						Class("text-muted"),
+						g.Text("Or fill out the form below"),
+					),
+				),
+			),
 			Div(
 				Class("form-floating mb-3"),
 				Input(

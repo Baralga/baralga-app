@@ -67,9 +67,13 @@ func (a *AuthWebHandlers) RegisterOpen(r chi.Router) {
 
 	r.Handle("/github/login", a.GithubLoginHandler())
 	r.Handle("/github/callback", a.GithubCallbackHandler())
+	r.Handle("/github/login/invite/{token}", a.GithubInviteLoginHandler())
+	r.Handle("/github/callback/invite/{token}", a.GithubInviteCallbackHandler())
 
 	r.Handle("/google/login", a.GoogleLoginHandler())
 	r.Handle("/google/callback", a.GoogleCallbackHandler())
+	r.Handle("/google/login/invite/{token}", a.GoogleInviteLoginHandler())
+	r.Handle("/google/callback/invite/{token}", a.GoogleInviteCallbackHandler())
 }
 
 func (a *AuthWebHandlers) HandleLoginForm() http.HandlerFunc {
@@ -240,6 +244,137 @@ func (a *AuthWebHandlers) IssueCookieForGoogle() http.Handler {
 				Origin:   "google",
 			}
 			err := userService.SetUpNewUser(r.Context(), user, uuid.Nil)
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			principal, err = authService.AuthenticateTrusted(ctx, fmt.Sprintf("%v", user.Username))
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+
+		cookie := authService.CreateCookie(tokenAuth, expiryDuration, principal)
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	return http.HandlerFunc(fn)
+}
+
+func (a *AuthWebHandlers) GithubInviteLoginHandler() http.Handler {
+	stateConfig, oauth2Config := a.githubAuthConfig()
+	return github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil))
+}
+
+func (a *AuthWebHandlers) GithubInviteCallbackHandler() http.Handler {
+	stateConfig, oauth2Config := a.githubAuthConfig()
+	return github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, a.IssueCookieForGithubWithInvite(), HandleTokenFailure()))
+}
+
+func (a *AuthWebHandlers) GoogleInviteLoginHandler() http.Handler {
+	stateConfig, oauth2Config := a.googleAuthConfig()
+	return google.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))
+}
+
+func (a *AuthWebHandlers) GoogleInviteCallbackHandler() http.Handler {
+	stateConfig, oauth2Config := a.googleAuthConfig()
+	return google.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, a.IssueCookieForGoogleWithInvite(), HandleTokenFailure()))
+}
+
+func (a *AuthWebHandlers) IssueCookieForGithubWithInvite() http.Handler {
+	tokenAuth := a.tokenAuth
+	expiryDuration := a.config.ExpiryDuration()
+	authService := a.authService
+	userService := a.userService
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		githubUser, err := github.UserFromContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Extract invite token from URL
+		inviteToken := chi.URLParam(r, "token")
+		if inviteToken == "" {
+			http.Error(w, "Invalid invite token", http.StatusBadRequest)
+			return
+		}
+
+		// Validate invite token
+		_, err = userService.ValidateInvite(ctx, inviteToken)
+		if err != nil {
+			http.Error(w, "Invalid or expired invite", http.StatusBadRequest)
+			return
+		}
+
+		principal, err := authService.AuthenticateTrusted(ctx, fmt.Sprintf("%v", *githubUser.ID))
+		if errors.Is(err, user.ErrUserNotFound) {
+			user := &user.User{
+				Username: fmt.Sprintf("%v", *githubUser.ID),
+				Name:     *githubUser.Login,
+				Origin:   "github",
+			}
+			err := userService.SetUpNewUserWithInvite(r.Context(), user, inviteToken)
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			principal, err = authService.AuthenticateTrusted(ctx, fmt.Sprintf("%v", user.Username))
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+
+		cookie := authService.CreateCookie(tokenAuth, expiryDuration, principal)
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	return http.HandlerFunc(fn)
+}
+
+func (a *AuthWebHandlers) IssueCookieForGoogleWithInvite() http.Handler {
+	tokenAuth := a.tokenAuth
+	expiryDuration := a.config.ExpiryDuration()
+	authService := a.authService
+	userService := a.userService
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		googleUser, err := google.UserFromContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Extract invite token from URL
+		inviteToken := chi.URLParam(r, "token")
+		if inviteToken == "" {
+			http.Error(w, "Invalid invite token", http.StatusBadRequest)
+			return
+		}
+
+		// Validate invite token
+		_, err = userService.ValidateInvite(ctx, inviteToken)
+		if err != nil {
+			http.Error(w, "Invalid or expired invite", http.StatusBadRequest)
+			return
+		}
+
+		principal, err := authService.AuthenticateTrusted(ctx, fmt.Sprintf("%v", googleUser.Id))
+		if errors.Is(err, user.ErrUserNotFound) {
+			user := &user.User{
+				Username: fmt.Sprintf("%v", googleUser.Id),
+				Name:     googleUser.Name,
+				EMail:    googleUser.Email,
+				Origin:   "google",
+			}
+			err := userService.SetUpNewUserWithInvite(r.Context(), user, inviteToken)
 			if err != nil {
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
