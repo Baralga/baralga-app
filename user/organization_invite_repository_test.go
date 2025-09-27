@@ -215,42 +215,6 @@ func TestOrganizationInviteRepository(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	t.Run("DeleteInvite", func(t *testing.T) {
-		invite := &OrganizationInvite{
-			ID:        uuid.New(),
-			OrgID:     shared.OrganizationIDSample,
-			Token:     "delete-test-token",
-			CreatedBy: uuid.MustParse("eeeeeb80-33f3-4d3f-befe-58694d2ac841"), // Use existing user ID
-			CreatedAt: time.Now(),
-			ExpiresAt: time.Now().Add(24 * time.Hour),
-			Active:    true,
-		}
-
-		err := repositoryTxer.InTx(
-			ctx,
-			func(ctx context.Context) error {
-				// Insert invite
-				_, err := repository.InsertInvite(ctx, invite)
-				if err != nil {
-					return err
-				}
-
-				// Delete invite
-				err = repository.DeleteInvite(ctx, invite.ID)
-				if err != nil {
-					return err
-				}
-
-				// Verify deletion
-				_, err = repository.FindInviteByToken(ctx, invite.Token)
-				is.Equal(err, ErrInviteNotFound)
-
-				return nil
-			},
-		)
-
-		is.NoErr(err)
-	})
 }
 
 func TestInMemOrganizationInviteRepository(t *testing.T) {
@@ -360,24 +324,4 @@ func TestInMemOrganizationInviteRepository(t *testing.T) {
 		is.Equal(found.Active, false)
 	})
 
-	t.Run("DeleteInvite", func(t *testing.T) {
-		invite := &OrganizationInvite{
-			ID:        uuid.New(),
-			OrgID:     uuid.New(),
-			Token:     "delete-token",
-			CreatedBy: uuid.New(),
-			CreatedAt: time.Now(),
-			ExpiresAt: time.Now().Add(24 * time.Hour),
-			Active:    true,
-		}
-
-		_, err := repository.InsertInvite(ctx, invite)
-		is.NoErr(err)
-
-		err = repository.DeleteInvite(ctx, invite.ID)
-		is.NoErr(err)
-
-		_, err = repository.FindInviteByToken(ctx, invite.Token)
-		is.Equal(err, ErrInviteNotFound)
-	})
 }

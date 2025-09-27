@@ -59,5 +59,4 @@ type OrganizationInviteRepository interface {
 	FindInviteByToken(ctx context.Context, token string) (*OrganizationInvite, error)
 	FindInvitesByOrganizationID(ctx context.Context, organizationID uuid.UUID) ([]*OrganizationInvite, error)
 	UpdateInvite(ctx context.Context, invite *OrganizationInvite) error
-	DeleteInvite(ctx context.Context, inviteID uuid.UUID) error
 }

@@ -15,6 +15,7 @@ type UserService struct {
 	mailResource            shared.MailResource
 	userRepository          UserRepository
 	organizationRepository  OrganizationRepository
+	inviteService           *OrganizationInviteService
 	organizationInitializer func(ctxWithTx context.Context, organizationID uuid.UUID) error
 }
 
@@ -30,14 +31,17 @@ func NewUserService(
 	mailResource shared.MailResource,
 	userRepository UserRepository,
 	organizationRepository OrganizationRepository,
+	inviteRepository OrganizationInviteRepository,
 	organizationInitializer func(ctxWithTx context.Context, organizationID uuid.UUID) error,
 ) *UserService {
+	inviteService := NewOrganizationInviteService(repositoryTxer, inviteRepository)
 	return &UserService{
 		config:                  config,
 		repositoryTxer:          repositoryTxer,
 		mailResource:            mailResource,
 		userRepository:          userRepository,
 		organizationRepository:  organizationRepository,
+		inviteService:           inviteService,
 		organizationInitializer: organizationInitializer,
 	}
 }
@@ -146,4 +150,52 @@ func (a *UserService) FindOrganizationByID(ctx context.Context, organizationID u
 		},
 	)
 	return organization, err
+}
+
+// GenerateOrganizationInvite creates a new invite link for the organization
+func (a *UserService) GenerateOrganizationInvite(ctx context.Context, principal *shared.Principal) (*OrganizationInvite, error) {
+	// Check if user has admin role
+	if !principal.HasRole("ROLE_ADMIN") {
+		return nil, fmt.Errorf("insufficient permissions: only administrators can generate invite links")
+	}
+
+	// Get user ID from username
+	user, err := a.userRepository.FindUserByUsername(ctx, principal.Username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Generate invite using the invite service
+	invite, err := a.inviteService.GenerateInvite(ctx, principal.OrganizationID, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate organization invite: %w", err)
+	}
+
+	return invite, nil
+}
+
+// FindOrganizationInvites returns all invites for the user's organization
+func (a *UserService) FindOrganizationInvites(ctx context.Context, principal *shared.Principal) ([]*OrganizationInvite, error) {
+	// Check if user has admin role
+	if !principal.HasRole("ROLE_ADMIN") {
+		return nil, fmt.Errorf("insufficient permissions: only administrators can view invite links")
+	}
+
+	// Find invites using the invite service
+	invites, err := a.inviteService.FindInvitesByOrganization(ctx, principal.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find organization invites: %w", err)
+	}
+
+	return invites, nil
+}
+
+// ValidateInviteToken validates an invite token and returns the invite
+func (a *UserService) ValidateInviteToken(ctx context.Context, token string) (*OrganizationInvite, error) {
+	invite, err := a.inviteService.ValidateInvite(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate invite token: %w", err)
+	}
+
+	return invite, nil
 }

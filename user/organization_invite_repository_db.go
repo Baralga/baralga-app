@@ -157,18 +157,3 @@ func (r *DbOrganizationInviteRepository) UpdateInvite(ctx context.Context, invit
 
 	return nil
 }
-
-func (r *DbOrganizationInviteRepository) DeleteInvite(ctx context.Context, inviteID uuid.UUID) error {
-	tx := shared.MustTxFromContext(ctx)
-
-	_, err := tx.Exec(
-		ctx,
-		`DELETE FROM organization_invites WHERE invite_id = $1`,
-		inviteID,
-	)
-	if err != nil {
-		return errors.Wrap(err, "failed to delete organization invite")
-	}
-
-	return nil
-}

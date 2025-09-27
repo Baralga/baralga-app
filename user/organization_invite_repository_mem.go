@@ -52,13 +52,3 @@ func (r *InMemOrganizationInviteRepository) UpdateInvite(ctx context.Context, in
 	}
 	return errors.New("invite not found")
 }
-
-func (r *InMemOrganizationInviteRepository) DeleteInvite(ctx context.Context, inviteID uuid.UUID) error {
-	for i, invite := range r.invites {
-		if invite.ID == inviteID {
-			r.invites = append(r.invites[:i], r.invites[i+1:]...)
-			return nil
-		}
-	}
-	return errors.New("invite not found")
-}

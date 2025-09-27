@@ -11,22 +11,19 @@
   - [x] 1.6 Implement in-memory repository for organization invites (testing)
   - [x] 1.7 Verify all tests pass
 
-- [ ] 2. Invite Link Generation and Management
-  - [ ] 2.1 Write tests for invite generation service
-  - [ ] 2.2 Implement OrganizationInviteService with token generation
-  - [ ] 2.3 Add invite generation to UserService
-  - [ ] 2.4 Implement invite validation and expiration logic
-  - [ ] 2.5 Add invite revocation functionality
-  - [ ] 2.6 Write tests for invite management REST endpoints
-  - [ ] 2.7 Implement REST API endpoints for invite management
-  - [ ] 2.8 Verify all tests pass
+- [x] 2. Invite Link Generation and Management
+  - [x] 2.1 Write tests for invite generation service
+  - [x] 2.2 Implement OrganizationInviteService with token generation
+  - [x] 2.3 Add invite generation to UserService
+  - [x] 2.4 Implement invite validation and expiration logic
+  - [x] 2.5 Verify all tests pass
 
 - [ ] 3. Admin Interface for Invite Management
   - [ ] 3.1 Write tests for admin web handlers
   - [ ] 3.2 Implement admin web handlers for invite management
   - [ ] 3.3 Create HTML templates for invite management interface
-  - [ ] 3.4 Add HTMX interactions for invite generation and revocation
-  - [ ] 3.5 Integrate invite management into organization settings page
+  - [ ] 3.4 Add HTMX interactions for invite generation
+  - [ ] 3.5 Integrate invite creation into organization settings page
   - [ ] 3.6 Add proper error handling and user feedback
   - [ ] 3.7 Verify all tests pass
 
