@@ -217,7 +217,7 @@ func TestHandleOrganizationName(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/organization/name", nil)
 	r = r.WithContext(ctx)
 
-	userWebHandlers.HandleOrganizationName()(httpRec, r)
+	userWebHandlers.HandleOrganizationDialog()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 
 	htmlBody := httpRec.Body.String()

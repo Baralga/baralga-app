@@ -2,14 +2,14 @@
 
 ## Tasks
 
-- [ ] 1. Database Schema Implementation
-  - [ ] 1.1 Write tests for organization_invites table migration
-  - [ ] 1.2 Create migration files (000007_organization_invites.up.sql and 000007_organization_invites.down.sql)
-  - [ ] 1.3 Add domain model for OrganizationInvite in user domain
-  - [ ] 1.4 Update repository interfaces for invite management
-  - [ ] 1.5 Implement database repository for organization invites
-  - [ ] 1.6 Implement in-memory repository for organization invites (testing)
-  - [ ] 1.7 Verify all tests pass
+- [x] 1. Database Schema Implementation
+  - [x] 1.1 Write tests for organization_invites table migration
+  - [x] 1.2 Create migration files (000007_organization_invites.up.sql and 000007_organization_invites.down.sql)
+  - [x] 1.3 Add domain model for OrganizationInvite in user domain
+  - [x] 1.4 Update repository interfaces for invite management
+  - [x] 1.5 Implement database repository for organization invites
+  - [x] 1.6 Implement in-memory repository for organization invites (testing)
+  - [x] 1.7 Verify all tests pass
 
 - [ ] 2. Invite Link Generation and Management
   - [ ] 2.1 Write tests for invite generation service
