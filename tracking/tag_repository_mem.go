@@ -193,3 +193,12 @@ func (r *InMemTagRepository) DeleteUnusedTags(ctx context.Context, organizationI
 	r.tags = remainingTags
 	return nil
 }
+
+// GetTagReportData retrieves tag report data with time aggregation
+// This is a simplified implementation for testing purposes
+func (r *InMemTagRepository) GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error) {
+	// For the in-memory implementation, we'll return empty results
+	// In a real test scenario, this would need to be populated with test data
+	// that matches the activities in the in-memory activity repository
+	return []*TagReportItem{}, nil
+}

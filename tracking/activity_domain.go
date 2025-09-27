@@ -40,6 +40,24 @@ type Tag struct {
 	CreatedAt      time.Time
 }
 
+// TagReportItem represents a single tag's time report data
+type TagReportItem struct {
+	TagName                string
+	TagColor               string
+	Year                   int
+	Quarter                int
+	Month                  int
+	Week                   int
+	Day                    int
+	DurationInMinutesTotal int
+	ActivityCount          int
+}
+
+// DurationFormatted is the tag report duration as formatted string (e.g. 1:15 h)
+func (t *TagReportItem) DurationFormatted() string {
+	return time_utils.FormatMinutesAsDuration(float64(t.DurationInMinutesTotal))
+}
+
 // ActivityFilter reprensents a filter for activities
 type ActivityFilter struct {
 	Timespan  string
@@ -121,6 +139,8 @@ type TagRepository interface {
 	SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error
 	// DeleteUnusedTags cleanup method for organization-level cleanup
 	DeleteUnusedTags(ctx context.Context, organizationID uuid.UUID) error
+	// GetTagReportData retrieves tag report data with time aggregation
+	GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error)
 }
 
 // DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)

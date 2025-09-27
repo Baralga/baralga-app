@@ -2,6 +2,7 @@ package tracking
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -211,4 +212,122 @@ func (r *DbTagRepository) DeleteUnusedTags(ctx context.Context, organizationID u
 // SetTagService sets the tag service for color generation
 func (r *DbTagRepository) SetTagService(tagService *TagService) {
 	r.tagService = tagService
+}
+
+// GetTagReportData retrieves tag report data with time aggregation
+func (r *DbTagRepository) GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error) {
+	// Build the base query that joins activities with their tags
+	baseQuery := `
+		SELECT 
+			t.name as tag_name,
+			t.color as tag_color,
+			EXTRACT(YEAR FROM a.start) as year,
+			EXTRACT(QUARTER FROM a.start) as quarter,
+			EXTRACT(MONTH FROM a.start) as month,
+			EXTRACT(WEEK FROM a.start) as week,
+			EXTRACT(DAY FROM a.start) as day,
+			SUM(EXTRACT(EPOCH FROM (a.end_time - a.start)) / 60) as duration_minutes,
+			COUNT(DISTINCT a.activity_id) as activity_count
+		FROM activities a
+		INNER JOIN activity_tags at ON a.activity_id = at.activity_id
+		INNER JOIN tags t ON at.tag_id = t.tag_id
+		WHERE a.org_id = $1`
+
+	args := []interface{}{filter.OrganizationID}
+	argIndex := 2
+
+	// Add date range filters
+	if !filter.Start.IsZero() {
+		baseQuery += ` AND a.start >= $` + strconv.Itoa(argIndex)
+		args = append(args, filter.Start)
+		argIndex++
+	}
+
+	if !filter.End.IsZero() {
+		baseQuery += ` AND a.start < $` + strconv.Itoa(argIndex)
+		args = append(args, filter.End)
+		argIndex++
+	}
+
+	// Add username filter if not admin
+	if filter.Username != "" {
+		baseQuery += ` AND a.username = $` + strconv.Itoa(argIndex)
+		args = append(args, filter.Username)
+		argIndex++
+	}
+
+	// Add tag filter if specific tags are selected
+	if len(filter.Tags) > 0 {
+		placeholders := make([]string, len(filter.Tags))
+		for i, tag := range filter.Tags {
+			placeholders[i] = `$` + strconv.Itoa(argIndex)
+			args = append(args, strings.ToLower(strings.TrimSpace(tag)))
+			argIndex++
+		}
+		baseQuery += ` AND t.name IN (` + strings.Join(placeholders, ",") + `)`
+	}
+
+	// Add GROUP BY clause based on aggregation type
+	var groupByClause string
+	switch aggregateBy {
+	case "day":
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start)
+						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start), t.name`
+	case "week":
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(WEEK FROM a.start)
+						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(WEEK FROM a.start), t.name`
+	case "month":
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start)
+						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), t.name`
+	case "quarter":
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(QUARTER FROM a.start)
+						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(QUARTER FROM a.start), t.name`
+	default:
+		// Default to day aggregation
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start)
+						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start), t.name`
+	}
+
+	finalQuery := baseQuery + ` ` + groupByClause
+
+	rows, err := r.connPool.Query(ctx, finalQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*TagReportItem
+	for rows.Next() {
+		var (
+			tagName         string
+			tagColor        string
+			year            int
+			quarter         int
+			month           int
+			week            int
+			day             int
+			durationMinutes float64
+			activityCount   int
+		)
+
+		err = rows.Scan(&tagName, &tagColor, &year, &quarter, &month, &week, &day, &durationMinutes, &activityCount)
+		if err != nil {
+			return nil, err
+		}
+
+		item := &TagReportItem{
+			TagName:                tagName,
+			TagColor:               tagColor,
+			Year:                   year,
+			Quarter:                quarter,
+			Month:                  month,
+			Week:                   week,
+			Day:                    day,
+			DurationInMinutesTotal: int(durationMinutes),
+			ActivityCount:          activityCount,
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
 }

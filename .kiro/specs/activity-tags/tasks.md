@@ -79,10 +79,35 @@
   - Ensure tags are displayed consistently across all activity views
   - _Requirements: 1.4, 4.1_
 
-- [ ] 13. Create tag statistics reporting
-  - Add GET /api/tags/statistics endpoint for organization-wide tag usage data
-  - Implement tag-based grouping in time reports respecting organization boundaries
-  - Add tag statistics to report views and templates
-  - Create database queries for organization-level tag usage analytics
-  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+- [x] 15. Extend TagService for report generation
+  - Add GenerateTagReports method to TagService for comprehensive tag-based reporting
+  - Implement GetTagReportData method to retrieve filtered tag report data for specific date ranges
+  - Add logic to handle tag selection filtering (include/exclude specific tags)
+  - Implement time aggregation by tag with daily/weekly/monthly breakdown support
+  - Handle activities with multiple tags (count activity time for each associated tag)
+  - _Requirements: 6.2, 6.3, 6.4, 6.5_
+
+- [ ] 16. Create Tag report category UI
+  - Add "Tag" as a fourth report category in the existing reporting navigation interface
+  - Create tag report page template following existing report category patterns
+  - Implement tag selection interface with multi-select dropdown for choosing specific tags
+  - Add "Select All" and "Clear All" functionality for tag selection convenience
+  - Maintain consistent UI patterns with existing general, time, and project report categories
+  - _Requirements: 6.1, 6.2, 6.4_
+
+- [ ] 17. Implement Tag report views and data display
+  - Create Summary View showing total time and activity count per tag with visual indicators
+  - Implement Detailed View with expandable sections showing individual activities per tag
+  - Add Timeline View displaying tag usage over time with trend analysis
+  - Create Comparison View for side-by-side comparison of selected tags
+  - Display tag colors consistently throughout all report views for visual identification
+  - _Requirements: 6.2, 6.3, 6.5_
+
+- [ ] 19. Handle edge cases for Tag reporting
+  - Implement appropriate messaging when no tagged activities are available for selected criteria
+  - Add graceful handling of empty tag data in all report views and export functions
+  - Ensure proper error handling when tag report generation fails or times out
+  - Add validation for tag report parameters (date ranges, tag selections)
+  - Test and handle scenarios with large datasets and multiple tag combinations
+  - _Requirements: 6.7_
 

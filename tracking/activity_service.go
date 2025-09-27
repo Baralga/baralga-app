@@ -308,6 +308,18 @@ func (a *ActitivityService) GetTagsForAutocomplete(ctx context.Context, principa
 	return a.tagService.GetTagsForAutocomplete(ctx, principal.OrganizationID, query)
 }
 
+// GenerateTagReports generates comprehensive tag-based reports with time breakdowns
+func (a *ActitivityService) GenerateTagReports(ctx context.Context, principal *shared.Principal, filter *ActivityFilter, aggregateBy string, selectedTags []string) (*TagReportData, error) {
+	activitiesFilter := toFilter(principal, filter)
+	return a.tagService.GenerateTagReports(ctx, principal.OrganizationID, activitiesFilter, aggregateBy, selectedTags)
+}
+
+// GetTagReportData retrieves filtered tag report data for specific date ranges and tag selections
+func (a *ActitivityService) GetTagReportData(ctx context.Context, principal *shared.Principal, filter *ActivityFilter, aggregateBy string) ([]*TagReportItem, error) {
+	activitiesFilter := toFilter(principal, filter)
+	return a.tagService.GetTagReportData(ctx, activitiesFilter, aggregateBy)
+}
+
 func toFilter(principal *shared.Principal, filter *ActivityFilter) *ActivitiesFilter {
 	activitiesFilter := &ActivitiesFilter{
 		Start:          filter.Start(),

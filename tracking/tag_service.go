@@ -202,3 +202,63 @@ func (s *TagService) PrepareTagsWithColors(tagNames []string) []*Tag {
 
 	return tags
 }
+
+// TagReportData represents comprehensive tag report data with filtering options
+type TagReportData struct {
+	Items        []*TagReportItem
+	SelectedTags []string
+	TotalTags    int
+	TotalTime    int // in minutes
+}
+
+// GenerateTagReports generates comprehensive tag-based reports with time breakdowns
+// Supports filtering by specific tags and aggregation by time periods
+func (s *TagService) GenerateTagReports(ctx context.Context, organizationID uuid.UUID, filter *ActivitiesFilter, aggregateBy string, selectedTags []string) (*TagReportData, error) {
+	// Create a copy of the filter with selected tags if provided
+	reportFilter := &ActivitiesFilter{
+		Start:          filter.Start,
+		End:            filter.End,
+		SortBy:         filter.SortBy,
+		SortOrder:      filter.SortOrder,
+		Username:       filter.Username,
+		OrganizationID: organizationID,
+		Tags:           selectedTags, // Use selected tags for filtering
+	}
+
+	// Get tag report data based on aggregation type
+	items, err := s.GetTagReportData(ctx, reportFilter, aggregateBy)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate totals
+	totalTime := 0
+	tagSet := make(map[string]bool)
+	for _, item := range items {
+		totalTime += item.DurationInMinutesTotal
+		tagSet[item.TagName] = true
+	}
+
+	return &TagReportData{
+		Items:        items,
+		SelectedTags: selectedTags,
+		TotalTags:    len(tagSet),
+		TotalTime:    totalTime,
+	}, nil
+}
+
+// GetTagReportData retrieves filtered tag report data for specific date ranges and tag selections
+// Handles activities with multiple tags by counting activity time for each associated tag
+func (s *TagService) GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error) {
+	// This method will need to be implemented by calling the repository layer
+	// For now, we'll define the interface that the repository should implement
+
+	// The repository implementation should:
+	// 1. Join activities with their tags
+	// 2. Filter by date range, organization, username, and selected tags
+	// 3. Group by tag and time period (day/week/month/quarter)
+	// 4. Calculate total duration and activity count per tag per time period
+	// 5. Handle activities with multiple tags by including the activity's time for each tag
+
+	return s.tagRepository.GetTagReportData(ctx, filter, aggregateBy)
+}

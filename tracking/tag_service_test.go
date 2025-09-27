@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/matryer/is"
@@ -266,6 +267,10 @@ func (m *mockTagRepository) DeleteUnusedTags(ctx context.Context, organizationID
 	return nil
 }
 
+func (m *mockTagRepository) GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error) {
+	return []*TagReportItem{}, nil
+}
+
 func TestTagService_GetTagsForAutocomplete(t *testing.T) {
 	is := is.New(t)
 
@@ -415,4 +420,54 @@ func TestTagService_GetTagColor_ValidLength(t *testing.T) {
 			is.True((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F'))
 		}
 	}
+}
+func TestTagService_GenerateTagReports(t *testing.T) {
+	is := is.New(t)
+
+	// Create mock repository with sample data
+	mockRepo := &mockTagRepository{
+		tags: []*Tag{
+			{ID: uuid.New(), Name: "development", Color: "#28a745", OrganizationID: uuid.New()},
+			{ID: uuid.New(), Name: "meeting", Color: "#007bff", OrganizationID: uuid.New()},
+		},
+	}
+
+	service := NewTagService(mockRepo)
+	ctx := context.Background()
+
+	orgID := uuid.New()
+	filter := &ActivitiesFilter{
+		OrganizationID: orgID,
+		Start:          time.Now().AddDate(0, 0, -7),
+		End:            time.Now(),
+	}
+
+	// Test GenerateTagReports
+	reportData, err := service.GenerateTagReports(ctx, orgID, filter, "day", []string{"development"})
+	is.NoErr(err)
+	is.True(reportData != nil)
+	is.Equal(reportData.SelectedTags, []string{"development"})
+	is.Equal(reportData.TotalTags, 0) // Mock returns empty data
+	is.Equal(reportData.TotalTime, 0)
+}
+
+func TestTagService_GetTagReportData(t *testing.T) {
+	is := is.New(t)
+
+	// Create mock repository
+	mockRepo := &mockTagRepository{}
+	service := NewTagService(mockRepo)
+	ctx := context.Background()
+
+	filter := &ActivitiesFilter{
+		OrganizationID: uuid.New(),
+		Start:          time.Now().AddDate(0, 0, -7),
+		End:            time.Now(),
+	}
+
+	// Test GetTagReportData
+	items, err := service.GetTagReportData(ctx, filter, "day")
+	is.NoErr(err)
+	is.True(items != nil)
+	is.Equal(len(items), 0) // Mock returns empty data
 }
