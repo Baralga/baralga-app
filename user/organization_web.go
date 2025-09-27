@@ -6,6 +6,7 @@ import (
 
 	"github.com/baralga/shared"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/csrf"
 	g "maragu.dev/gomponents"
 	ghx "maragu.dev/gomponents-htmx"
 	. "maragu.dev/gomponents/html" //nolint:all
@@ -98,11 +99,12 @@ func (h *OrganizationWebHandlers) HandleOrganizationTitleUpdate() http.HandlerFu
 
 // renderOrganizationDialog renders the organization management dialog
 func (h *OrganizationWebHandlers) renderOrganizationDialog(w http.ResponseWriter, r *http.Request, organization *Organization, principal *shared.Principal) {
-	shared.RenderHTML(w, h.OrganizationDialog(organization, principal))
+	csrfToken := csrf.Token(r)
+	shared.RenderHTML(w, h.OrganizationDialog(organization, principal, csrfToken))
 }
 
 // OrganizationDialog returns the organization management dialog as a gomponents node
-func (h *OrganizationWebHandlers) OrganizationDialog(organization *Organization, principal *shared.Principal) g.Node {
+func (h *OrganizationWebHandlers) OrganizationDialog(organization *Organization, principal *shared.Principal, csrfToken string) g.Node {
 	// Check if user is admin
 	isAdmin := principal.HasRole("ROLE_ADMIN")
 
@@ -140,6 +142,12 @@ func (h *OrganizationWebHandlers) OrganizationDialog(organization *Organization,
 
 	// Build all form content
 	formContent := []g.Node{
+		// CSRF token hidden input
+		Input(
+			Type("hidden"),
+			Name("CSRFToken"),
+			Value(csrfToken),
+		),
 		Div(
 			Class("modal-header"),
 			H2(
