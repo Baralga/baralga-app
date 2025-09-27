@@ -20,6 +20,7 @@ Each domain follows a consistent layered architecture:
 ```
 domain/
 ├── *_domain.go      # Domain entities, value objects, interfaces or repositories, structs
+├── *_domain.go      # Domain entities, value objects, interfaces
 ├── *_service.go     # Business logic and use cases
 ├── *_repository_*.go # Data access implementations (db, mem)
 ├── *_rest.go        # REST API handlers
