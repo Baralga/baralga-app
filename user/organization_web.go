@@ -32,12 +32,6 @@ func (h *OrganizationWebHandlers) HandleOrganizationManagementPage() http.Handle
 		principal := shared.MustPrincipalFromContext(r.Context())
 		orgID := principal.OrganizationID
 
-		// Check if user is admin using Principal roles
-		if !principal.HasRole("admin") {
-			http.Error(w, "Access denied. Administrator privileges required.", http.StatusForbidden)
-			return
-		}
-
 		// Get organization details
 		organization, err := h.organizationService.GetOrganization(r.Context(), orgID)
 		if err != nil {
@@ -45,8 +39,11 @@ func (h *OrganizationWebHandlers) HandleOrganizationManagementPage() http.Handle
 			return
 		}
 
+		// Set HX-Trigger to show modal
+		w.Header().Set("HX-Trigger", "baralga__main_content_modal-show")
+
 		// Render organization management dialog
-		h.renderOrganizationDialog(w, r, organization)
+		h.renderOrganizationDialog(w, r, organization, principal)
 	}
 }
 
@@ -58,7 +55,7 @@ func (h *OrganizationWebHandlers) HandleOrganizationTitleUpdate() http.HandlerFu
 		orgID := principal.OrganizationID
 
 		// Check if user is admin using Principal roles
-		if !principal.HasRole("admin") {
+		if !principal.HasRole("ROLE_ADMIN") {
 			h.renderError(w, r, "Access denied. Administrator privileges required.", http.StatusForbidden)
 			return
 		}
@@ -72,8 +69,8 @@ func (h *OrganizationWebHandlers) HandleOrganizationTitleUpdate() http.HandlerFu
 			return
 		}
 
-		if len(title) > 255 {
-			h.renderValidationError(w, r, "Organization name must be between 1 and 255 characters")
+		if len(title) > 100 {
+			h.renderValidationError(w, r, "Organization name must be between 1 and 100 characters")
 			return
 		}
 
@@ -92,78 +89,103 @@ func (h *OrganizationWebHandlers) HandleOrganizationTitleUpdate() http.HandlerFu
 			return
 		}
 
+		w.Header().Set("HX-Trigger", "{ \"baralga__main_content_modal-hide\": true }")
+
 		// Render success response
 		h.renderSuccess(w, r, "Organization name updated successfully.")
 	}
 }
 
 // renderOrganizationDialog renders the organization management dialog
-func (h *OrganizationWebHandlers) renderOrganizationDialog(w http.ResponseWriter, r *http.Request, organization *Organization) {
-	shared.RenderHTML(w, h.OrganizationDialog(organization))
+func (h *OrganizationWebHandlers) renderOrganizationDialog(w http.ResponseWriter, r *http.Request, organization *Organization, principal *shared.Principal) {
+	shared.RenderHTML(w, h.OrganizationDialog(organization, principal))
 }
 
 // OrganizationDialog returns the organization management dialog as a gomponents node
-func (h *OrganizationWebHandlers) OrganizationDialog(organization *Organization) g.Node {
-	return Div(
-		ID("organizationModal"),
-		Class("modal fade"),
-		g.Attr("tabindex", "-1"),
+func (h *OrganizationWebHandlers) OrganizationDialog(organization *Organization, principal *shared.Principal) g.Node {
+	// Check if user is admin
+	isAdmin := principal.HasRole("ROLE_ADMIN")
+
+	// Create input attributes based on admin status
+	inputAttrs := []g.Node{
+		Type("text"),
+		Class("form-control"),
+		ID("orgTitle"),
+		Name("title"),
+		Value(organization.Title),
+		MaxLength("100"),
+	}
+
+	// Add readonly attribute for non-admin users
+	if !isAdmin {
+		inputAttrs = append(inputAttrs, ReadOnly())
+	} else {
+		inputAttrs = append(inputAttrs, Required())
+	}
+
+	// Create form attributes based on admin status
+	formAttrs := []g.Node{
+		ID("baralga__main_content_modal_content"),
+		Class("modal-content"),
+	}
+
+	// Add form submission attributes only for admin users
+	if isAdmin {
+		formAttrs = append(formAttrs,
+			ghx.Post("/profile/organization"),
+			ghx.Target("#baralga__main_content_modal_content"),
+			ghx.Swap("outerHTML"),
+		)
+	}
+
+	// Build all form content
+	formContent := []g.Node{
 		Div(
-			Class("modal-dialog"),
-			Div(
-				Class("modal-content"),
-				Div(
-					Class("modal-header"),
-					H5(
-						Class("modal-title"),
-						g.Text("Organization Settings"),
-					),
-					Button(
-						Type("button"),
-						Class("btn-close"),
-						g.Attr("data-bs-dismiss", "modal"),
-					),
-				),
-				Div(
-					Class("modal-body"),
-					Form(
-						ghx.Post("/profile/organization"),
-						ghx.Target("#organizationForm"),
-						Div(
-							Class("mb-3"),
-							Label(
-								For("orgTitle"),
-								Class("form-label"),
-								g.Text("Organization Name"),
-							),
-							Input(
-								Type("text"),
-								Class("form-control"),
-								ID("orgTitle"),
-								Name("title"),
-								Value(organization.Title),
-								Required(),
-							),
-						),
-						Div(
-							Class("modal-footer"),
-							Button(
-								Type("button"),
-								Class("btn btn-secondary"),
-								g.Attr("data-bs-dismiss", "modal"),
-								g.Text("Cancel"),
-							),
-							Button(
-								Type("submit"),
-								Class("btn btn-primary"),
-								g.Text("Save Changes"),
-							),
-						),
-					),
-				),
+			Class("modal-header"),
+			H2(
+				Class("modal-title"),
+				g.Text("Organization Settings"),
+			),
+			A(
+				g.Attr("data-bs-dismiss", "modal"),
+				Class("btn-close"),
 			),
 		),
-	)
+		Div(
+			Class("modal-body"),
+			Div(
+				Class("mb-3"),
+				Label(
+					For("orgTitle"),
+					Class("form-label"),
+					g.Text("Organization Name"),
+				),
+				Input(inputAttrs...),
+			),
+		),
+		Div(
+			Class("modal-footer"),
+			// Only show save button for admin users
+			g.If(isAdmin,
+				Button(
+					Type("submit"),
+					Class("btn btn-primary"),
+					I(Class("bi-save me-2")),
+					g.Text("Save Changes"),
+				),
+			),
+			A(
+				g.Attr("data-bs-dismiss", "modal"),
+				Class("btn btn-secondary"),
+				I(Class("bi-x me-2")),
+				g.Text("Cancel"),
+			),
+		),
+	}
+
+	// Combine form attributes with content
+	allAttrs := append(formAttrs, formContent...)
+	return FormEl(allAttrs...)
 }
 
 // renderSuccess renders a success message
@@ -173,19 +195,11 @@ func (h *OrganizationWebHandlers) renderSuccess(w http.ResponseWriter, r *http.R
 
 // SuccessMessage returns a success message as a gomponents node
 func (h *OrganizationWebHandlers) SuccessMessage(message string) g.Node {
-	return g.Group([]g.Node{
-		Div(
-			Class("alert alert-success"),
-			g.Text(message),
-		),
-		Script(
-			g.Text(`
-				// Close modal and refresh page
-				bootstrap.Modal.getInstance(document.getElementById('organizationModal')).hide();
-				location.reload();
-			`),
-		),
-	})
+	return Div(
+		Class("alert alert-success text-center"),
+		Role("alert"),
+		Span(g.Text(message)),
+	)
 }
 
 // renderValidationError renders validation error messages

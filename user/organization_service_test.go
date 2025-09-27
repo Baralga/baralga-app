@@ -16,8 +16,8 @@ func TestOrganizationService_GetOrganization(t *testing.T) {
 	// Create test organization
 	orgID := uuid.New()
 	organization := &Organization{
-		ID:   orgID,
-		Name: "Test Organization",
+		ID:    orgID,
+		Title: "Test Organization",
 	}
 
 	// Create mock repository
@@ -27,6 +27,7 @@ func TestOrganizationService_GetOrganization(t *testing.T) {
 
 	// Create organization service
 	service := &OrganizationService{
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		organizationRepository: repo,
 	}
 
@@ -37,7 +38,7 @@ func TestOrganizationService_GetOrganization(t *testing.T) {
 	// Verify result
 	is.NoErr(err)
 	is.Equal(result.ID, orgID)
-	is.Equal(result.Name, "Test Organization")
+	is.Equal(result.Title, "Test Organization")
 }
 
 func TestOrganizationService_UpdateOrganizationName(t *testing.T) {
@@ -46,8 +47,8 @@ func TestOrganizationService_UpdateOrganizationName(t *testing.T) {
 	// Create test organization
 	orgID := uuid.New()
 	organization := &Organization{
-		ID:   orgID,
-		Name: "Old Title",
+		ID:    orgID,
+		Title: "Old Title",
 	}
 
 	// Create mock repository
@@ -57,6 +58,7 @@ func TestOrganizationService_UpdateOrganizationName(t *testing.T) {
 
 	// Create organization service
 	service := &OrganizationService{
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		organizationRepository: repo,
 	}
 
@@ -66,7 +68,7 @@ func TestOrganizationService_UpdateOrganizationName(t *testing.T) {
 
 	// Verify result
 	is.NoErr(err)
-	is.Equal(organization.Name, "New Title")
+	is.Equal(organization.Title, "New Title")
 }
 
 func TestOrganizationService_UpdateOrganizationNameValidationError(t *testing.T) {
@@ -75,8 +77,8 @@ func TestOrganizationService_UpdateOrganizationNameValidationError(t *testing.T)
 	// Create test organization
 	orgID := uuid.New()
 	organization := &Organization{
-		ID:   orgID,
-		Name: "Old Title",
+		ID:    orgID,
+		Title: "Old Title",
 	}
 
 	// Create mock repository
@@ -86,6 +88,7 @@ func TestOrganizationService_UpdateOrganizationNameValidationError(t *testing.T)
 
 	// Create organization service
 	service := &OrganizationService{
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		organizationRepository: repo,
 	}
 
@@ -104,15 +107,15 @@ func TestOrganizationService_UpdateOrganizationNameDuplicateError(t *testing.T) 
 	// Create test organization
 	orgID := uuid.New()
 	organization := &Organization{
-		ID:   orgID,
-		Name: "Old Title",
+		ID:    orgID,
+		Title: "Old Title",
 	}
 
 	// Create mock repository with existing organization with same title
 	existingOrgID := uuid.New()
 	existingOrg := &Organization{
-		ID:   existingOrgID,
-		Name: "Duplicate Title",
+		ID:    existingOrgID,
+		Title: "Duplicate Title",
 	}
 
 	repo := &MockOrganizationRepository{
@@ -124,6 +127,7 @@ func TestOrganizationService_UpdateOrganizationNameDuplicateError(t *testing.T) 
 
 	// Create organization service
 	service := &OrganizationService{
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		organizationRepository: repo,
 	}
 
@@ -147,6 +151,7 @@ func TestOrganizationService_IsUserAdmin(t *testing.T) {
 
 	// Create organization service
 	service := &OrganizationService{
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		organizationRepository: repo,
 	}
 
@@ -178,6 +183,7 @@ func TestOrganizationService_IsUserAdminNonAdmin(t *testing.T) {
 
 	// Create organization service
 	service := &OrganizationService{
+		repositoryTxer:         shared.NewInMemRepositoryTxer(),
 		organizationRepository: repo,
 	}
 
@@ -237,7 +243,7 @@ func (m *MockOrganizationRepository) Exists(ctx context.Context, orgID uuid.UUID
 
 func (m *MockOrganizationRepository) FindByName(ctx context.Context, name string) (*Organization, error) {
 	for _, org := range m.organizations {
-		if org.Name == name {
+		if org.Title == name {
 			return org, nil
 		}
 	}

@@ -192,11 +192,11 @@ func Navbar(pageContext *PageContext) g.Node {
 							A(
 								Href("/profile/organization"),
 								ghx.Get("/profile/organization"),
-								ghx.Target("#organizationModal"),
-								ghx.Trigger("click"),
+								ghx.Target("#baralga__main_content_modal_content"),
+								ghx.Swap("outerHTML"),
 								Class("dropdown-item"),
 								I(Class("bi-building me-2")),
-								g.Text("Organization"),
+								g.Text("Organization Settings"),
 							),
 						),
 						Li(
@@ -212,10 +212,6 @@ func Navbar(pageContext *PageContext) g.Node {
 					),
 				),
 			),
-		),
-		// Organization Modal placeholder
-		Div(
-			ID("organizationModal"),
 		),
 	)
 }

@@ -8,23 +8,37 @@ import (
 	"github.com/google/uuid"
 )
 
-// OrganizationService interface is defined in organization_domain.go
-
-// OrganizationService implements the OrganizationService interface
 type OrganizationService struct {
+	repositoryTxer         shared.RepositoryTxer
 	organizationRepository OrganizationRepository
 }
 
 // NewOrganizationService creates a new organization service
-func NewOrganizationService(organizationRepository OrganizationRepository) OrganizationService {
+func NewOrganizationService(repositoryTxer shared.RepositoryTxer, organizationRepository OrganizationRepository) OrganizationService {
 	return OrganizationService{
+		repositoryTxer:         repositoryTxer,
 		organizationRepository: organizationRepository,
 	}
 }
 
 // GetOrganization retrieves an organization by ID
 func (s *OrganizationService) GetOrganization(ctx context.Context, orgID uuid.UUID) (*Organization, error) {
-	return s.organizationRepository.FindByID(ctx, orgID)
+	var org *Organization
+	err := s.repositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			foundOrg, err := s.organizationRepository.FindByID(ctx, orgID)
+			if err != nil {
+				return err
+			}
+			org = foundOrg
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return org, nil
 }
 
 // UpdateOrganizationName updates the name of an organization
@@ -38,33 +52,41 @@ func (s *OrganizationService) UpdateOrganizationName(ctx context.Context, orgID 
 		return shared.ErrValidation("Organization name must be between 1 and 255 characters")
 	}
 
-	// Check if organization exists
-	exists, err := s.organizationRepository.Exists(ctx, orgID)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return shared.ErrNotFound
-	}
+	// Use transaction for all database operations
+	err := s.repositoryTxer.InTx(
+		ctx,
+		func(ctx context.Context) error {
+			// Check if organization exists
+			exists, err := s.organizationRepository.Exists(ctx, orgID)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				return shared.ErrNotFound
+			}
 
-	// Check if name already exists (excluding current organization)
-	existingOrg, err := s.organizationRepository.FindByName(ctx, name)
-	if err != nil && err != shared.ErrNotFound {
-		return err
-	}
-	if existingOrg != nil && existingOrg.ID != orgID {
-		return shared.ErrConflict("Organization name already exists")
-	}
+			// Check if name already exists (excluding current organization)
+			existingOrg, err := s.organizationRepository.FindByName(ctx, name)
+			if err != nil && err != shared.ErrNotFound {
+				return err
+			}
+			if existingOrg != nil && existingOrg.ID != orgID {
+				return shared.ErrConflict("Organization name already exists")
+			}
 
-	// Get current organization
-	organization, err := s.organizationRepository.FindByID(ctx, orgID)
-	if err != nil {
-		return err
-	}
+			// Get current organization
+			organization, err := s.organizationRepository.FindByID(ctx, orgID)
+			if err != nil {
+				return err
+			}
 
-	// Update organization name
-	organization.Title = strings.TrimSpace(name)
-	return s.organizationRepository.Update(ctx, organization)
+			// Update organization name
+			organization.Title = strings.TrimSpace(name)
+			return s.organizationRepository.Update(ctx, organization)
+		},
+	)
+
+	return err
 }
 
 // IsUserAdmin checks if a user is an admin of an organization
@@ -73,5 +95,5 @@ func (s *OrganizationService) IsUserAdmin(ctx context.Context, orgID uuid.UUID) 
 	principal := shared.MustPrincipalFromContext(ctx)
 
 	// Check if the user has admin role
-	return principal.HasRole("admin"), nil
+	return principal.HasRole("ROLE_ADMIN"), nil
 }

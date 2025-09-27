@@ -89,7 +89,7 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	userWeb := user.NewUserWeb(&config, userService, userRepository)
 
 	// Organization
-	organizationService := user.NewOrganizationService(organizationRepository)
+	organizationService := user.NewOrganizationService(repositoryTxer, organizationRepository)
 	organizationWebHandlers := user.NewOrganizationWebHandlers(&config, organizationService)
 
 	// Auth

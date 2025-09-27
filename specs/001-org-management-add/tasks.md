@@ -65,6 +65,8 @@
 - [x] T016 Organization form validation in user/organization_web.go
 - [x] T017 Organization error handling in user/organization_web.go
 - [x] T025 Convert organization web handlers to use gomponents instead of raw HTML
+- [x] T026 Integrate organization modal with global modal system like activity web handlers
+- [x] T027 Update organization service to use repositoryTxer.InTx for database transactions
 
 ## Phase 3.4: Integration
 - [x] T018 Connect organization service to database repository
