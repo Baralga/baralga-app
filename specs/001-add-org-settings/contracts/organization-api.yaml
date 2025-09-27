@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: Organization Management API
+  description: API endpoints for organization management functionality
+  version: 1.0.0
+  contact:
+    name: Baralga Team
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+paths:
+  /profile/organization:
+    get:
+      summary: Show organization management dialog
+      description: Returns the organization management modal dialog for admin users
+      tags:
+        - Organization Management
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Organization management dialog
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h2 class="modal-title">Organization Settings</h2>
+                      <button class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <form hx-post="/profile/organization" hx-target="#baralga__main_content_modal_content">
+                        <input type="hidden" name="CSRFToken" value="csrf-token">
+                        <div class="mb-3">
+                          <label for="Name" class="form-label">Organization Name</label>
+                          <input type="text" class="form-control" id="Name" name="Name" 
+                                 value="Current Organization" required minlength="3" maxlength="100">
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+        '403':
+          description: Forbidden - User is not an admin
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">You do not have permission to manage organization settings.</div>
+        '401':
+          description: Unauthorized - User not logged in
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">Please log in to access this page.</div>
+
+    post:
+      summary: Update organization name
+      description: Updates the organization name for admin users
+      tags:
+        - Organization Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - Name
+                - CSRFToken
+              properties:
+                Name:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  pattern: '^[a-zA-Z0-9\s\-_]+$'
+                  description: Organization name
+                  example: "My Organization"
+                CSRFToken:
+                  type: string
+                  description: CSRF protection token
+                  example: "csrf-token-value"
+      responses:
+        '200':
+          description: Organization updated successfully
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-success">Organization name updated successfully!</div>
+        '400':
+          description: Bad Request - Validation error
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">Organization name must be between 3 and 100 characters.</div>
+        '403':
+          description: Forbidden - User is not an admin
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">You do not have permission to manage organization settings.</div>
+        '401':
+          description: Unauthorized - User not logged in
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">Please log in to access this page.</div>
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Organization:
+      type: object
+      required:
+        - ID
+        - Title
+      properties:
+        ID:
+          type: string
+          format: uuid
+          description: Unique organization identifier
+        Title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9\s\-_]+$'
+          description: Organization name
+
+    OrganizationForm:
+      type: object
+      required:
+        - Name
+        - CSRFToken
+      properties:
+        Name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9\s\-_]+$'
+          description: Organization name
+        CSRFToken:
+          type: string
+          description: CSRF protection token
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Additional error details

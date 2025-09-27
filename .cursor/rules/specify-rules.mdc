@@ -1,0 +1,24 @@
+# baralga-app Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-09-27
+
+## Active Technologies
+- Go 1.24+ with toolchain go1.24.5 + Chi router (go-chi/chi/v5), HTMX 2.0.6, Bootstrap 5.3.2, gomponents for HTML generation (001-add-a-new)
+
+## Project Structure
+```
+src/
+tests/
+```
+
+## Commands
+# Add commands for Go 1.24+ with toolchain go1.24.5
+
+## Code Style
+Go 1.24+ with toolchain go1.24.5: Follow standard conventions
+
+## Recent Changes
+- 001-add-a-new: Added Go 1.24+ with toolchain go1.24.5 + Chi router (go-chi/chi/v5), HTMX 2.0.6, Bootstrap 5.3.2, gomponents for HTML generation
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
