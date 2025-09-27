@@ -59,6 +59,11 @@
   - _Requirements: 1.1, 1.2, 1.5, 3.1_
 
 
+- [ ] 8a. Store tag color in db
+  - create a migration script to add tag color to tags table
+  - create a struct for the tag with properties name and color
+  - before calling SyncTagsForActivity assign a color to the tags
+  - _Requirements: 4.1, 4.2, 4.4, 4.5_
 
 - [ ] 9. Implement tag filtering in activity list UI
   - Add tag filter input field to activity list page in tracking/activity_web.go
