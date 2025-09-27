@@ -97,6 +97,7 @@ func (a *ActivityWebHandlers) HandleTrackingPage() http.HandlerFunc {
 			Timespan: TimespanWeek,
 			start:    isoweek.StartTime(wyear, week, time.UTC),
 		}
+
 		pageParams := &paged.PageParams{
 			Page: 0,
 			Size: 100,
@@ -632,41 +633,68 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 				),
 				g.Group(g.Map(activities, func(activity *Activity) g.Node {
 					return Div(
-						Class("d-flex justify-content-between mb-2"),
+						Class("mb-3 p-2 border-start border-2 border-secondary"),
 						ghx.Target(fmt.Sprintf("#%v", activityCardID)),
 						TitleAttr(activity.Description),
-						Span(
-							Class("flex-fill"),
-							g.Text(time_utils.FormatTime(activity.Start)+" - "+time_utils.FormatTime(activity.End)),
-						),
-						Span(
-							Class("flex-fill"),
-							g.Text(projectsById[activity.ProjectID].Title),
-						),
-						Span(
-							Class("flex-fill text-end pe-3"),
-							g.Text(activity.DurationFormatted()),
-						),
+						// Time and project row
 						Div(
-							A(
-								ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-								ghx.Target("#baralga__main_content_modal_content"),
-								ghx.Swap("outerHTML"),
-
-								Class("btn btn-outline-secondary btn-sm"),
-								I(Class("bi-pen")),
+							Class("d-flex justify-content-between mb-1"),
+							Span(
+								Class("flex-fill"),
+								g.Text(time_utils.FormatTime(activity.Start)+" - "+time_utils.FormatTime(activity.End)),
 							),
-							A(
-								ghx.Confirm(
-									fmt.Sprintf(
-										"Do you really want to delete the activity from %v on %v?",
-										time_utils.FormatTime(activity.Start),
-										activity.Start.Format("Monday"),
-									),
+							Span(
+								Class("flex-fill"),
+								g.Text(projectsById[activity.ProjectID].Title),
+							),
+							Span(
+								Class("flex-fill text-end pe-3"),
+								g.Text(activity.DurationFormatted()),
+							),
+							Div(
+								A(
+									ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+									ghx.Target("#baralga__main_content_modal_content"),
+									ghx.Swap("outerHTML"),
+
+									Class("btn btn-outline-secondary btn-sm"),
+									I(Class("bi-pen")),
 								),
-								ghx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
-								Class("btn btn-outline-secondary btn-sm ms-1"),
-								I(Class("bi-trash2")),
+								A(
+									ghx.Confirm(
+										fmt.Sprintf(
+											"Do you really want to delete the activity from %v on %v?",
+											time_utils.FormatTime(activity.Start),
+											activity.Start.Format("Monday"),
+										),
+									),
+									ghx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
+									Class("btn btn-outline-secondary btn-sm ms-1"),
+									I(Class("bi-trash2")),
+								),
+							),
+						),
+						// Description row (if exists)
+						g.If(activity.Description != "",
+							Div(
+								Class("mb-1"),
+								Small(
+									Class("text-muted"),
+									g.Text(activity.Description),
+								),
+							),
+						),
+						// Tags row (if exists)
+						g.If(len(activity.Tags) > 0,
+							Div(
+								Class("d-flex flex-wrap gap-1"),
+								g.Group(g.Map(activity.Tags, func(tag string) g.Node {
+									return Span(
+										Class("badge bg-light text-dark"),
+										StyleAttr("font-size: 0.7em;"),
+										g.Text(tag),
+									)
+								})),
 							),
 						),
 					)

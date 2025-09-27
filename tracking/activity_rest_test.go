@@ -648,6 +648,46 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
 }
 
+func TestFilterFromQueryParamsWithTags(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	params := url.Values{}
+	params.Set("t", "week")
+	params.Set("v", "2021-46")
+	params.Set("tags", "meeting,development,bug-fix")
+
+	// Act
+	filter, err := filterFromQueryParams(params)
+
+	// Assert
+	is.NoErr(err)
+	is.Equal(len(filter.Tags()), 3)
+	is.True(contains(filter.Tags(), "meeting"))
+	is.True(contains(filter.Tags(), "development"))
+	is.True(contains(filter.Tags(), "bug-fix"))
+}
+
+func TestFilterFromQueryParamsWithMultipleTagParams(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	params := url.Values{}
+	params.Set("t", "week")
+	params.Set("v", "2021-46")
+	params.Add("tags", "meeting,development")
+	params.Add("tags", "bug-fix,testing")
+
+	// Act
+	filter, err := filterFromQueryParams(params)
+
+	// Assert
+	is.NoErr(err)
+	is.Equal(len(filter.Tags()), 4)
+	is.True(contains(filter.Tags(), "meeting"))
+	is.True(contains(filter.Tags(), "development"))
+	is.True(contains(filter.Tags(), "bug-fix"))
+	is.True(contains(filter.Tags(), "testing"))
+}
+
 func TestFilterFromQueryParams(t *testing.T) {
 	is := is.New(t)
 
@@ -925,4 +965,14 @@ func TestHandleGetTagsAutocompleteNoResults(t *testing.T) {
 	err := json.NewDecoder(httpRec.Body).Decode(&response)
 	is.NoErr(err)
 	is.Equal(0, len(response.Tags))
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

@@ -299,7 +299,7 @@ func (a *ActivityRestHandlers) HandleGetTagsAutocomplete() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 
 		principal := shared.MustPrincipalFromContext(r.Context())
-		
+
 		// Get query parameter
 		query := r.URL.Query().Get("q")
 		if query == "" {
@@ -533,6 +533,22 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		}
 	default:
 		return nil, errors.New("invalid activity filter")
+	}
+
+	// Parse tag filters from URL parameters
+	if tagParams := params["tags"]; len(tagParams) > 0 {
+		var tags []string
+		for _, tagParam := range tagParams {
+			// Split comma-separated tags
+			tagParts := strings.Split(tagParam, ",")
+			for _, tag := range tagParts {
+				tag = strings.TrimSpace(tag)
+				if tag != "" {
+					tags = append(tags, strings.ToLower(tag))
+				}
+			}
+		}
+		filter.tags = tags
 	}
 
 	return filter, nil

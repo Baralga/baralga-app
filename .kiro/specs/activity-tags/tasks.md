@@ -58,16 +58,14 @@
   - Update mapFormToActivity and mapActivityToForm functions to handle tags
   - _Requirements: 1.1, 1.2, 1.5, 3.1_
 
-- [ ] 9. Implement tag filtering in activity list
+- [x] 9. Implement tag filtering in activity list
   - Add tag filter parameters to activity list handlers in tracking/activity_web.go
-  - Modify ActivitiesInWeekView template to show tag filter UI
   - Update activity list queries to support tag-based filtering
   - Add tag filter state management in URL parameters
   - _Requirements: 4.1, 4.2, 4.4, 4.5_
 
 - [ ] 10. Add tag display to activity views
   - Update ActivitiesSumByDayView template to display tags for each activity
-  - Update ActivityForm template to show current tags in edit mode
   - Add CSS styling for tag display (badges/chips) in activity list
   - Ensure tags are displayed consistently across all activity views
   - _Requirements: 1.4, 4.1_

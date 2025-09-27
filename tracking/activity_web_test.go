@@ -249,14 +249,39 @@ func TestMapActivityToFormWithTags(t *testing.T) {
 	is.Equal(formModel.Tags, "meeting, development, bug-fix")
 }
 
-// Helper function to check if a slice contains a string
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+func TestHandleTrackingPageDisplaysTagsWithoutFiltering(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	config := &shared.Config{}
+	activityRepository := NewInMemActivityRepository()
+	projectRepository := NewInMemProjectRepository()
+	tagRepository := NewInMemTagRepository()
+	tagService := NewTagService(tagRepository)
+	repositoryTxer := shared.NewInMemRepositoryTxer()
+
+	activityService := NewActitivityService(repositoryTxer, activityRepository, tagRepository, tagService)
+
+	handlers := NewActivityWebHandlers(config, activityService, activityRepository, projectRepository)
+
+	// Create a simple request (no tag filtering on web page)
+	req := httptest.NewRequest("GET", "/", nil)
+	req = req.WithContext(shared.ToContextWithPrincipal(req.Context(), &shared.Principal{
+		OrganizationID: uuid.New(),
+		Username:       "test@example.com",
+		Roles:          []string{"ROLE_USER"},
+	}))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handlers.HandleTrackingPage()(w, req)
+
+	// Assert
+	is.Equal(w.Code, http.StatusOK)
+	// The response should not contain tag filter UI (removed from web page)
+	responseBody := w.Body.String()
+	is.True(!strings.Contains(responseBody, "Filter by tags"))
 }
 
 func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {
