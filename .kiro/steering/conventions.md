@@ -1,5 +1,7 @@
 # Layered DDD Architecture
 
+On top level there are modules by domain repsponsibility like user, auth, tracking and shared. The layers have to be met for each module. Dependencies between the modules may only occurr on the domain layer. The shared module may not depend on any other module.
+
 A layered ddd architecture is used. The dependencies between the layers is:
 
 1. Presentation layer may depend on domain layer only
