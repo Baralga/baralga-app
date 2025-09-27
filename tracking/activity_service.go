@@ -76,7 +76,8 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	}
 
 	// Validate tags
-	if err := a.tagService.ValidateTags(tagNames); err != nil {
+	err := a.tagService.ValidateTags(tagNames)
+	if err != nil {
 		return nil, err
 	}
 
@@ -85,7 +86,7 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	activity.Tags = tagsWithColors
 
 	var newActivity *Activity
-	err := a.repositoryTxer.InTx(
+	err = a.repositoryTxer.InTx(
 		ctx,
 		func(ctx context.Context) error {
 			insertedActivity, err := a.activityRepository.InsertActivity(ctx, activity)
