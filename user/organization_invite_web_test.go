@@ -320,6 +320,6 @@ func TestOrganizationInviteWebHandlers_GetInviteURL(t *testing.T) {
 	handlers := NewOrganizationInviteWeb(config, &UserService{})
 
 	url := handlers.getInviteURL("test-token")
-	expected := "https://example.com/signup?invite=test-token"
+	expected := "https://example.com/signup/invite/test-token"
 	is.Equal(url, expected)
 }

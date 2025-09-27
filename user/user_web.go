@@ -182,7 +182,7 @@ func (a *UserWebHandlers) HandleOrganizationInvites() http.HandlerFunc {
 			return
 		}
 
-		shared.RenderHTML(w, OrganizationInvitesPage(principal, invites))
+		shared.RenderHTML(w, OrganizationInvitesPage(a.config, principal, invites))
 	}
 }
 
@@ -204,7 +204,7 @@ func (a *UserWebHandlers) HandleGenerateInviteInDialog() http.HandlerFunc {
 		}
 
 		// Return the invite link display
-		shared.RenderHTML(w, InviteLinkDisplay(invite))
+		shared.RenderHTML(w, InviteLinkDisplay(a.config, invite))
 	}
 }
 
@@ -903,7 +903,7 @@ func OrganizationDialog(principal *shared.Principal, formModel organizationFormM
 	)
 }
 
-func OrganizationInvitesPage(principal *shared.Principal, invites []*OrganizationInvite) g.Node {
+func OrganizationInvitesPage(config *shared.Config, principal *shared.Principal, invites []*OrganizationInvite) g.Node {
 	return shared.Page(
 		"Organization Invites",
 		"/organization/invites",
@@ -940,7 +940,7 @@ func OrganizationInvitesPage(principal *shared.Principal, invites []*Organizatio
 						func() g.Node {
 							var nodes []g.Node
 							for _, invite := range invites {
-								nodes = append(nodes, InviteCard(invite))
+								nodes = append(nodes, InviteCard(config, invite))
 							}
 							return Div(append([]g.Node{Class("row")}, nodes...)...)
 						}(),
@@ -951,7 +951,7 @@ func OrganizationInvitesPage(principal *shared.Principal, invites []*Organizatio
 	)
 }
 
-func InviteCard(invite *OrganizationInvite) g.Node {
+func InviteCard(config *shared.Config, invite *OrganizationInvite) g.Node {
 	status := getInviteStatus(invite)
 	statusClass := getStatusClass(status)
 
@@ -981,7 +981,7 @@ func InviteCard(invite *OrganizationInvite) g.Node {
 					Input(
 						Type("text"),
 						Class("form-control font-monospace"),
-						Value(getInviteURL(invite.Token)),
+						Value(getInviteURL(config, invite.Token)),
 						g.Attr("readonly", "readonly"),
 						ID(fmt.Sprintf("invite-url-%s", invite.ID.String())),
 					),
@@ -1041,11 +1041,11 @@ func getStatusClass(status string) string {
 	}
 }
 
-func getInviteURL(token string) string {
-	return fmt.Sprintf("%s/signup?invite=%s", "https://example.com", token) // TODO: Use config
+func getInviteURL(config *shared.Config, token string) string {
+	return fmt.Sprintf("%s/signup/invite/%s", config.Webroot, token)
 }
 
-func InviteLinkDisplay(invite *OrganizationInvite) g.Node {
+func InviteLinkDisplay(config *shared.Config, invite *OrganizationInvite) g.Node {
 	return Div(
 		Class("alert alert-success"),
 		Div(
@@ -1064,7 +1064,7 @@ func InviteLinkDisplay(invite *OrganizationInvite) g.Node {
 			Input(
 				Type("text"),
 				Class("form-control font-monospace"),
-				Value(getInviteURL(invite.Token)),
+				Value(getInviteURL(config, invite.Token)),
 				g.Attr("readonly", "readonly"),
 				ID(fmt.Sprintf("dialog-invite-url-%s", invite.ID.String())),
 			),
