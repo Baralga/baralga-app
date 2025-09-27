@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: Organization Management Web Interface
+  description: Web interface contracts for organization management dialog
+  version: 1.0.0
+
+paths:
+  /profile/organization:
+    get:
+      summary: Get organization management page
+      description: Returns the organization management dialog for administrators
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Organization management dialog HTML
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="modal fade" id="organizationModal" tabindex="-1">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Organization Settings</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <form hx-post="/profile/organization" hx-target="#organizationForm">
+                            <div class="mb-3">
+                              <label for="orgTitle" class="form-label">Organization Name</label>
+                              <input type="text" class="form-control" id="orgTitle" name="title" value="{{.Organization.Title}}" required>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+        '403':
+          description: Forbidden - User is not an administrator
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">Access denied. Administrator privileges required.</div>
+        '401':
+          description: Unauthorized - User not authenticated
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-warning">Please log in to access this page.</div>
+
+    post:
+      summary: Update organization title
+      description: Updates the organization title for administrators
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: New organization title
+              required:
+                - title
+      responses:
+        '200':
+          description: Organization title updated successfully
+          content:
+            text/html:
+              schema:
+                type: string
+              examples:
+                success:
+                  summary: Success response
+                  value: |
+                    <div class="alert alert-success">Organization name updated successfully.</div>
+                    <script>
+                      // Close modal and refresh page
+                      bootstrap.Modal.getInstance(document.getElementById('organizationModal')).hide();
+                      location.reload();
+                    </script>
+                validation_error:
+                  summary: Validation error
+                  value: |
+                    <div class="alert alert-danger">
+                      <ul>
+                        <li>Organization name is required</li>
+                        <li>Organization name must be between 1 and 255 characters</li>
+                      </ul>
+                    </div>
+        '400':
+          description: Bad request - validation errors
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">
+                    <ul>
+                      <li>Organization name is required</li>
+                      <li>Organization name must be between 1 and 255 characters</li>
+                    </ul>
+                  </div>
+        '403':
+          description: Forbidden - User is not an administrator
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">Access denied. Administrator privileges required.</div>
+        '401':
+          description: Unauthorized - User not authenticated
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-warning">Please log in to access this page.</div>
+        '409':
+          description: Conflict - Organization title already exists
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <div class="alert alert-danger">Organization name already exists. Please choose a different name.</div>
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Organization unique identifier
+        title:
+          type: string
+          maxLength: 255
+          description: Organization title/name
+      required:
+        - id
+        - title
+
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+        message:
+          type: string
+          description: Validation error message
+      required:
+        - field
+        - message
