@@ -17,6 +17,18 @@ import (
 	"github.com/matryer/is"
 )
 
+// Helper function to create a properly initialized ActivityService for tests
+func createTestActivityService(repo ActivityRepository) *ActitivityService {
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	return &ActitivityService{
+		repositoryTxer:     shared.NewInMemRepositoryTxer(),
+		activityRepository: repo,
+		tagRepository:      tagRepo,
+		tagService:         tagService,
+	}
+}
+
 func TestMapToActivity(t *testing.T) {
 	is := is.New(t)
 
@@ -144,9 +156,7 @@ func TestHandleGetActivitiesWithUrlParams(t *testing.T) {
 	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
-		actitivityService: &ActitivityService{
-			activityRepository: activityRepository,
-		},
+		actitivityService:  createTestActivityService(activityRepository),
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?start=2021-10-01&end=2022-10-01", nil)
@@ -169,9 +179,7 @@ func TestHandleGetActivitiesWithTimespanUrlParams(t *testing.T) {
 	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
-		actitivityService: &ActitivityService{
-			activityRepository: activityRepository,
-		},
+		actitivityService:  createTestActivityService(activityRepository),
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
@@ -194,9 +202,7 @@ func TestHandleGetActivitiesWithTimespanUrlParamsAsCSV(t *testing.T) {
 	a := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: activityRepository,
-		actitivityService: &ActitivityService{
-			activityRepository: activityRepository,
-		},
+		actitivityService:  createTestActivityService(activityRepository),
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
@@ -219,9 +225,7 @@ func TestHandleGetActivitiesWithTimespanUrlParamsAsExcel(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	r, _ := http.NewRequest("GET", "/api/activities?t=week&v=2020-3", nil)
@@ -242,10 +246,7 @@ func TestHandleCreateActivity(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	countBefore := len(repo.activities)
@@ -312,10 +313,7 @@ func TestHandleDeleteActivityAsAdmin(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
@@ -343,10 +341,7 @@ func TestHandleDeleteActivityAsMatchingUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
@@ -414,10 +409,7 @@ func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
@@ -443,10 +435,7 @@ func TestHandleUpdateActivity(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	body := `
@@ -526,10 +515,7 @@ func TestHandleUpdateActivityAsUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	body := `
@@ -572,10 +558,7 @@ func TestHandleUpdateActivityWithNonMatchingUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityService(repo),
 	}
 
 	body := `
@@ -665,6 +648,46 @@ func TestHandleUpdateActivityIdNotValid(t *testing.T) {
 
 	a.HandleUpdateActivity()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
+}
+
+func TestFilterFromQueryParamsWithTags(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	params := url.Values{}
+	params.Set("t", "week")
+	params.Set("v", "2021-46")
+	params.Set("tags", "meeting,development,bug-fix")
+
+	// Act
+	filter, err := filterFromQueryParams(params)
+
+	// Assert
+	is.NoErr(err)
+	is.Equal(len(filter.Tags()), 3)
+	is.True(contains(filter.Tags(), "meeting"))
+	is.True(contains(filter.Tags(), "development"))
+	is.True(contains(filter.Tags(), "bug-fix"))
+}
+
+func TestFilterFromQueryParamsWithMultipleTagParams(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+	params := url.Values{}
+	params.Set("t", "week")
+	params.Set("v", "2021-46")
+	params.Add("tags", "meeting,development")
+	params.Add("tags", "bug-fix,testing")
+
+	// Act
+	filter, err := filterFromQueryParams(params)
+
+	// Assert
+	is.NoErr(err)
+	is.Equal(len(filter.Tags()), 4)
+	is.True(contains(filter.Tags(), "meeting"))
+	is.True(contains(filter.Tags(), "development"))
+	is.True(contains(filter.Tags(), "bug-fix"))
+	is.True(contains(filter.Tags(), "testing"))
 }
 
 func TestFilterFromQueryParams(t *testing.T) {
@@ -826,4 +849,137 @@ func TestFilterFromQueryParams(t *testing.T) {
 		is.Equal(time.November, filter.Start().Month())
 	})
 
+}
+func TestHandleGetTagsAutocomplete(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	// Create test data
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	// Add some test tags
+	orgID := uuid.New()
+	ctx := context.Background()
+	_, err := tagRepo.FindOrCreateTag(ctx, "meeting", orgID)
+	is.NoErr(err)
+	_, err = tagRepo.FindOrCreateTag(ctx, "development", orgID)
+	is.NoErr(err)
+	_, err = tagRepo.FindOrCreateTag(ctx, "testing", orgID)
+	is.NoErr(err)
+	_, err = tagRepo.FindOrCreateTag(ctx, "testing", orgID)
+	is.NoErr(err)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete?q=meet", nil)
+	principal := &shared.Principal{OrganizationID: orgID}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(httpRec.Header().Get("Content-Type"), "application/json")
+
+	var response tagsAutocompleteResponse
+	err = json.NewDecoder(httpRec.Body).Decode(&response)
+	is.NoErr(err)
+	is.True(len(response.Tags) > 0)
+	is.Equal("meeting", response.Tags[0].Name)
+}
+
+func TestHandleGetTagsAutocompleteEmptyQuery(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete", nil)
+	principal := &shared.Principal{OrganizationID: uuid.New()}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	var response tagsAutocompleteResponse
+	err := json.NewDecoder(httpRec.Body).Decode(&response)
+	is.NoErr(err)
+	is.Equal(0, len(response.Tags))
+}
+
+func TestHandleGetTagsAutocompleteLongQuery(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	// Create a query that's too long (over 100 characters)
+	longQuery := strings.Repeat("a", 101)
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete?q="+longQuery, nil)
+	principal := &shared.Principal{OrganizationID: uuid.New()}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusBadRequest)
+}
+
+func TestHandleGetTagsAutocompleteNoResults(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
+
+	a := &ActivityRestHandlers{
+		config:            &shared.Config{},
+		actitivityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/api/tags/autocomplete?q=nonexistent", nil)
+	principal := &shared.Principal{OrganizationID: uuid.New()}
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleGetTagsAutocomplete()(httpRec, r)
+
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	var response tagsAutocompleteResponse
+	err := json.NewDecoder(httpRec.Body).Decode(&response)
+	is.NoErr(err)
+	is.Equal(0, len(response.Tags))
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

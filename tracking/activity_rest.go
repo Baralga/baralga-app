@@ -71,6 +71,7 @@ func (a *ActivityRestHandlers) RegisterProtected(r chi.Router) {
 	r.Get("/activities/{activity-id}", a.HandleGetActivity())
 	r.Delete("/activities/{activity-id}", a.HandleDeleteActivity())
 	r.Patch("/activities/{activity-id}", a.HandleUpdateActivity())
+	r.Get("/tags/autocomplete", a.HandleGetTagsAutocomplete())
 }
 
 // HandleGetActivities reads activities
@@ -280,6 +281,65 @@ func (a *ActivityRestHandlers) HandleUpdateActivity() http.HandlerFunc {
 	}
 }
 
+// tagAutocompleteModel represents a tag suggestion for autocomplete
+type tagAutocompleteModel struct {
+	Name string `json:"name"`
+}
+
+// tagsAutocompleteResponse represents the response for tag autocomplete
+type tagsAutocompleteResponse struct {
+	Tags []*tagAutocompleteModel `json:"tags"`
+}
+
+// HandleGetTagsAutocomplete handles tag autocomplete requests
+func (a *ActivityRestHandlers) HandleGetTagsAutocomplete() http.HandlerFunc {
+	isProduction := a.config.IsProduction()
+	actitivityService := a.actitivityService
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		principal := shared.MustPrincipalFromContext(r.Context())
+
+		// Get query parameter
+		query := r.URL.Query().Get("q")
+		if query == "" {
+			// Return empty response if no query provided
+			response := &tagsAutocompleteResponse{
+				Tags: []*tagAutocompleteModel{},
+			}
+			shared.RenderJSON(w, response)
+			return
+		}
+
+		// Validate query length to prevent abuse
+		if len(query) > 100 {
+			http.Error(w, problem.New(problem.Title("query parameter too long")).JSONString(), http.StatusBadRequest)
+			return
+		}
+
+		// Get matching tags from service
+		tags, err := actitivityService.GetTagsForAutocomplete(r.Context(), principal, query)
+		if err != nil {
+			shared.RenderProblemJSON(w, isProduction, err)
+			return
+		}
+
+		// Convert to response model
+		tagModels := make([]*tagAutocompleteModel, len(tags))
+		for i, tag := range tags {
+			tagModels[i] = &tagAutocompleteModel{
+				Name: tag.Name,
+			}
+		}
+
+		response := &tagsAutocompleteResponse{
+			Tags: tagModels,
+		}
+
+		shared.RenderJSON(w, response)
+	}
+}
+
 func mapToActivity(activityModel *activityModel) (*Activity, error) {
 	var activityID uuid.UUID
 
@@ -473,6 +533,22 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		}
 	default:
 		return nil, errors.New("invalid activity filter")
+	}
+
+	// Parse tag filters from URL parameters
+	if tagParams := params["tags"]; len(tagParams) > 0 {
+		var tags []string
+		for _, tagParam := range tagParams {
+			// Split comma-separated tags
+			tagParts := strings.Split(tagParam, ",")
+			for _, tag := range tagParts {
+				tag = strings.TrimSpace(tag)
+				if tag != "" {
+					tags = append(tags, strings.ToLower(tag))
+				}
+			}
+		}
+		filter.tags = tags
 	}
 
 	return filter, nil
