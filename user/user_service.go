@@ -9,14 +9,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type ProjectServiceInterface interface {
+	InitializeOrganization(ctx context.Context, organizationID uuid.UUID) error
+}
+
 type UserService struct {
-	config                  *shared.Config
-	repositoryTxer          shared.RepositoryTxer
-	mailResource            shared.MailResource
-	userRepository          UserRepository
-	organizationRepository  OrganizationRepository
-	inviteService           *OrganizationInviteService
-	organizationInitializer func(ctxWithTx context.Context, organizationID uuid.UUID) error
+	config                 *shared.Config
+	repositoryTxer         shared.RepositoryTxer
+	mailResource           shared.MailResource
+	userRepository         UserRepository
+	organizationRepository OrganizationRepository
+	inviteService          *OrganizationInviteService
+	projectService         ProjectServiceInterface
 }
 
 func NewInMemUserService() *UserService {
@@ -32,17 +36,17 @@ func NewUserService(
 	userRepository UserRepository,
 	organizationRepository OrganizationRepository,
 	inviteRepository OrganizationInviteRepository,
-	organizationInitializer func(ctxWithTx context.Context, organizationID uuid.UUID) error,
+	projectService ProjectServiceInterface,
 ) *UserService {
 	inviteService := NewOrganizationInviteService(repositoryTxer, inviteRepository)
 	return &UserService{
-		config:                  config,
-		repositoryTxer:          repositoryTxer,
-		mailResource:            mailResource,
-		userRepository:          userRepository,
-		organizationRepository:  organizationRepository,
-		inviteService:           inviteService,
-		organizationInitializer: organizationInitializer,
+		config:                 config,
+		repositoryTxer:         repositoryTxer,
+		mailResource:           mailResource,
+		userRepository:         userRepository,
+		organizationRepository: organizationRepository,
+		inviteService:          inviteService,
+		projectService:         projectService,
 	}
 }
 
@@ -98,7 +102,7 @@ func (a *UserService) SetUpNewUser(ctx context.Context, user *User, confirmation
 			return nil
 		},
 		func(ctx context.Context) error {
-			return a.organizationInitializer(ctx, organization.ID)
+			return a.projectService.InitializeOrganization(ctx, organization.ID)
 		},
 		// Send email confirmation link
 		func(ctx context.Context) error {

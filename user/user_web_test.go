@@ -47,9 +47,11 @@ func TestHandleSignUpFormWithSuccessfullSignUp(t *testing.T) {
 			repositoryTxer:         shared.NewInMemRepositoryTxer(),
 			mailResource:           mailService,
 			organizationRepository: NewInMemOrganizationRepository(),
-			organizationInitializer: func(ctxWithTx context.Context, organizationID uuid.UUID) error {
-				organizationInitializerCalled = true
-				return nil
+			projectService: &mockProjectService{
+				initializeOrganization: func(ctx context.Context, organizationID uuid.UUID) error {
+					organizationInitializerCalled = true
+					return nil
+				},
 			},
 			userRepository: userRepository,
 		},

@@ -86,7 +86,7 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	userRepository := user.NewDbUserRepository(connPool)
 	organizationRepository := user.NewDbOrganizationRepository(connPool)
 	organizationInviteRepository := user.NewDbOrganizationInviteRepository(connPool)
-	userService := user.NewUserService(&config, repositoryTxer, mailResource, userRepository, organizationRepository, organizationInviteRepository, projectService.OrganizationInitializer())
+	userService := user.NewUserService(&config, repositoryTxer, mailResource, userRepository, organizationRepository, organizationInviteRepository, projectService)
 	userWeb := user.NewUserWeb(&config, userService, userRepository)
 
 	// Auth

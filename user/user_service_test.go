@@ -9,6 +9,17 @@ import (
 	"github.com/matryer/is"
 )
 
+type mockProjectService struct {
+	initializeOrganization func(ctx context.Context, organizationID uuid.UUID) error
+}
+
+func (m *mockProjectService) InitializeOrganization(ctx context.Context, organizationID uuid.UUID) error {
+	if m.initializeOrganization != nil {
+		return m.initializeOrganization(ctx, organizationID)
+	}
+	return nil
+}
+
 func TestSetUpNewUser(t *testing.T) {
 	// Arrange
 	is := is.New(t)
@@ -28,9 +39,11 @@ func TestSetUpNewUser(t *testing.T) {
 		mailResource:           mailResource,
 		userRepository:         userRepository,
 		organizationRepository: organizationRepository,
-		organizationInitializer: func(ctxWithTx context.Context, organizationID uuid.UUID) error {
-			organizationInitializerCalled = true
-			return nil
+		projectService: &mockProjectService{
+			initializeOrganization: func(ctx context.Context, organizationID uuid.UUID) error {
+				organizationInitializerCalled = true
+				return nil
+			},
 		},
 	}
 
@@ -67,9 +80,7 @@ func TestSetUpNewUserWithUserRepositoryError(t *testing.T) {
 		mailResource:           mailResource,
 		userRepository:         userRepository,
 		organizationRepository: organizationRepository,
-		organizationInitializer: func(ctxWithTx context.Context, organizationID uuid.UUID) error {
-			return nil
-		},
+		projectService:         &mockProjectService{},
 	}
 
 	user := &User{

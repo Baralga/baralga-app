@@ -86,20 +86,18 @@ func (a *ProjectService) DeleteProjectByID(ctx context.Context, principal *share
 	)
 }
 
-func (a *ProjectService) OrganizationInitializer() func(ctx context.Context, organizationID uuid.UUID) error {
-	return func(ctx context.Context, organizationID uuid.UUID) error {
-		// Create initial project
-		project := &Project{
-			ID:             uuid.New(),
-			Title:          "My Project",
-			Active:         true,
-			OrganizationID: organizationID,
-		}
-
-		_, err := a.projectRepository.InsertProject(ctx, project)
-		if err != nil {
-			return err
-		}
-		return nil
+func (a *ProjectService) InitializeOrganization(ctx context.Context, organizationID uuid.UUID) error {
+	// Create initial project
+	project := &Project{
+		ID:             uuid.New(),
+		Title:          "My Project",
+		Active:         true,
+		OrganizationID: organizationID,
 	}
+
+	_, err := a.projectRepository.InsertProject(ctx, project)
+	if err != nil {
+		return err
+	}
+	return nil
 }
