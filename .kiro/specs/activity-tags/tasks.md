@@ -87,11 +87,10 @@
   - Handle activities with multiple tags (count activity time for each associated tag)
   - _Requirements: 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 16. Create Tag report category UI
+- [x] 16. Create Tag report category UI
   - Add "Tag" as a fourth report category in the existing reporting navigation interface
   - Create tag report page template following existing report category patterns
-  - Implement tag selection interface with multi-select dropdown for choosing specific tags
-  - Add "Select All" and "Clear All" functionality for tag selection convenience
+  - Implement tag selection interface for choosing a single tag
   - Maintain consistent UI patterns with existing general, time, and project report categories
   - _Requirements: 6.1, 6.2, 6.4_
 

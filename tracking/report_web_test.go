@@ -1,11 +1,13 @@
 package tracking
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/baralga/shared"
 	"github.com/matryer/is"
@@ -147,6 +149,101 @@ func TestHandleReportPageWithProject(t *testing.T) {
 	is.True(strings.Contains(htmlBody, "id=\"project-report\""))
 }
 
+func TestHandleReportPageWithTag(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+
+	a := &ReportWeb{
+		config: &shared.Config{},
+		activityService: &ActitivityService{
+			activityRepository: NewInMemActivityRepository(),
+			tagRepository:      tagRepo,
+			tagService:         tagService,
+		},
+	}
+
+	r, _ := http.NewRequest("GET", "/reports?c=tag", nil)
+	r.Header.Add("HX-Request", "true")
+	r.Header.Add("HX-Target", "baralga__report_content")
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{}))
+
+	a.HandleReportPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+	is.True(strings.Contains(htmlBody, "No tagged activities found"))
+}
+
+func TestHandleReportPageWithTagData(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	activityRepo := NewInMemActivityRepository()
+	repositoryTxer := &shared.InMemRepositoryTxer{}
+
+	activityService := &ActitivityService{
+		repositoryTxer:     repositoryTxer,
+		activityRepository: activityRepo,
+		tagRepository:      tagRepo,
+		tagService:         tagService,
+	}
+
+	principal := &shared.Principal{
+		OrganizationID: shared.OrganizationIDSample,
+		Username:       "testuser",
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	// Create an activity with tags in the current week (2025-39)
+	start, _ := time.Parse(time.RFC3339, "2025-09-27T10:00:00.000Z")
+	end, _ := time.Parse(time.RFC3339, "2025-09-27T11:00:00.000Z")
+
+	activity := &Activity{
+		Start:          start,
+		End:            end,
+		Description:    "Test activity with tags",
+		ProjectID:      shared.ProjectIDSample,
+		OrganizationID: principal.OrganizationID,
+		Username:       principal.Username,
+		Tags: []*Tag{
+			{Name: "meeting"},
+			{Name: "development"},
+		},
+	}
+
+	_, err := activityService.CreateActivity(context.Background(), principal, activity)
+	is.NoErr(err)
+
+	a := &ReportWeb{
+		config:          &shared.Config{},
+		activityService: activityService,
+	}
+
+	r, _ := http.NewRequest("GET", "/reports?c=tag", nil)
+	r.Header.Add("HX-Request", "true")
+	r.Header.Add("HX-Target", "baralga__report_content")
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), principal))
+
+	a.HandleReportPage()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+
+	htmlBody := httpRec.Body.String()
+
+	// The in-memory tag repository returns empty results for GetTagReportData
+	// but we can still verify that the tag report UI structure is correct
+	// and that it shows the "No tagged activities found" message
+	is.True(strings.Contains(htmlBody, "No tagged activities found"))
+
+	// Verify that the Tag navigation is active
+	is.True(strings.Contains(htmlBody, `<a class="nav-link active"`))
+	is.True(strings.Contains(htmlBody, `<i class="bi-tags me-2"></i>Tag`))
+}
+
 func TestReportViewFromQueryParams(t *testing.T) {
 	is := is.New(t)
 
@@ -257,5 +354,19 @@ func TestReportViewFromQueryParams(t *testing.T) {
 		// Assert
 		is.Equal(view.main, "time")
 		is.Equal(view.sub, "d")
+	})
+
+	t.Run("view with tag category", func(t *testing.T) {
+		// Arrange
+		params := make(url.Values)
+		params["t"] = []string{"week"}
+		params["c"] = []string{"tag"}
+
+		// Act
+		view := reportViewFromQueryParams(params, "week")
+
+		// Assert
+		is.Equal(view.main, "tag")
+		is.Equal(view.sub, "")
 	})
 }

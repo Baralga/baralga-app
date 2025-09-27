@@ -221,12 +221,12 @@ func (r *DbTagRepository) GetTagReportData(ctx context.Context, filter *Activiti
 		SELECT 
 			t.name as tag_name,
 			t.color as tag_color,
-			EXTRACT(YEAR FROM a.start) as year,
-			EXTRACT(QUARTER FROM a.start) as quarter,
-			EXTRACT(MONTH FROM a.start) as month,
-			EXTRACT(WEEK FROM a.start) as week,
-			EXTRACT(DAY FROM a.start) as day,
-			SUM(EXTRACT(EPOCH FROM (a.end_time - a.start)) / 60) as duration_minutes,
+			EXTRACT(YEAR FROM a.start_time) as year,
+			EXTRACT(QUARTER FROM a.start_time) as quarter,
+			EXTRACT(MONTH FROM a.start_time) as month,
+			EXTRACT(WEEK FROM a.start_time) as week,
+			EXTRACT(DAY FROM a.start_time) as day,
+			SUM(EXTRACT(EPOCH FROM (a.end_time - a.start_time)) / 60) as duration_minutes,
 			COUNT(DISTINCT a.activity_id) as activity_count
 		FROM activities a
 		INNER JOIN activity_tags at ON a.activity_id = at.activity_id
@@ -238,13 +238,13 @@ func (r *DbTagRepository) GetTagReportData(ctx context.Context, filter *Activiti
 
 	// Add date range filters
 	if !filter.Start.IsZero() {
-		baseQuery += ` AND a.start >= $` + strconv.Itoa(argIndex)
+		baseQuery += ` AND a.start_time >= $` + strconv.Itoa(argIndex)
 		args = append(args, filter.Start)
 		argIndex++
 	}
 
 	if !filter.End.IsZero() {
-		baseQuery += ` AND a.start < $` + strconv.Itoa(argIndex)
+		baseQuery += ` AND a.start_time < $` + strconv.Itoa(argIndex)
 		args = append(args, filter.End)
 		argIndex++
 	}
@@ -268,24 +268,25 @@ func (r *DbTagRepository) GetTagReportData(ctx context.Context, filter *Activiti
 	}
 
 	// Add GROUP BY clause based on aggregation type
+	// Note: All columns in SELECT must be in GROUP BY (PostgreSQL requirement)
 	var groupByClause string
 	switch aggregateBy {
 	case "day":
-		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start)
-						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start), t.name`
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start_time), EXTRACT(QUARTER FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(WEEK FROM a.start_time), EXTRACT(DAY FROM a.start_time)
+						ORDER BY EXTRACT(YEAR FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(DAY FROM a.start_time), t.name`
 	case "week":
-		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(WEEK FROM a.start)
-						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(WEEK FROM a.start), t.name`
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start_time), EXTRACT(QUARTER FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(WEEK FROM a.start_time), EXTRACT(DAY FROM a.start_time)
+						ORDER BY EXTRACT(YEAR FROM a.start_time), EXTRACT(WEEK FROM a.start_time), t.name`
 	case "month":
-		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start)
-						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), t.name`
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start_time), EXTRACT(QUARTER FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(WEEK FROM a.start_time), EXTRACT(DAY FROM a.start_time)
+						ORDER BY EXTRACT(YEAR FROM a.start_time), EXTRACT(MONTH FROM a.start_time), t.name`
 	case "quarter":
-		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(QUARTER FROM a.start)
-						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(QUARTER FROM a.start), t.name`
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start_time), EXTRACT(QUARTER FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(WEEK FROM a.start_time), EXTRACT(DAY FROM a.start_time)
+						ORDER BY EXTRACT(YEAR FROM a.start_time), EXTRACT(QUARTER FROM a.start_time), t.name`
 	default:
 		// Default to day aggregation
-		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start)
-						ORDER BY EXTRACT(YEAR FROM a.start), EXTRACT(MONTH FROM a.start), EXTRACT(DAY FROM a.start), t.name`
+		groupByClause = `GROUP BY t.name, t.color, EXTRACT(YEAR FROM a.start_time), EXTRACT(QUARTER FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(WEEK FROM a.start_time), EXTRACT(DAY FROM a.start_time)
+						ORDER BY EXTRACT(YEAR FROM a.start_time), EXTRACT(MONTH FROM a.start_time), EXTRACT(DAY FROM a.start_time), t.name`
 	}
 
 	finalQuery := baseQuery + ` ` + groupByClause
