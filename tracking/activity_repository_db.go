@@ -297,7 +297,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	if len(filter.Tags) > 0 {
 		tagJoin = `INNER JOIN activity_tags at ON a.id = at.activity_id
 				   INNER JOIN tags t ON at.tag_id = t.tag_id`
-		
+
 		// Create placeholders for tag names
 		tagPlaceholders := make([]string, len(filter.Tags))
 		for i, tag := range filter.Tags {
@@ -407,7 +407,7 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	if len(filter.Tags) > 0 {
 		countTagJoin = `INNER JOIN activity_tags at ON activities.activity_id = at.activity_id
 						INNER JOIN tags t ON at.tag_id = t.tag_id`
-		
+
 		// Add tag parameters for count query
 		tagPlaceholders := make([]string, len(filter.Tags))
 		for i, tag := range filter.Tags {
@@ -620,7 +620,7 @@ func (r *DbActivityRepository) loadTagsForActivities(ctx context.Context, activi
 	activityMap := make(map[uuid.UUID]*Activity)
 	activityIDs := make([]interface{}, len(activities))
 	placeholders := make([]string, len(activities))
-	
+
 	for i, activity := range activities {
 		activityMap[activity.ID] = activity
 		activityIDs[i] = activity.ID
@@ -629,7 +629,7 @@ func (r *DbActivityRepository) loadTagsForActivities(ctx context.Context, activi
 
 	// Query to get all tags for these activities
 	sql := fmt.Sprintf(`
-		SELECT at.activity_id, t.name
+		SELECT at.activity_id, t.tag_id, t.name, t.color, t.org_id, t.created_at
 		FROM activity_tags at
 		INNER JOIN tags t ON at.tag_id = t.tag_id
 		WHERE at.activity_id IN (%s)
@@ -646,17 +646,28 @@ func (r *DbActivityRepository) loadTagsForActivities(ctx context.Context, activi
 	for rows.Next() {
 		var (
 			activityID string
+			tagID      string
 			tagName    string
+			tagColor   string
+			orgID      string
+			createdAt  time.Time
 		)
 
-		err = rows.Scan(&activityID, &tagName)
+		err = rows.Scan(&activityID, &tagID, &tagName, &tagColor, &orgID, &createdAt)
 		if err != nil {
 			return err
 		}
 
 		activityUUID := uuid.MustParse(activityID)
 		if activity, exists := activityMap[activityUUID]; exists {
-			activity.Tags = append(activity.Tags, tagName)
+			tag := &Tag{
+				ID:             uuid.MustParse(tagID),
+				Name:           tagName,
+				Color:          tagColor,
+				OrganizationID: uuid.MustParse(orgID),
+				CreatedAt:      createdAt,
+			}
+			activity.Tags = append(activity.Tags, tag)
 		}
 	}
 

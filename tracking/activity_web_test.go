@@ -17,10 +17,13 @@ import (
 // Helper function to create a properly initialized ActivityService for web tests
 func createTestActivityServiceForWeb(repo ActivityRepository) *ActitivityService {
 	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	tagRepo.SetTagService(tagService)
 	return &ActitivityService{
 		repositoryTxer:     shared.NewInMemRepositoryTxer(),
 		activityRepository: repo,
 		tagRepository:      tagRepo,
+		tagService:         tagService,
 	}
 }
 
@@ -170,9 +173,9 @@ func TestHandleCreateActivityWithTags(t *testing.T) {
 	// Verify the activity was created with tags
 	createdActivity := repo.activities[len(repo.activities)-1]
 	is.Equal(len(createdActivity.Tags), 3)
-	is.True(contains(createdActivity.Tags, "meeting"))
-	is.True(contains(createdActivity.Tags, "development"))
-	is.True(contains(createdActivity.Tags, "bug-fix"))
+	is.True(containsTag(createdActivity.Tags, "meeting"))
+	is.True(containsTag(createdActivity.Tags, "development"))
+	is.True(containsTag(createdActivity.Tags, "bug-fix"))
 }
 
 func TestMapFormToActivityWithTags(t *testing.T) {
@@ -190,9 +193,9 @@ func TestMapFormToActivityWithTags(t *testing.T) {
 	activity, err := mapFormToActivity(formModel)
 	is.NoErr(err)
 	is.Equal(len(activity.Tags), 3)
-	is.True(contains(activity.Tags, "meeting"))
-	is.True(contains(activity.Tags, "development"))
-	is.True(contains(activity.Tags, "bug-fix"))
+	is.True(containsTag(activity.Tags, "meeting"))
+	is.True(containsTag(activity.Tags, "development"))
+	is.True(containsTag(activity.Tags, "bug-fix"))
 }
 
 func TestMapFormToActivityWithSpaceSeparatedTags(t *testing.T) {
@@ -210,9 +213,9 @@ func TestMapFormToActivityWithSpaceSeparatedTags(t *testing.T) {
 	activity, err := mapFormToActivity(formModel)
 	is.NoErr(err)
 	is.Equal(len(activity.Tags), 3)
-	is.True(contains(activity.Tags, "meeting"))
-	is.True(contains(activity.Tags, "development"))
-	is.True(contains(activity.Tags, "bug-fix"))
+	is.True(containsTag(activity.Tags, "meeting"))
+	is.True(containsTag(activity.Tags, "development"))
+	is.True(containsTag(activity.Tags, "bug-fix"))
 }
 
 func TestMapFormToActivityWithDuplicateTags(t *testing.T) {
@@ -230,8 +233,8 @@ func TestMapFormToActivityWithDuplicateTags(t *testing.T) {
 	activity, err := mapFormToActivity(formModel)
 	is.NoErr(err)
 	is.Equal(len(activity.Tags), 2) // Should deduplicate case-insensitive
-	is.True(contains(activity.Tags, "meeting"))
-	is.True(contains(activity.Tags, "development"))
+	is.True(containsTag(activity.Tags, "meeting"))
+	is.True(containsTag(activity.Tags, "development"))
 }
 
 func TestMapActivityToFormWithTags(t *testing.T) {
@@ -242,7 +245,11 @@ func TestMapActivityToFormWithTags(t *testing.T) {
 		ID:          activityID,
 		ProjectID:   shared.ProjectIDSample,
 		Description: "My description",
-		Tags:        []string{"meeting", "development", "bug-fix"},
+		Tags: []*Tag{
+			{Name: "meeting"},
+			{Name: "development"},
+			{Name: "bug-fix"},
+		},
 	}
 
 	formModel := mapActivityToForm(activity)
@@ -258,6 +265,7 @@ func TestHandleTrackingPageDisplaysTagsWithoutFiltering(t *testing.T) {
 	projectRepository := NewInMemProjectRepository()
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
+	tagRepository.SetTagService(tagService)
 	repositoryTxer := shared.NewInMemRepositoryTxer()
 
 	activityService := NewActitivityService(repositoryTxer, activityRepository, tagRepository, tagService)
@@ -359,4 +367,14 @@ func TestHandleEndTimeValidation(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "10:00"))
+}
+
+// Helper function to check if a tag name exists in a slice of Tag objects
+func containsTag(tags []*Tag, tagName string) bool {
+	for _, tag := range tags {
+		if tag.Name == tagName {
+			return true
+		}
+	}
+	return false
 }

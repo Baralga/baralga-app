@@ -34,7 +34,7 @@ The existing `Activity` struct will be extended to include tags:
 ```go
 type Activity struct {
     // existing fields...
-    Tags   []string  // slice of tag names for easy handling
+    Tags   []Tag  // slice of tags
 } 
 
 type Tag struct {

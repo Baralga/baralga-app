@@ -2,6 +2,7 @@ package tracking
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/baralga/shared"
@@ -12,6 +13,8 @@ import (
 func TestInMemTagRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := NewInMemTagRepository()
+	tagService := NewTagService(repo)
+	repo.SetTagService(tagService)
 
 	t.Run("FindTagsByOrganization returns sample tags", func(t *testing.T) {
 		tags, err := repo.FindTagsByOrganization(ctx, shared.OrganizationIDSample, "")
@@ -87,6 +90,37 @@ func TestInMemTagRepository(t *testing.T) {
 
 		for _, tag := range tags {
 			assert.NotEqual(t, unusedTag.ID, tag.ID, "unused tag should be deleted")
+		}
+	})
+
+	t.Run("SyncTagsForActivity generates colors for new tags", func(t *testing.T) {
+		repo := NewInMemTagRepository()
+		tagService := NewTagService(repo)
+		repo.SetTagService(tagService)
+		ctx := context.Background()
+		activityID := uuid.New()
+		tagNames := []string{"bug-fix", "new-feature"}
+
+		err := repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, tagNames)
+		assert.NoError(t, err)
+
+		// Verify tags were created with generated colors
+		tags, err := repo.FindTagsByOrganization(ctx, shared.OrganizationIDSample, "")
+		assert.NoError(t, err)
+
+		// Should have original 3 sample tags + 2 new ones = 5 total
+		assert.Equal(t, 5, len(tags))
+
+		// Find the new tags and verify they have colors (not default gray)
+		for _, tag := range tags {
+			if tag.Name == "bug-fix" || tag.Name == "new-feature" {
+				assert.NotEqual(t, "", tag.Color)
+				assert.True(t, strings.HasPrefix(tag.Color, "#"))
+				assert.Equal(t, 7, len(tag.Color)) // #RRGGBB format
+				// Verify it's not the default color (should be generated)
+				expectedColor := tagService.GetTagColor(tag.Name)
+				assert.Equal(t, expectedColor, tag.Color)
+			}
 		}
 	})
 }

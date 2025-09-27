@@ -14,7 +14,8 @@ import (
 
 // DbTagRepository is a SQL database repository for tags
 type DbTagRepository struct {
-	connPool *pgxpool.Pool
+	connPool   *pgxpool.Pool
+	tagService *TagService
 }
 
 var _ TagRepository = (*DbTagRepository)(nil)
@@ -30,11 +31,11 @@ func NewDbTagRepository(connPool *pgxpool.Pool) *DbTagRepository {
 func (r *DbTagRepository) FindTagsByOrganization(ctx context.Context, organizationID uuid.UUID, query string) ([]*Tag, error) {
 	var rows pgx.Rows
 	var err error
-	
+
 	if query == "" {
 		// Return all tags for the organization if no query provided
 		rows, err = r.connPool.Query(ctx,
-			`SELECT tag_id, name, org_id, created_at 
+			`SELECT tag_id, name, color, org_id, created_at 
 			 FROM tags 
 			 WHERE org_id = $1 
 			 ORDER BY name ASC`,
@@ -43,14 +44,14 @@ func (r *DbTagRepository) FindTagsByOrganization(ctx context.Context, organizati
 		// Use trigram similarity search for autocomplete
 		normalizedQuery := strings.ToLower(strings.TrimSpace(query))
 		rows, err = r.connPool.Query(ctx,
-			`SELECT tag_id, name, org_id, created_at 
+			`SELECT tag_id, name, color, org_id, created_at 
 			 FROM tags 
 			 WHERE org_id = $1 AND name % $2
 			 ORDER BY similarity(name, $2) DESC, name ASC
 			 LIMIT 20`,
 			organizationID, normalizedQuery)
 	}
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -61,11 +62,12 @@ func (r *DbTagRepository) FindTagsByOrganization(ctx context.Context, organizati
 		var (
 			tagID     string
 			name      string
+			color     string
 			orgID     string
 			createdAt time.Time
 		)
 
-		err = rows.Scan(&tagID, &name, &orgID, &createdAt)
+		err = rows.Scan(&tagID, &name, &color, &orgID, &createdAt)
 		if err != nil {
 			return nil, err
 		}
@@ -73,6 +75,7 @@ func (r *DbTagRepository) FindTagsByOrganization(ctx context.Context, organizati
 		tag := &Tag{
 			ID:             uuid.MustParse(tagID),
 			Name:           name,
+			Color:          color,
 			OrganizationID: uuid.MustParse(orgID),
 			CreatedAt:      createdAt,
 		}
@@ -82,8 +85,13 @@ func (r *DbTagRepository) FindTagsByOrganization(ctx context.Context, organizati
 	return tags, nil
 }
 
-// FindOrCreateTag gets existing or creates new tag for organization
+// FindOrCreateTag gets existing or creates new tag for organization with default color
 func (r *DbTagRepository) FindOrCreateTag(ctx context.Context, name string, organizationID uuid.UUID) (*Tag, error) {
+	return r.FindOrCreateTagWithColor(ctx, name, organizationID, "#6c757d")
+}
+
+// FindOrCreateTagWithColor gets existing or creates new tag for organization with specified color
+func (r *DbTagRepository) FindOrCreateTagWithColor(ctx context.Context, name string, organizationID uuid.UUID, color string) (*Tag, error) {
 	// Normalize tag name to lowercase for case-insensitive handling
 	normalizedName := strings.ToLower(strings.TrimSpace(name))
 	if normalizedName == "" {
@@ -94,7 +102,7 @@ func (r *DbTagRepository) FindOrCreateTag(ctx context.Context, name string, orga
 
 	// First try to find existing tag
 	row := tx.QueryRow(ctx,
-		`SELECT tag_id, name, org_id, created_at 
+		`SELECT tag_id, name, color, org_id, created_at 
 		 FROM tags 
 		 WHERE name = $1 AND org_id = $2`,
 		normalizedName, organizationID)
@@ -102,16 +110,18 @@ func (r *DbTagRepository) FindOrCreateTag(ctx context.Context, name string, orga
 	var (
 		tagID     string
 		tagName   string
+		tagColor  string
 		orgID     string
 		createdAt time.Time
 	)
 
-	err := row.Scan(&tagID, &tagName, &orgID, &createdAt)
+	err := row.Scan(&tagID, &tagName, &tagColor, &orgID, &createdAt)
 	if err == nil {
 		// Tag exists, return it
 		return &Tag{
 			ID:             uuid.MustParse(tagID),
 			Name:           tagName,
+			Color:          tagColor,
 			OrganizationID: uuid.MustParse(orgID),
 			CreatedAt:      createdAt,
 		}, nil
@@ -126,9 +136,9 @@ func (r *DbTagRepository) FindOrCreateTag(ctx context.Context, name string, orga
 	now := time.Now()
 
 	_, err = tx.Exec(ctx,
-		`INSERT INTO tags (tag_id, name, org_id, created_at) 
-		 VALUES ($1, $2, $3, $4)`,
-		newTagID, normalizedName, organizationID, now)
+		`INSERT INTO tags (tag_id, name, color, org_id, created_at) 
+		 VALUES ($1, $2, $3, $4, $5)`,
+		newTagID, normalizedName, color, organizationID, now)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +146,7 @@ func (r *DbTagRepository) FindOrCreateTag(ctx context.Context, name string, orga
 	return &Tag{
 		ID:             newTagID,
 		Name:           normalizedName,
+		Color:          color,
 		OrganizationID: organizationID,
 		CreatedAt:      now,
 	}, nil
@@ -169,7 +180,9 @@ func (r *DbTagRepository) SyncTagsForActivity(ctx context.Context, activityID uu
 
 	// Create or find each tag and create the relationship
 	for tagName := range normalizedTags {
-		tag, err := r.FindOrCreateTag(ctx, tagName, organizationID)
+		// Generate color for new tags (existing tags will keep their color)
+		color := r.tagService.GetTagColor(tagName)
+		tag, err := r.FindOrCreateTagWithColor(ctx, tagName, organizationID, color)
 		if err != nil {
 			return err
 		}
@@ -201,6 +214,11 @@ func (r *DbTagRepository) DeleteUnusedTags(ctx context.Context, organizationID u
 			 WHERE org_id = $1
 		 )`,
 		organizationID)
-	
+
 	return err
+}
+
+// SetTagService sets the tag service for color generation
+func (r *DbTagRepository) SetTagService(tagService *TagService) {
+	r.tagService = tagService
 }

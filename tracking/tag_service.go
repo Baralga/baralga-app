@@ -2,6 +2,7 @@ package tracking
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"regexp"
 	"strings"
@@ -42,7 +43,7 @@ func (s *TagService) GetTagsForAutocomplete(ctx context.Context, organizationID 
 
 	// Normalize the query for consistent matching
 	normalizedQuery := s.NormalizeTagName(query)
-	
+
 	return s.tagRepository.FindTagsByOrganization(ctx, organizationID, normalizedQuery)
 }
 
@@ -62,7 +63,7 @@ func (s *TagService) ParseTagsFromString(tagString string) []string {
 	// Split by comma first, then by spaces within each part
 	var tags []string
 	parts := strings.Split(tagString, ",")
-	
+
 	for _, part := range parts {
 		// Split each part by spaces and add non-empty tags
 		spaceSplit := strings.Fields(strings.TrimSpace(part))
@@ -87,20 +88,20 @@ func (s *TagService) ValidateTags(tags []string) error {
 
 	// Validate each tag
 	tagPattern := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
-	
+
 	for _, tag := range tags {
 		normalizedTag := s.NormalizeTagName(tag)
-		
+
 		// Check minimum length
 		if len(normalizedTag) < 1 {
 			return ErrTagTooShort
 		}
-		
+
 		// Check maximum length
 		if len(normalizedTag) > 50 {
 			return ErrTagTooLong
 		}
-		
+
 		// Check format (alphanumeric, hyphens, underscores only)
 		if !tagPattern.MatchString(normalizedTag) {
 			return fmt.Errorf("%w: '%s'", ErrInvalidTagFormat, tag)
@@ -110,11 +111,51 @@ func (s *TagService) ValidateTags(tags []string) error {
 	return nil
 }
 
+// GetTagColor generates a consistent color for a tag based on its name
+// Uses SHA256 hash of the normalized tag name to ensure consistency
+func (s *TagService) GetTagColor(tagName string) string {
+	// Predefined set of accessible colors with good contrast
+	colors := []string{
+		"#007bff",   // Blue
+		"#28a745",   // Green
+		"#dc3545",   // Red
+		"#ffc107",   // Yellow
+		"#71c1cdff", // Cyan
+		"#6f42c1",   // Purple
+		"#fd7e14",   // Orange
+		"#20c997",   // Teal
+		"#e83e8c",   // Pink
+		"#6c757d",   // Gray
+		"#343a40",   // Dark
+		"#495057",   // Dark Gray
+		"#0056b3",   // Dark Blue
+		"#155724",   // Dark Green
+		"#721c24",   // Dark Red
+		"#856404",   // Dark Yellow
+	}
+
+	// Default fallback color
+	if tagName == "" {
+		return "#6c757d"
+	}
+
+	// Normalize tag name for consistent hashing
+	normalized := s.NormalizeTagName(tagName)
+
+	// Generate hash
+	hash := sha256.Sum256([]byte(normalized))
+
+	// Use first byte of hash to select color
+	colorIndex := int(hash[0]) % len(colors)
+
+	return colors[colorIndex]
+}
+
 // removeDuplicates removes duplicate tags and normalizes them
 func (s *TagService) removeDuplicates(tags []string) []string {
 	seen := make(map[string]bool)
 	var result []string
-	
+
 	for _, tag := range tags {
 		normalized := s.NormalizeTagName(tag)
 		if normalized != "" && !seen[normalized] {
@@ -122,6 +163,6 @@ func (s *TagService) removeDuplicates(tags []string) []string {
 			result = append(result, normalized)
 		}
 	}
-	
+
 	return result
 }

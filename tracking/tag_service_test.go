@@ -268,10 +268,10 @@ func (m *mockTagRepository) DeleteUnusedTags(ctx context.Context, organizationID
 
 func TestTagService_GetTagsForAutocomplete(t *testing.T) {
 	is := is.New(t)
-	
+
 	orgID := uuid.New()
 	otherOrgID := uuid.New()
-	
+
 	mockRepo := &mockTagRepository{
 		tags: []*Tag{
 			{ID: uuid.New(), Name: "meeting", OrganizationID: orgID},
@@ -281,7 +281,7 @@ func TestTagService_GetTagsForAutocomplete(t *testing.T) {
 			{ID: uuid.New(), Name: "other-org-tag", OrganizationID: otherOrgID},
 		},
 	}
-	
+
 	service := NewTagService(mockRepo)
 	ctx := context.Background()
 
@@ -330,4 +330,59 @@ func TestTagService_GetTagsForAutocomplete(t *testing.T) {
 			is.Equal(len(result), tt.expectedCount)
 		})
 	}
+}
+
+func TestTagService_GetTagColor(t *testing.T) {
+	is := is.New(t)
+	service := NewTagService(nil)
+
+	tests := []struct {
+		name     string
+		tagName  string
+		expected string
+	}{
+		{
+			name:     "consistent color for same tag",
+			tagName:  "development",
+			expected: service.GetTagColor("development"),
+		},
+		{
+			name:     "case insensitive consistency",
+			tagName:  "DEVELOPMENT",
+			expected: service.GetTagColor("development"),
+		},
+		{
+			name:     "empty tag returns default color",
+			tagName:  "",
+			expected: "#6c757d",
+		},
+		{
+			name:     "different tags get different colors",
+			tagName:  "meeting",
+			expected: service.GetTagColor("meeting"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := service.GetTagColor(tt.tagName)
+			is.Equal(result, tt.expected)
+
+			// Verify it's a valid hex color
+			is.True(strings.HasPrefix(result, "#"))
+			is.Equal(len(result), 7) // #RRGGBB format
+		})
+	}
+
+	// Test consistency - same tag should always return same color
+	t.Run("consistency check", func(t *testing.T) {
+		tag1 := "development"
+		color1 := service.GetTagColor(tag1)
+		color2 := service.GetTagColor(tag1)
+		is.Equal(color1, color2)
+
+		// Case insensitive consistency
+		color3 := service.GetTagColor("DEVELOPMENT")
+		is.Equal(color1, color3)
+	})
 }

@@ -28,13 +28,14 @@ type Activity struct {
 	ProjectID      uuid.UUID
 	OrganizationID uuid.UUID
 	Username       string
-	Tags           []string // slice of tag names for easy handling
+	Tags           []*Tag // slice of Tag objects with full information
 }
 
 // Tag represents a tag that can be associated with activities
 type Tag struct {
 	ID             uuid.UUID
-	Name           string    // normalized (lowercase)
+	Name           string // normalized (lowercase)
+	Color          string // hex color code
 	OrganizationID uuid.UUID
 	CreatedAt      time.Time
 }

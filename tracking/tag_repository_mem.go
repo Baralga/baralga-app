@@ -14,6 +14,7 @@ import (
 type InMemTagRepository struct {
 	tags         []*Tag
 	activityTags map[uuid.UUID][]uuid.UUID // activityID -> []tagID
+	tagService   *TagService
 }
 
 var _ TagRepository = (*InMemTagRepository)(nil)
@@ -25,18 +26,21 @@ func NewInMemTagRepository() *InMemTagRepository {
 		{
 			ID:             uuid.MustParse("00000000-0000-0000-3333-000000000001"),
 			Name:           "development",
+			Color:          "#28a745",
 			OrganizationID: shared.OrganizationIDSample,
 			CreatedAt:      time.Now().Add(-24 * time.Hour),
 		},
 		{
 			ID:             uuid.MustParse("00000000-0000-0000-3333-000000000002"),
 			Name:           "meeting",
+			Color:          "#007bff",
 			OrganizationID: shared.OrganizationIDSample,
 			CreatedAt:      time.Now().Add(-12 * time.Hour),
 		},
 		{
 			ID:             uuid.MustParse("00000000-0000-0000-3333-000000000003"),
 			Name:           "testing",
+			Color:          "#dc3545",
 			OrganizationID: shared.OrganizationIDSample,
 			CreatedAt:      time.Now().Add(-6 * time.Hour),
 		},
@@ -93,10 +97,11 @@ func (r *InMemTagRepository) FindOrCreateTag(ctx context.Context, name string, o
 		}
 	}
 
-	// Tag doesn't exist, create it
+	// Tag doesn't exist, create it with default color
 	newTag := &Tag{
 		ID:             uuid.New(),
 		Name:           normalizedName,
+		Color:          "#6c757d", // Default gray color
 		OrganizationID: organizationID,
 		CreatedAt:      time.Now(),
 	}
@@ -127,7 +132,9 @@ func (r *InMemTagRepository) SyncTagsForActivity(ctx context.Context, activityID
 	// Create or find each tag and create the relationship
 	var tagIDs []uuid.UUID
 	for tagName := range normalizedTags {
-		tag, err := r.FindOrCreateTag(ctx, tagName, organizationID)
+		// Generate color for new tags (existing tags will keep their color)
+		color := r.tagService.GetTagColor(tagName)
+		tag, err := r.findOrCreateTagWithColor(ctx, tagName, organizationID, color)
 		if err != nil {
 			return err
 		}
@@ -140,6 +147,34 @@ func (r *InMemTagRepository) SyncTagsForActivity(ctx context.Context, activityID
 	}
 
 	return nil
+}
+
+// findOrCreateTagWithColor gets existing or creates new tag for organization with specified color
+func (r *InMemTagRepository) findOrCreateTagWithColor(ctx context.Context, name string, organizationID uuid.UUID, color string) (*Tag, error) {
+	// Normalize tag name to lowercase for case-insensitive handling
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	if normalizedName == "" {
+		return nil, errors.New("tag name cannot be empty")
+	}
+
+	// First try to find existing tag
+	for _, tag := range r.tags {
+		if tag.Name == normalizedName && tag.OrganizationID == organizationID {
+			return tag, nil
+		}
+	}
+
+	// Tag doesn't exist, create it with the provided color
+	newTag := &Tag{
+		ID:             uuid.New(),
+		Name:           normalizedName,
+		Color:          color,
+		OrganizationID: organizationID,
+		CreatedAt:      time.Now(),
+	}
+
+	r.tags = append(r.tags, newTag)
+	return newTag, nil
 }
 
 // DeleteUnusedTags cleanup method for organization-level cleanup
@@ -168,4 +203,9 @@ func (r *InMemTagRepository) DeleteUnusedTags(ctx context.Context, organizationI
 
 	r.tags = remainingTags
 	return nil
+}
+
+// SetTagService sets the tag service for color generation
+func (r *InMemTagRepository) SetTagService(tagService *TagService) {
+	r.tagService = tagService
 }

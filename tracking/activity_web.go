@@ -688,11 +688,11 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 						g.If(len(activity.Tags) > 0,
 							Div(
 								Class("d-flex flex-wrap gap-1"),
-								g.Group(g.Map(activity.Tags, func(tag string) g.Node {
+								g.Group(g.Map(activity.Tags, func(tag *Tag) g.Node {
 									return Span(
-										Class("badge bg-light text-dark"),
-										StyleAttr("font-size: 0.7em;"),
-										g.Text(tag),
+										Class("badge text-white"),
+										StyleAttr(fmt.Sprintf("font-size: 0.7em; background-color: %s;", tag.Color)),
+										g.Text(tag.Name),
 									)
 								})),
 							),
@@ -1132,7 +1132,7 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 	}
 
 	// Parse tags from comma/space-separated string
-	var tags []string
+	var tags []*Tag
 	if formModel.Tags != "" {
 		// Split by comma and space, then clean up
 		tagParts := strings.FieldsFunc(formModel.Tags, func(c rune) bool {
@@ -1150,9 +1150,11 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 			}
 		}
 
-		// Convert back to slice
-		for tag := range tagMap {
-			tags = append(tags, tag)
+		// Convert to Tag objects (service layer will handle full tag creation)
+		for tagName := range tagMap {
+			tags = append(tags, &Tag{
+				Name: tagName,
+			})
 		}
 	}
 
@@ -1170,7 +1172,11 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 
 func mapActivityToForm(activity Activity) activityFormModel {
 	// Convert tags slice to comma-separated string
-	tagsString := strings.Join(activity.Tags, ", ")
+	tagNames := make([]string, len(activity.Tags))
+	for i, tag := range activity.Tags {
+		tagNames[i] = tag.Name
+	}
+	tagsString := strings.Join(tagNames, ", ")
 
 	return activityFormModel{
 		ID:          activity.ID.String(),

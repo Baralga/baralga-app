@@ -69,15 +69,16 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	activity.OrganizationID = principal.OrganizationID
 	activity.Username = principal.Username
 
-	// Normalize and validate tags using TagService
-	normalizedTags := make([]string, len(activity.Tags))
+	// Normalize tag names and update Tag objects
+	tagNames := make([]string, len(activity.Tags))
 	for i, tag := range activity.Tags {
-		normalizedTags[i] = a.tagService.NormalizeTagName(tag)
+		normalizedName := a.tagService.NormalizeTagName(tag.Name)
+		tag.Name = normalizedName // Update the tag object with normalized name
+		tagNames[i] = normalizedName
 	}
-	activity.Tags = normalizedTags
 
 	// Validate tags
-	if err := a.tagService.ValidateTags(activity.Tags); err != nil {
+	if err := a.tagService.ValidateTags(tagNames); err != nil {
 		return nil, err
 	}
 
@@ -90,13 +91,13 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 				return err
 			}
 			newActivity = insertedActivity
-			
+
 			// Sync tags after activity creation
-			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, activity.OrganizationID, activity.Tags)
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, activity.OrganizationID, tagNames)
 			if err != nil {
 				return err
 			}
-			
+
 			return nil
 		},
 	)
@@ -126,15 +127,16 @@ func (a *ActitivityService) DeleteActivityByID(ctx context.Context, principal *s
 
 // UpdateActivity updates an activity
 func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *shared.Principal, activity *Activity) (*Activity, error) {
-	// Normalize and validate tags using TagService
-	normalizedTags := make([]string, len(activity.Tags))
+	// Normalize tag names and update Tag objects
+	tagNames := make([]string, len(activity.Tags))
 	for i, tag := range activity.Tags {
-		normalizedTags[i] = a.tagService.NormalizeTagName(tag)
+		normalizedName := a.tagService.NormalizeTagName(tag.Name)
+		tag.Name = normalizedName // Update the tag object with normalized name
+		tagNames[i] = normalizedName
 	}
-	activity.Tags = normalizedTags
 
 	// Validate tags
-	if err := a.tagService.ValidateTags(activity.Tags); err != nil {
+	if err := a.tagService.ValidateTags(tagNames); err != nil {
 		return nil, err
 	}
 
@@ -148,13 +150,13 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 					return err
 				}
 				activityUpdate = updatedActivity
-				
+
 				// Sync tags after activity update
-				err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, activity.Tags)
+				err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagNames)
 				if err != nil {
 					return err
 				}
-				
+
 				return nil
 			},
 		)
@@ -171,13 +173,13 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 				return err
 			}
 			activityUpdate = updatedActivity
-			
+
 			// Sync tags after activity update
-			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, activity.Tags)
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagNames)
 			if err != nil {
 				return err
 			}
-			
+
 			return nil
 		},
 	)

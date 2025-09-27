@@ -319,8 +319,9 @@ func TestActivityService_TagIntegration(t *testing.T) {
 
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
+	tagRepository.SetTagService(tagService)
 	activityRepository := NewInMemActivityRepository()
-	
+
 	a := &ActitivityService{
 		activityRepository: activityRepository,
 		tagRepository:      tagRepository,
@@ -351,7 +352,7 @@ func TestActivityService_TagIntegration(t *testing.T) {
 	principal := &shared.Principal{
 		OrganizationID: uuid.New(),
 	}
-	
+
 	// Add some tags to the repository
 	tagRepository.tags = []*Tag{
 		{ID: uuid.New(), Name: "meeting", OrganizationID: principal.OrganizationID},
@@ -371,9 +372,10 @@ func TestActivityService_CreateActivityWithTags(t *testing.T) {
 
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
+	tagRepository.SetTagService(tagService)
 	activityRepository := NewInMemActivityRepository()
 	repositoryTxer := &shared.InMemRepositoryTxer{}
-	
+
 	a := &ActitivityService{
 		repositoryTxer:     repositoryTxer,
 		activityRepository: activityRepository,
@@ -394,7 +396,11 @@ func TestActivityService_CreateActivityWithTags(t *testing.T) {
 		End:         end,
 		Description: "Test activity",
 		ProjectID:   uuid.New(),
-		Tags:        []string{"Meeting", "DEVELOPMENT", "bug-fix"},
+		Tags: []*Tag{
+			{Name: "Meeting"},
+			{Name: "DEVELOPMENT"},
+			{Name: "bug-fix"},
+		},
 	}
 
 	// Act
@@ -405,9 +411,9 @@ func TestActivityService_CreateActivityWithTags(t *testing.T) {
 	is.True(createdActivity != nil)
 	is.Equal(len(createdActivity.Tags), 3)
 	// Tags should be normalized to lowercase
-	is.Equal(createdActivity.Tags[0], "meeting")
-	is.Equal(createdActivity.Tags[1], "development")
-	is.Equal(createdActivity.Tags[2], "bug-fix")
+	is.Equal(createdActivity.Tags[0].Name, "meeting")
+	is.Equal(createdActivity.Tags[1].Name, "development")
+	is.Equal(createdActivity.Tags[2].Name, "bug-fix")
 	is.Equal(createdActivity.OrganizationID, principal.OrganizationID)
 	is.Equal(createdActivity.Username, principal.Username)
 }
@@ -418,9 +424,10 @@ func TestActivityService_UpdateActivityWithTags(t *testing.T) {
 
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
+	tagRepository.SetTagService(tagService)
 	activityRepository := NewInMemActivityRepository()
 	repositoryTxer := &shared.InMemRepositoryTxer{}
-	
+
 	a := &ActitivityService{
 		repositoryTxer:     repositoryTxer,
 		activityRepository: activityRepository,
@@ -447,9 +454,9 @@ func TestActivityService_UpdateActivityWithTags(t *testing.T) {
 		ProjectID:      uuid.New(),
 		OrganizationID: principal.OrganizationID,
 		Username:       principal.Username,
-		Tags:           []string{"original"},
+		Tags:           []*Tag{{Name: "original"}},
 	}
-	
+
 	// Add the activity to the repository
 	activityRepository.activities = []*Activity{existingActivity}
 
@@ -459,7 +466,10 @@ func TestActivityService_UpdateActivityWithTags(t *testing.T) {
 		End:         end,
 		Description: "Updated activity",
 		ProjectID:   existingActivity.ProjectID,
-		Tags:        []string{"UPDATED", "tags"},
+		Tags: []*Tag{
+			{Name: "UPDATED"},
+			{Name: "tags"},
+		},
 	}
 
 	// Act
@@ -470,8 +480,8 @@ func TestActivityService_UpdateActivityWithTags(t *testing.T) {
 	is.True(updatedActivity != nil)
 	is.Equal(len(updatedActivity.Tags), 2)
 	// Tags should be normalized to lowercase
-	is.Equal(updatedActivity.Tags[0], "updated")
-	is.Equal(updatedActivity.Tags[1], "tags")
+	is.Equal(updatedActivity.Tags[0].Name, "updated")
+	is.Equal(updatedActivity.Tags[1].Name, "tags")
 }
 
 func TestActivityFilter_WithTags(t *testing.T) {
