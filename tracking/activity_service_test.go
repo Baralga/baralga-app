@@ -263,6 +263,10 @@ func TestWriteAsCSV(t *testing.T) {
 		Start:     start,
 		End:       end,
 		ProjectID: uuid.New(),
+		Tags: []*Tag{
+			{Name: "meeting"},
+			{Name: "development"},
+		},
 	}
 	activities := []*Activity{activity}
 
@@ -283,6 +287,8 @@ func TestWriteAsCSV(t *testing.T) {
 	is.True(strings.Contains(csv, "My Project"))
 	is.True(strings.Contains(csv, "11:00"))
 	is.True(strings.Contains(csv, "11:30"))
+	is.True(strings.Contains(csv, "Tags"))
+	is.True(strings.Contains(csv, "meeting, development"))
 }
 
 func TestWriteAsExcel(t *testing.T) {
@@ -297,6 +303,10 @@ func TestWriteAsExcel(t *testing.T) {
 		Start:     start,
 		End:       end,
 		ProjectID: uuid.New(),
+		Tags: []*Tag{
+			{Name: "meeting"},
+			{Name: "development"},
+		},
 	}
 	activities := []*Activity{activity}
 
@@ -311,4 +321,197 @@ func TestWriteAsExcel(t *testing.T) {
 	err := a.WriteAsExcel(activities, projects, &buffer)
 
 	is.NoErr(err)
+}
+
+func TestActivityService_TagIntegration(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	tagRepository := NewInMemTagRepository()
+	tagService := NewTagService(tagRepository)
+	activityRepository := NewInMemActivityRepository()
+
+	a := &ActitivityService{
+		activityRepository: activityRepository,
+		tagRepository:      tagRepository,
+		tagService:         tagService,
+	}
+
+	// Test ParseTagsFromString
+	tags := a.ParseTagsFromString("Meeting, Development, bug-fix")
+	is.Equal(len(tags), 3)
+	is.Equal(tags[0], "meeting")
+	is.Equal(tags[1], "development")
+	is.Equal(tags[2], "bug-fix")
+
+	// Test ValidateTags with valid tags
+	err := a.ValidateTags([]string{"meeting", "development", "bug-fix"})
+	is.NoErr(err)
+
+	// Test ValidateTags with too many tags
+	tooManyTags := make([]string, 11)
+	for i := 0; i < 11; i++ {
+		tooManyTags[i] = "tag" + string(rune(i))
+	}
+	err = a.ValidateTags(tooManyTags)
+	is.True(err != nil)
+	is.Equal(err, ErrTooManyTags)
+
+	// Test GetTagsForAutocomplete
+	principal := &shared.Principal{
+		OrganizationID: uuid.New(),
+	}
+
+	// Add some tags to the repository
+	tagRepository.tags = []*Tag{
+		{ID: uuid.New(), Name: "meeting", OrganizationID: principal.OrganizationID},
+		{ID: uuid.New(), Name: "development", OrganizationID: principal.OrganizationID},
+		{ID: uuid.New(), Name: "testing", OrganizationID: principal.OrganizationID},
+	}
+
+	autocompleteResults, err := a.GetTagsForAutocomplete(context.Background(), principal, "meet")
+	is.NoErr(err)
+	is.Equal(len(autocompleteResults), 1)
+	is.Equal(autocompleteResults[0].Name, "meeting")
+}
+
+func TestActivityService_CreateActivityWithTags(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	tagRepository := NewInMemTagRepository()
+	tagService := NewTagService(tagRepository)
+	activityRepository := NewInMemActivityRepository()
+	repositoryTxer := &shared.InMemRepositoryTxer{}
+
+	a := &ActitivityService{
+		repositoryTxer:     repositoryTxer,
+		activityRepository: activityRepository,
+		tagRepository:      tagRepository,
+		tagService:         tagService,
+	}
+
+	principal := &shared.Principal{
+		OrganizationID: uuid.New(),
+		Username:       "testuser",
+	}
+
+	start, _ := time.Parse(time.RFC3339, "2021-01-01T10:00:00.000Z")
+	end, _ := time.Parse(time.RFC3339, "2021-01-01T11:00:00.000Z")
+
+	activity := &Activity{
+		Start:       start,
+		End:         end,
+		Description: "Test activity",
+		ProjectID:   uuid.New(),
+		Tags: []*Tag{
+			{Name: "Meeting"},
+			{Name: "DEVELOPMENT"},
+			{Name: "bug-fix"},
+		},
+	}
+
+	// Act
+	createdActivity, err := a.CreateActivity(context.Background(), principal, activity)
+
+	// Assert
+	is.NoErr(err)
+	is.True(createdActivity != nil)
+	is.Equal(len(createdActivity.Tags), 3)
+	// Tags should be normalized to lowercase
+	is.Equal(createdActivity.Tags[0].Name, "meeting")
+	is.Equal(createdActivity.Tags[1].Name, "development")
+	is.Equal(createdActivity.Tags[2].Name, "bug-fix")
+	is.Equal(createdActivity.OrganizationID, principal.OrganizationID)
+	is.Equal(createdActivity.Username, principal.Username)
+}
+
+func TestActivityService_UpdateActivityWithTags(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	tagRepository := NewInMemTagRepository()
+	tagService := NewTagService(tagRepository)
+	activityRepository := NewInMemActivityRepository()
+	repositoryTxer := &shared.InMemRepositoryTxer{}
+
+	a := &ActitivityService{
+		repositoryTxer:     repositoryTxer,
+		activityRepository: activityRepository,
+		tagRepository:      tagRepository,
+		tagService:         tagService,
+	}
+
+	principal := &shared.Principal{
+		OrganizationID: uuid.New(),
+		Username:       "testuser",
+		Roles:          []string{"ROLE_ADMIN"},
+	}
+
+	activityID := uuid.New()
+	start, _ := time.Parse(time.RFC3339, "2021-01-01T10:00:00.000Z")
+	end, _ := time.Parse(time.RFC3339, "2021-01-01T11:00:00.000Z")
+
+	// First create an activity to update
+	existingActivity := &Activity{
+		ID:             activityID,
+		Start:          start,
+		End:            end,
+		Description:    "Original activity",
+		ProjectID:      uuid.New(),
+		OrganizationID: principal.OrganizationID,
+		Username:       principal.Username,
+		Tags:           []*Tag{{Name: "original"}},
+	}
+
+	// Add the activity to the repository
+	activityRepository.activities = []*Activity{existingActivity}
+
+	activity := &Activity{
+		ID:          activityID,
+		Start:       start,
+		End:         end,
+		Description: "Updated activity",
+		ProjectID:   existingActivity.ProjectID,
+		Tags: []*Tag{
+			{Name: "UPDATED"},
+			{Name: "tags"},
+		},
+	}
+
+	// Act
+	updatedActivity, err := a.UpdateActivity(context.Background(), principal, activity)
+
+	// Assert
+	is.NoErr(err)
+	is.True(updatedActivity != nil)
+	is.Equal(len(updatedActivity.Tags), 2)
+	// Tags should be normalized to lowercase
+	is.Equal(updatedActivity.Tags[0].Name, "updated")
+	is.Equal(updatedActivity.Tags[1].Name, "tags")
+}
+
+func TestActivityFilter_WithTags(t *testing.T) {
+	// Arrange
+	is := is.New(t)
+
+	start, _ := time.Parse(time.RFC3339, "2021-01-01T10:00:00.000Z")
+	end, _ := time.Parse(time.RFC3339, "2021-01-01T11:00:00.000Z")
+
+	filter := &ActivityFilter{
+		Timespan: TimespanCustom,
+		start:    start,
+		end:      end,
+	}
+
+	// Act
+	filterWithTags := filter.WithTags([]string{"meeting", "development"})
+
+	// Assert
+	is.Equal(len(filterWithTags.Tags()), 2)
+	is.Equal(filterWithTags.Tags()[0], "meeting")
+	is.Equal(filterWithTags.Tags()[1], "development")
+	is.Equal(filterWithTags.Timespan, TimespanCustom)
+	is.Equal(filterWithTags.Start(), start)
+	is.Equal(filterWithTags.End(), end)
 }

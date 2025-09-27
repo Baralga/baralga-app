@@ -2,6 +2,7 @@ package tracking
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -284,10 +285,12 @@ func (r *DbActivityRepository) ProjectReport(ctx context.Context, filter *Activi
 func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End, pageParams.Size, pageParams.Offset()}
 	filterSql := ""
+	paramIndex := 6
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $6"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
 	}
 
 	sortBy := "start"
@@ -301,15 +304,30 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT a.*, projects.title as project FROM
-		   (SELECT activity_id as id, description, start_time as start, end_time as end, username, org_id, project_id
+		`SELECT a.*, projects.title as project,
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'id', t.tag_id,
+						'name', t.name,
+						'color', t.color,
+						'organization_id', t.org_id,
+						'created_at', t.created_at
+					)
+				) FILTER (WHERE t.tag_id IS NOT NULL), 
+				'[]'::json
+			) as tags
+		FROM (
+			SELECT activity_id as id, description, start_time as start, end_time as end, username, org_id, project_id
 			FROM activities 
 			WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3
-		   ) a
-         INNER JOIN projects
-	     ON projects.project_id = a.project_id
-		 ORDER by %s %s 
-	     LIMIT $4 OFFSET $5`,
+		) a
+		INNER JOIN projects ON projects.project_id = a.project_id
+		LEFT JOIN activity_tags at ON at.activity_id = a.id
+		LEFT JOIN tags t ON t.tag_id = at.tag_id
+		GROUP BY a.id, a.description, a.start, a.end, a.username, a.org_id, a.project_id, projects.title
+		ORDER by %s %s 
+		LIMIT $4 OFFSET $5`,
 		filterSql,
 		sortBy,
 		sortOrder,
@@ -333,23 +351,61 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 			organizationID string
 			projectID      string
 			projectTitle   string
+			tagsJSON       string
 		)
 
-		err = rows.Scan(&id, &description, &startTime, &endTime, &username, &organizationID, &projectID, &projectTitle)
+		err = rows.Scan(&id, &description, &startTime, &endTime, &username, &organizationID, &projectID, &projectTitle, &tagsJSON)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		projectUUID := uuid.MustParse(projectID)
+		activityID := uuid.MustParse(id)
+
+		// Parse tags from JSON
+		var tags []*Tag
+		if tagsJSON != "[]" && tagsJSON != "" {
+			var tagData []struct {
+				ID             string `json:"id"`
+				Name           string `json:"name"`
+				Color          string `json:"color"`
+				OrganizationID string `json:"organization_id"`
+				CreatedAt      string `json:"created_at"`
+			}
+
+			if err := json.Unmarshal([]byte(tagsJSON), &tagData); err == nil {
+				for _, td := range tagData {
+					// Parse the timestamp manually
+					createdAt, err := time.Parse("2006-01-02T15:04:05.999999", td.CreatedAt)
+					if err != nil {
+						// Fallback to a simpler format
+						createdAt, err = time.Parse("2006-01-02T15:04:05", td.CreatedAt)
+						if err != nil {
+							createdAt = time.Now() // fallback to current time
+						}
+					}
+
+					tag := &Tag{
+						ID:             uuid.MustParse(td.ID),
+						Name:           td.Name,
+						Color:          td.Color,
+						OrganizationID: uuid.MustParse(td.OrganizationID),
+						CreatedAt:      createdAt,
+					}
+					tags = append(tags, tag)
+				}
+			}
+		}
 
 		activity := &Activity{
-			ID:             uuid.MustParse(id),
+			ID:             activityID,
 			Description:    description,
 			Start:          startTime,
 			End:            endTime,
 			Username:       username,
 			OrganizationID: uuid.MustParse(organizationID),
 			ProjectID:      projectUUID,
+			Tags:           tags,
 		}
 		activities = append(activities, activity)
 
@@ -361,21 +417,23 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 			}
 			projectsById[projectUUID] = project
 		}
-
 	}
 
 	projects := maps.Values(projectsById)
 
+	// Count query with same filtering logic
 	countParams := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	countFilter := ""
+	countParamIndex := 4
 
 	if filter.Username != "" {
 		countParams = append(countParams, filter.Username)
-		countFilter = " AND username = $4"
+		countFilter += fmt.Sprintf(" AND username = $%d", countParamIndex)
+		countParamIndex++
 	}
 
 	countSql := fmt.Sprintf(`
-     	SELECT count(*) as total 
+     	SELECT count(activities.activity_id) as total 
 	    FROM activities
 	    WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3`,
 		countFilter)
@@ -396,9 +454,24 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 
 func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID, organizationID uuid.UUID) (*Activity, error) {
 	row := r.connPool.QueryRow(ctx,
-		`SELECT activity_id as id, description, start_time, end_time, username, org_id, project_id 
-         FROM activities 
-	     WHERE activity_id = $1 AND org_id = $2`,
+		`SELECT a.activity_id as id, a.description, a.start_time, a.end_time, a.username, a.org_id, a.project_id,
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'id', t.tag_id,
+						'name', t.name,
+						'color', t.color,
+						'organization_id', t.org_id,
+						'created_at', t.created_at
+					)
+				) FILTER (WHERE t.tag_id IS NOT NULL), 
+				'[]'::json
+			) as tags
+         FROM activities a
+		 LEFT JOIN activity_tags at ON at.activity_id = a.activity_id
+		 LEFT JOIN tags t ON t.tag_id = at.tag_id
+	     WHERE a.activity_id = $1 AND a.org_id = $2
+		 GROUP BY a.activity_id, a.description, a.start_time, a.end_time, a.username, a.org_id, a.project_id`,
 		activityID, organizationID)
 
 	var (
@@ -409,15 +482,51 @@ func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID,
 		username    string
 		orgID       string
 		projectID   string
+		tagsJSON    string
 	)
 
-	err := row.Scan(&id, &description, &startTime, &endTime, &username, &orgID, &projectID)
+	err := row.Scan(&id, &description, &startTime, &endTime, &username, &orgID, &projectID, &tagsJSON)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrActivityNotFound
 		}
 
 		return nil, err
+	}
+
+	// Parse tags from JSON
+	var tags []*Tag
+	if tagsJSON != "[]" && tagsJSON != "" {
+		var tagData []struct {
+			ID             string `json:"id"`
+			Name           string `json:"name"`
+			Color          string `json:"color"`
+			OrganizationID string `json:"organization_id"`
+			CreatedAt      string `json:"created_at"`
+		}
+
+		if err := json.Unmarshal([]byte(tagsJSON), &tagData); err == nil {
+			for _, td := range tagData {
+				// Parse the timestamp manually
+				createdAt, err := time.Parse("2006-01-02T15:04:05.999999", td.CreatedAt)
+				if err != nil {
+					// Fallback to a simpler format
+					createdAt, err = time.Parse("2006-01-02T15:04:05", td.CreatedAt)
+					if err != nil {
+						createdAt = time.Now() // fallback to current time
+					}
+				}
+
+				tag := &Tag{
+					ID:             uuid.MustParse(td.ID),
+					Name:           td.Name,
+					Color:          td.Color,
+					OrganizationID: uuid.MustParse(td.OrganizationID),
+					CreatedAt:      createdAt,
+				}
+				tags = append(tags, tag)
+			}
+		}
 	}
 
 	activity := &Activity{
@@ -428,6 +537,7 @@ func (r *DbActivityRepository) FindActivityByID(ctx context.Context, activityID,
 		Username:       username,
 		OrganizationID: uuid.MustParse(orgID),
 		ProjectID:      uuid.MustParse(projectID),
+		Tags:           tags,
 	}
 
 	return activity, nil

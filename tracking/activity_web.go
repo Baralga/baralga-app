@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/baralga/shared"
@@ -30,6 +31,7 @@ type activityFormModel struct {
 	StartTime   string `validate:"required,min=5,max=5"`
 	EndTime     string `validate:"required,min=5,max=5"`
 	Description string `validate:"min=0,max=500"`
+	Tags        string `validate:"max=1000"` // comma-separated tag string
 }
 
 type activityTrackFormModel struct {
@@ -43,6 +45,7 @@ type activityTrackFormModel struct {
 	Date         string
 	StartTime    string
 	Description  string
+	Tags         string `validate:"max=1000"` // comma-separated tag string
 }
 
 type ActivityWebHandlers struct {
@@ -95,6 +98,7 @@ func (a *ActivityWebHandlers) HandleTrackingPage() http.HandlerFunc {
 			Timespan: TimespanWeek,
 			start:    isoweek.StartTime(wyear, week, time.UTC),
 		}
+
 		pageParams := &paged.PageParams{
 			Page: 0,
 			Size: 100,
@@ -296,6 +300,7 @@ func (a *ActivityWebHandlers) HandleActivityTrackForm() http.HandlerFunc {
 				EndTime:     time_utils.FormatTime(time.Now()),
 				ProjectID:   formModel.ProjectID,
 				Description: formModel.Description,
+				Tags:        formModel.Tags,
 			}
 			activityToCreate, _ := mapFormToActivity(activityFormModel)
 			formModel.Duration = activityToCreate.DurationFormatted()
@@ -630,41 +635,68 @@ func ActivitiesSumByDayView(activitiesPage *ActivitiesPaged, projects []*Project
 				),
 				g.Group(g.Map(activities, func(activity *Activity) g.Node {
 					return Div(
-						Class("d-flex justify-content-between mb-2"),
+						Class("mb-3"),
 						ghx.Target(fmt.Sprintf("#%v", activityCardID)),
 						TitleAttr(activity.Description),
-						Span(
-							Class("flex-fill"),
-							g.Text(time_utils.FormatTime(activity.Start)+" - "+time_utils.FormatTime(activity.End)),
-						),
-						Span(
-							Class("flex-fill"),
-							g.Text(projectsById[activity.ProjectID].Title),
-						),
-						Span(
-							Class("flex-fill text-end pe-3"),
-							g.Text(activity.DurationFormatted()),
-						),
+						// Time and project row
 						Div(
-							A(
-								ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
-								ghx.Target("#baralga__main_content_modal_content"),
-								ghx.Swap("outerHTML"),
-
-								Class("btn btn-outline-secondary btn-sm"),
-								I(Class("bi-pen")),
+							Class("d-flex justify-content-between mb-1"),
+							Span(
+								Class("flex-fill"),
+								g.Text(time_utils.FormatTime(activity.Start)+" - "+time_utils.FormatTime(activity.End)),
 							),
-							A(
-								ghx.Confirm(
-									fmt.Sprintf(
-										"Do you really want to delete the activity from %v on %v?",
-										time_utils.FormatTime(activity.Start),
-										activity.Start.Format("Monday"),
-									),
+							Span(
+								Class("flex-fill"),
+								g.Text(projectsById[activity.ProjectID].Title),
+							),
+							Span(
+								Class("flex-fill text-end pe-3"),
+								g.Text(activity.DurationFormatted()),
+							),
+							Div(
+								A(
+									ghx.Get(fmt.Sprintf("/activities/%v/edit", activity.ID)),
+									ghx.Target("#baralga__main_content_modal_content"),
+									ghx.Swap("outerHTML"),
+
+									Class("btn btn-outline-secondary btn-sm"),
+									I(Class("bi-pen")),
 								),
-								ghx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
-								Class("btn btn-outline-secondary btn-sm ms-1"),
-								I(Class("bi-trash2")),
+								A(
+									ghx.Confirm(
+										fmt.Sprintf(
+											"Do you really want to delete the activity from %v on %v?",
+											time_utils.FormatTime(activity.Start),
+											activity.Start.Format("Monday"),
+										),
+									),
+									ghx.Delete(fmt.Sprintf("/api/activities/%v", activity.ID)),
+									Class("btn btn-outline-secondary btn-sm ms-1"),
+									I(Class("bi-trash2")),
+								),
+							),
+						),
+						// Description row (if exists)
+						g.If(activity.Description != "",
+							Div(
+								Class("mb-1"),
+								Small(
+									Class("text-muted"),
+									g.Text(activity.Description),
+								),
+							),
+						),
+						// Tags row (if exists)
+						g.If(len(activity.Tags) > 0,
+							Div(
+								Class("d-flex flex-wrap gap-1"),
+								g.Group(g.Map(activity.Tags, func(tag *Tag) g.Node {
+									return Span(
+										Class("badge text-white"),
+										StyleAttr(fmt.Sprintf("font-size: 0.7em; background-color: %s;", tag.Color)),
+										g.Text(tag.Name),
+									)
+								})),
 							),
 						),
 					)
@@ -854,6 +886,26 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 					g.Text(formModel.Description),
 				),
 			),
+			Div(
+				Class("mb-3"),
+				Label(
+					Class("form-label"),
+					g.Attr("for", "Tags"),
+					g.Text("Tags"),
+				),
+				Input(
+					ID("Tags"),
+					Type("text"),
+					Name("Tags"),
+					Value(formModel.Tags),
+					Class("form-control"),
+					g.Attr("placeholder", "meeting, development, bug-fix"),
+				),
+				Div(
+					Class("form-text"),
+					g.Text("Separate tags with commas or spaces"),
+				),
+			),
 		),
 		Div(
 			Class("modal-footer"),
@@ -1022,6 +1074,22 @@ func TrackPanel(projects []*Project, formModel activityTrackFormModel) g.Node {
 				),
 			),
 		),
+		g.If(formModel.Action == "running",
+			Div(
+				Class("row mt-2"),
+				Div(
+					Class("col-sm-12"),
+					Input(
+						ID("Tags"),
+						Type("text"),
+						Name("Tags"),
+						Value(formModel.Tags),
+						Class("form-control"),
+						g.Attr("placeholder", "meeting, development, bug-fix"),
+					),
+				),
+			),
+		),
 	)
 }
 
@@ -1081,18 +1149,53 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 		return nil, err
 	}
 
+	// Parse tags from comma/space-separated string
+	var tags []*Tag
+	if formModel.Tags != "" {
+		// Split by comma and space, then clean up
+		tagParts := strings.FieldsFunc(formModel.Tags, func(c rune) bool {
+			return c == ',' || c == ' '
+		})
+
+		// Normalize and deduplicate tags
+		tagMap := make(map[string]bool)
+		for _, tag := range tagParts {
+			tag = strings.TrimSpace(tag)
+			if tag != "" {
+				// Normalize to lowercase for consistency
+				normalizedTag := strings.ToLower(tag)
+				tagMap[normalizedTag] = true
+			}
+		}
+
+		// Convert to Tag objects (service layer will handle full tag creation)
+		for tagName := range tagMap {
+			tags = append(tags, &Tag{
+				Name: tagName,
+			})
+		}
+	}
+
 	activity := &Activity{
 		ID:          activityID,
 		Start:       *start,
 		End:         *end,
 		ProjectID:   projectID,
 		Description: formModel.Description,
+		Tags:        tags,
 	}
 
 	return activity, nil
 }
 
 func mapActivityToForm(activity Activity) activityFormModel {
+	// Convert tags slice to comma-separated string
+	tagNames := make([]string, len(activity.Tags))
+	for i, tag := range activity.Tags {
+		tagNames[i] = tag.Name
+	}
+	tagsString := strings.Join(tagNames, ", ")
+
 	return activityFormModel{
 		ID:          activity.ID.String(),
 		Date:        time_utils.FormatDateDE(activity.Start),
@@ -1100,5 +1203,6 @@ func mapActivityToForm(activity Activity) activityFormModel {
 		EndTime:     time_utils.FormatTime(activity.End),
 		ProjectID:   activity.ProjectID.String(),
 		Description: activity.Description,
+		Tags:        tagsString,
 	}
 }

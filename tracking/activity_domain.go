@@ -28,6 +28,34 @@ type Activity struct {
 	ProjectID      uuid.UUID
 	OrganizationID uuid.UUID
 	Username       string
+	Tags           []*Tag // slice of Tag objects with full information
+}
+
+// Tag represents a tag that can be associated with activities
+type Tag struct {
+	ID             uuid.UUID
+	Name           string // normalized (lowercase)
+	Color          string // hex color code
+	OrganizationID uuid.UUID
+	CreatedAt      time.Time
+}
+
+// TagReportItem represents a single tag's time report data
+type TagReportItem struct {
+	TagName                string
+	TagColor               string
+	Year                   int
+	Quarter                int
+	Month                  int
+	Week                   int
+	Day                    int
+	DurationInMinutesTotal int
+	ActivityCount          int
+}
+
+// DurationFormatted is the tag report duration as formatted string (e.g. 1:15 h)
+func (t *TagReportItem) DurationFormatted() string {
+	return time_utils.FormatMinutesAsDuration(float64(t.DurationInMinutesTotal))
 }
 
 // ActivityFilter reprensents a filter for activities
@@ -37,6 +65,7 @@ type ActivityFilter struct {
 	sortOrder string
 	start     time.Time
 	end       time.Time
+	tags      []string // tag names to filter by
 }
 
 type ActivityTimeReportItem struct {
@@ -99,6 +128,20 @@ type ActivityRepository interface {
 	UpdateActivityByUsername(ctx context.Context, organizationID uuid.UUID, activity *Activity, username string) (*Activity, error)
 }
 
+// TagRepository manages tag CRUD operations
+type TagRepository interface {
+	// FindTagsByOrganization returns all tags for a specific organization for autocomplete
+	FindTagsByOrganization(ctx context.Context, organizationID uuid.UUID, query string) ([]*Tag, error)
+	// FindOrCreateTag gets existing or creates new tag for organization
+	FindOrCreateTag(ctx context.Context, name string, organizationID uuid.UUID) (*Tag, error)
+	// SyncTagsForActivity creates/updates tag relationships when activity is saved
+	SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error
+	// DeleteUnusedTags cleanup method for organization-level cleanup
+	DeleteUnusedTags(ctx context.Context, organizationID uuid.UUID) error
+	// GetTagReportData retrieves tag report data with time aggregation
+	GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error)
+}
+
 // DurationFormatted is the activity duration as formatted string (e.g. 1:15 h)
 func (i *ActivityTimeReportItem) DurationFormatted() string {
 	return time_utils.FormatMinutesAsDuration(float64(i.DurationInMinutesTotal))
@@ -156,10 +199,28 @@ func (f *ActivityFilter) End() time.Time {
 	}
 }
 
+// Tags returns the filter's tag names
+func (f *ActivityFilter) Tags() []string {
+	return f.tags
+}
+
+// WithTags returns a new filter with the specified tags
+func (f *ActivityFilter) WithTags(tags []string) *ActivityFilter {
+	return &ActivityFilter{
+		Timespan:  f.Timespan,
+		sortBy:    f.sortBy,
+		sortOrder: f.sortOrder,
+		start:     f.start,
+		end:       f.end,
+		tags:      tags,
+	}
+}
+
 func (f *ActivityFilter) Home() *ActivityFilter {
 	return &ActivityFilter{
 		Timespan: f.Timespan,
 		start:    time.Now(),
+		tags:     f.tags,
 	}
 }
 
@@ -168,6 +229,7 @@ func (f *ActivityFilter) Next() *ActivityFilter {
 		Timespan: f.Timespan,
 		start:    f.start,
 		end:      f.end,
+		tags:     f.tags,
 	}
 
 	switch nextFilter.Timespan {
@@ -196,6 +258,7 @@ func (f *ActivityFilter) Previous() *ActivityFilter {
 		Timespan: f.Timespan,
 		start:    f.start,
 		end:      f.end,
+		tags:     f.tags,
 	}
 
 	switch previousFilter.Timespan {
@@ -225,6 +288,7 @@ func (f *ActivityFilter) WithSortToggle(sortBy string) *ActivityFilter {
 		sortBy:   sortBy,
 		start:    f.start,
 		end:      f.end,
+		tags:     f.tags,
 	}
 
 	if f.sortOrder == "desc" {
