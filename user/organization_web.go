@@ -92,8 +92,10 @@ func (h *OrganizationWebHandlers) HandleOrganizationTitleUpdate() http.HandlerFu
 
 		w.Header().Set("HX-Trigger", "{ \"baralga__main_content_modal-hide\": true }")
 
-		// Render success response
-		h.renderSuccess(w, r, "Organization name updated successfully.")
+		d := Div(
+			ID("baralga__main_content_modal_content"),
+		)
+		shared.RenderHTML(w, d)
 	}
 }
 
@@ -142,7 +144,7 @@ func (h *OrganizationWebHandlers) OrganizationDialog(organization *Organization,
 
 	// Build all form content
 	formContent := []g.Node{
-		// CSRF token hidden input
+		ID("baralga__main_content_modal_content"),
 		Input(
 			Type("hidden"),
 			Name("CSRFToken"),
