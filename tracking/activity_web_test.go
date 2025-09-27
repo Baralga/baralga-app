@@ -10,6 +10,7 @@ import (
 
 	"github.com/baralga/shared"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/matryer/is"
 )
 
@@ -62,6 +63,10 @@ func TestHandleActivityAddPage(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "<form"))
+	// Verify that the Tags input field is present
+	is.True(strings.Contains(htmlBody, `name="Tags"`))
+	is.True(strings.Contains(htmlBody, `placeholder="meeting, development, bug-fix"`))
+	is.True(strings.Contains(htmlBody, "Separate tags with commas or spaces"))
 }
 
 func TestHandleActivityEditPage(t *testing.T) {
@@ -86,6 +91,10 @@ func TestHandleActivityEditPage(t *testing.T) {
 
 	htmlBody := httpRec.Body.String()
 	is.True(strings.Contains(htmlBody, "<form"))
+	// Verify that the Tags input field is present in edit form
+	is.True(strings.Contains(htmlBody, `name="Tags"`))
+	// The sample activity should have tags "meeting, development" as defined in the in-memory repository
+	is.True(strings.Contains(htmlBody, "meeting, development"))
 }
 
 func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
@@ -121,6 +130,133 @@ func TestHandleCreateActivtiyWithValidActivtiy(t *testing.T) {
 	w.HandleActivityForm()(httpRec, r)
 	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
 	is.Equal(countBefore+1, len(repo.activities))
+}
+
+func TestHandleCreateActivityWithTags(t *testing.T) {
+	is := is.New(t)
+	httpRec := httptest.NewRecorder()
+
+	repo := NewInMemActivityRepository()
+	config := &shared.Config{}
+
+	w := &ActivityWebHandlers{
+		config:             config,
+		activityRepository: repo,
+		projectRepository:  NewInMemProjectRepository(),
+		activityService:    createTestActivityServiceForWeb(repo),
+	}
+
+	countBefore := len(repo.activities)
+
+	data := url.Values{}
+	data["ProjectID"] = []string{shared.ProjectIDSample.String()}
+	data["Date"] = []string{"21.12.2021"}
+	data["StartTime"] = []string{"10:00"}
+	data["EndTime"] = []string{"11:00"}
+	data["Description"] = []string{"My description"}
+	data["Tags"] = []string{"meeting, development, bug-fix"}
+
+	r, _ := http.NewRequest("POST", "/activities/new", strings.NewReader(data.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	r = r.WithContext(shared.ToContextWithPrincipal(r.Context(), &shared.Principal{
+		Roles: []string{"ROLE_ADMIN"},
+	}))
+
+	w.HandleActivityForm()(httpRec, r)
+	is.Equal(httpRec.Result().StatusCode, http.StatusOK)
+	is.Equal(countBefore+1, len(repo.activities))
+
+	// Verify the activity was created with tags
+	createdActivity := repo.activities[len(repo.activities)-1]
+	is.Equal(len(createdActivity.Tags), 3)
+	is.True(contains(createdActivity.Tags, "meeting"))
+	is.True(contains(createdActivity.Tags, "development"))
+	is.True(contains(createdActivity.Tags, "bug-fix"))
+}
+
+func TestMapFormToActivityWithTags(t *testing.T) {
+	is := is.New(t)
+
+	formModel := activityFormModel{
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		EndTime:     "11:00",
+		Description: "My description",
+		Tags:        "meeting, development, bug-fix",
+	}
+
+	activity, err := mapFormToActivity(formModel)
+	is.NoErr(err)
+	is.Equal(len(activity.Tags), 3)
+	is.True(contains(activity.Tags, "meeting"))
+	is.True(contains(activity.Tags, "development"))
+	is.True(contains(activity.Tags, "bug-fix"))
+}
+
+func TestMapFormToActivityWithSpaceSeparatedTags(t *testing.T) {
+	is := is.New(t)
+
+	formModel := activityFormModel{
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		EndTime:     "11:00",
+		Description: "My description",
+		Tags:        "meeting development bug-fix",
+	}
+
+	activity, err := mapFormToActivity(formModel)
+	is.NoErr(err)
+	is.Equal(len(activity.Tags), 3)
+	is.True(contains(activity.Tags, "meeting"))
+	is.True(contains(activity.Tags, "development"))
+	is.True(contains(activity.Tags, "bug-fix"))
+}
+
+func TestMapFormToActivityWithDuplicateTags(t *testing.T) {
+	is := is.New(t)
+
+	formModel := activityFormModel{
+		ProjectID:   shared.ProjectIDSample.String(),
+		Date:        "21.12.2021",
+		StartTime:   "10:00",
+		EndTime:     "11:00",
+		Description: "My description",
+		Tags:        "meeting, Meeting, MEETING, development",
+	}
+
+	activity, err := mapFormToActivity(formModel)
+	is.NoErr(err)
+	is.Equal(len(activity.Tags), 2) // Should deduplicate case-insensitive
+	is.True(contains(activity.Tags, "meeting"))
+	is.True(contains(activity.Tags, "development"))
+}
+
+func TestMapActivityToFormWithTags(t *testing.T) {
+	is := is.New(t)
+
+	activityID := uuid.MustParse("00000000-0000-0000-2222-000000000001")
+	activity := Activity{
+		ID:          activityID,
+		ProjectID:   shared.ProjectIDSample,
+		Description: "My description",
+		Tags:        []string{"meeting", "development", "bug-fix"},
+	}
+
+	formModel := mapActivityToForm(activity)
+	is.Equal(formModel.Tags, "meeting, development, bug-fix")
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 func TestHandleCreateActivtiyWithInvalidActivtiy(t *testing.T) {

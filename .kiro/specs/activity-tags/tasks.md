@@ -51,11 +51,11 @@
   - Add proper error handling and validation
   - _Requirements: 3.1, 3.2, 3.3, 3.5_
 
-- [ ] 8. Update activity form to include tag input
+- [x] 8. Update activity form to include tag input
   - Add Tags field to activityFormModel struct in tracking/activity_web.go with validation
-  - Modify ActivityForm function to include tag input field with autocomplete
+  - Modify ActivityForm function to include tag input field
+  - Use a simple text input without any magic where tags are entered with space or comma as separator
   - Update mapFormToActivity and mapActivityToForm functions to handle tags
-  - Add JavaScript for tag autocomplete functionality in the form template
   - _Requirements: 1.1, 1.2, 1.5, 3.1_
 
 - [ ] 9. Implement tag filtering in activity list

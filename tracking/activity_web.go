@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/baralga/shared"
@@ -30,6 +31,7 @@ type activityFormModel struct {
 	StartTime   string `validate:"required,min=5,max=5"`
 	EndTime     string `validate:"required,min=5,max=5"`
 	Description string `validate:"min=0,max=500"`
+	Tags        string `validate:"max=1000"` // comma-separated tag string
 }
 
 type activityTrackFormModel struct {
@@ -854,6 +856,26 @@ func ActivityForm(formModel activityFormModel, projects *ProjectsPaged, errorMes
 					g.Text(formModel.Description),
 				),
 			),
+			Div(
+				Class("mb-3"),
+				Label(
+					Class("form-label"),
+					g.Attr("for", "Tags"),
+					g.Text("Tags"),
+				),
+				Input(
+					ID("Tags"),
+					Type("text"),
+					Name("Tags"),
+					Value(formModel.Tags),
+					Class("form-control"),
+					g.Attr("placeholder", "meeting, development, bug-fix"),
+				),
+				Div(
+					Class("form-text"),
+					g.Text("Separate tags with commas or spaces"),
+				),
+			),
 		),
 		Div(
 			Class("modal-footer"),
@@ -1081,18 +1103,47 @@ func mapFormToActivity(formModel activityFormModel) (*Activity, error) {
 		return nil, err
 	}
 
+	// Parse tags from comma/space-separated string
+	var tags []string
+	if formModel.Tags != "" {
+		// Split by comma and space, then clean up
+		tagParts := strings.FieldsFunc(formModel.Tags, func(c rune) bool {
+			return c == ',' || c == ' '
+		})
+
+		// Normalize and deduplicate tags
+		tagMap := make(map[string]bool)
+		for _, tag := range tagParts {
+			tag = strings.TrimSpace(tag)
+			if tag != "" {
+				// Normalize to lowercase for consistency
+				normalizedTag := strings.ToLower(tag)
+				tagMap[normalizedTag] = true
+			}
+		}
+
+		// Convert back to slice
+		for tag := range tagMap {
+			tags = append(tags, tag)
+		}
+	}
+
 	activity := &Activity{
 		ID:          activityID,
 		Start:       *start,
 		End:         *end,
 		ProjectID:   projectID,
 		Description: formModel.Description,
+		Tags:        tags,
 	}
 
 	return activity, nil
 }
 
 func mapActivityToForm(activity Activity) activityFormModel {
+	// Convert tags slice to comma-separated string
+	tagsString := strings.Join(activity.Tags, ", ")
+
 	return activityFormModel{
 		ID:          activity.ID.String(),
 		Date:        time_utils.FormatDateDE(activity.Start),
@@ -1100,5 +1151,6 @@ func mapActivityToForm(activity Activity) activityFormModel {
 		EndTime:     time_utils.FormatTime(activity.End),
 		ProjectID:   activity.ProjectID.String(),
 		Description: activity.Description,
+		Tags:        tagsString,
 	}
 }
