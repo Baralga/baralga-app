@@ -69,18 +69,20 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 	activity.OrganizationID = principal.OrganizationID
 	activity.Username = principal.Username
 
-	// Normalize tag names and update Tag objects
+	// Extract tag names from Tag objects
 	tagNames := make([]string, len(activity.Tags))
 	for i, tag := range activity.Tags {
-		normalizedName := a.tagService.NormalizeTagName(tag.Name)
-		tag.Name = normalizedName // Update the tag object with normalized name
-		tagNames[i] = normalizedName
+		tagNames[i] = tag.Name
 	}
 
 	// Validate tags
 	if err := a.tagService.ValidateTags(tagNames); err != nil {
 		return nil, err
 	}
+
+	// Prepare tags with colors for repository and update activity.Tags
+	tagsWithColors := a.tagService.PrepareTagsWithColors(tagNames)
+	activity.Tags = tagsWithColors
 
 	var newActivity *Activity
 	err := a.repositoryTxer.InTx(
@@ -93,7 +95,7 @@ func (a *ActitivityService) CreateActivity(ctx context.Context, principal *share
 			newActivity = insertedActivity
 
 			// Sync tags after activity creation
-			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, activity.OrganizationID, tagNames)
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, activity.OrganizationID, tagsWithColors)
 			if err != nil {
 				return err
 			}
@@ -127,18 +129,20 @@ func (a *ActitivityService) DeleteActivityByID(ctx context.Context, principal *s
 
 // UpdateActivity updates an activity
 func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *shared.Principal, activity *Activity) (*Activity, error) {
-	// Normalize tag names and update Tag objects
+	// Extract tag names from Tag objects
 	tagNames := make([]string, len(activity.Tags))
 	for i, tag := range activity.Tags {
-		normalizedName := a.tagService.NormalizeTagName(tag.Name)
-		tag.Name = normalizedName // Update the tag object with normalized name
-		tagNames[i] = normalizedName
+		tagNames[i] = tag.Name
 	}
 
 	// Validate tags
 	if err := a.tagService.ValidateTags(tagNames); err != nil {
 		return nil, err
 	}
+
+	// Prepare tags with colors for repository and update activity.Tags
+	tagsWithColors := a.tagService.PrepareTagsWithColors(tagNames)
+	activity.Tags = tagsWithColors
 
 	var activityUpdate *Activity
 	if principal.HasRole("ROLE_ADMIN") {
@@ -152,7 +156,7 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 				activityUpdate = updatedActivity
 
 				// Sync tags after activity update
-				err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagNames)
+				err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagsWithColors)
 				if err != nil {
 					return err
 				}
@@ -175,7 +179,7 @@ func (a *ActitivityService) UpdateActivity(ctx context.Context, principal *share
 			activityUpdate = updatedActivity
 
 			// Sync tags after activity update
-			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagNames)
+			err = a.tagRepository.SyncTagsForActivity(ctx, activity.ID, principal.OrganizationID, tagsWithColors)
 			if err != nil {
 				return err
 			}

@@ -116,22 +116,22 @@ func (s *TagService) ValidateTags(tags []string) error {
 func (s *TagService) GetTagColor(tagName string) string {
 	// Predefined set of accessible colors with good contrast
 	colors := []string{
-		"#007bff",   // Blue
-		"#28a745",   // Green
-		"#dc3545",   // Red
-		"#ffc107",   // Yellow
-		"#71c1cdff", // Cyan
-		"#6f42c1",   // Purple
-		"#fd7e14",   // Orange
-		"#20c997",   // Teal
-		"#e83e8c",   // Pink
-		"#6c757d",   // Gray
-		"#343a40",   // Dark
-		"#495057",   // Dark Gray
-		"#0056b3",   // Dark Blue
-		"#155724",   // Dark Green
-		"#721c24",   // Dark Red
-		"#856404",   // Dark Yellow
+		"#007bff", // Blue
+		"#28a745", // Green
+		"#dc3545", // Red
+		"#ffc107", // Yellow
+		"#17a2b8", // Cyan
+		"#6f42c1", // Purple
+		"#fd7e14", // Orange
+		"#20c997", // Teal
+		"#e83e8c", // Pink
+		"#6c757d", // Gray
+		"#343a40", // Dark
+		"#495057", // Dark Gray
+		"#0056b3", // Dark Blue
+		"#155724", // Dark Green
+		"#721c24", // Dark Red
+		"#856404", // Dark Yellow
 	}
 
 	// Default fallback color
@@ -148,7 +148,14 @@ func (s *TagService) GetTagColor(tagName string) string {
 	// Use first byte of hash to select color
 	colorIndex := int(hash[0]) % len(colors)
 
-	return colors[colorIndex]
+	selectedColor := colors[colorIndex]
+
+	// Safety check: ensure color is exactly 7 characters (#RRGGBB format)
+	if len(selectedColor) != 7 || selectedColor[0] != '#' {
+		return "#6c757d" // Return default gray if invalid color
+	}
+
+	return selectedColor
 }
 
 // removeDuplicates removes duplicate tags and normalizes them
@@ -165,4 +172,33 @@ func (s *TagService) removeDuplicates(tags []string) []string {
 	}
 
 	return result
+}
+
+// PrepareTagsWithColors takes tag names and returns Tag objects with generated colors
+// This method should be called before SyncTagsForActivity to ensure all tags have colors
+func (s *TagService) PrepareTagsWithColors(tagNames []string) []*Tag {
+	if len(tagNames) == 0 {
+		return []*Tag{}
+	}
+
+	// Normalize and deduplicate tag names
+	normalizedTags := make(map[string]bool)
+	for _, tagName := range tagNames {
+		normalized := s.NormalizeTagName(tagName)
+		if normalized != "" {
+			normalizedTags[normalized] = true
+		}
+	}
+
+	// Create Tag objects with generated colors
+	var tags []*Tag
+	for tagName := range normalizedTags {
+		tag := &Tag{
+			Name:  tagName,
+			Color: s.GetTagColor(tagName),
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags
 }

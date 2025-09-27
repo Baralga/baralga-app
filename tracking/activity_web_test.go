@@ -18,7 +18,6 @@ import (
 func createTestActivityServiceForWeb(repo ActivityRepository) *ActitivityService {
 	tagRepo := NewInMemTagRepository()
 	tagService := NewTagService(tagRepo)
-	tagRepo.SetTagService(tagService)
 	return &ActitivityService{
 		repositoryTxer:     shared.NewInMemRepositoryTxer(),
 		activityRepository: repo,
@@ -265,7 +264,6 @@ func TestHandleTrackingPageDisplaysTagsWithoutFiltering(t *testing.T) {
 	projectRepository := NewInMemProjectRepository()
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
-	tagRepository.SetTagService(tagService)
 	repositoryTxer := shared.NewInMemRepositoryTxer()
 
 	activityService := NewActitivityService(repositoryTxer, activityRepository, tagRepository, tagService)

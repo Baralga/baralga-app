@@ -153,7 +153,7 @@ func (r *DbTagRepository) FindOrCreateTagWithColor(ctx context.Context, name str
 }
 
 // SyncTagsForActivity creates/updates tag relationships when activity is saved
-func (r *DbTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tagNames []string) error {
+func (r *DbTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error {
 	tx := shared.MustTxFromContext(ctx)
 
 	// First, delete all existing tag relationships for this activity
@@ -165,24 +165,14 @@ func (r *DbTagRepository) SyncTagsForActivity(ctx context.Context, activityID uu
 	}
 
 	// If no tags provided, we're done
-	if len(tagNames) == 0 {
+	if len(tags) == 0 {
 		return nil
 	}
 
-	// Normalize and deduplicate tag names
-	normalizedTags := make(map[string]bool)
-	for _, tagName := range tagNames {
-		normalized := strings.ToLower(strings.TrimSpace(tagName))
-		if normalized != "" {
-			normalizedTags[normalized] = true
-		}
-	}
-
 	// Create or find each tag and create the relationship
-	for tagName := range normalizedTags {
-		// Generate color for new tags (existing tags will keep their color)
-		color := r.tagService.GetTagColor(tagName)
-		tag, err := r.FindOrCreateTagWithColor(ctx, tagName, organizationID, color)
+	for _, tag := range tags {
+		// Find or create the tag with the provided color
+		dbTag, err := r.FindOrCreateTagWithColor(ctx, tag.Name, organizationID, tag.Color)
 		if err != nil {
 			return err
 		}
@@ -191,7 +181,7 @@ func (r *DbTagRepository) SyncTagsForActivity(ctx context.Context, activityID uu
 		_, err = tx.Exec(ctx,
 			`INSERT INTO activity_tags (activity_id, tag_id, org_id) 
 			 VALUES ($1, $2, $3)`,
-			activityID, tag.ID, organizationID)
+			activityID, dbTag.ID, organizationID)
 		if err != nil {
 			return err
 		}

@@ -14,7 +14,6 @@ func TestInMemTagRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := NewInMemTagRepository()
 	tagService := NewTagService(repo)
-	repo.SetTagService(tagService)
 
 	t.Run("FindTagsByOrganization returns sample tags", func(t *testing.T) {
 		tags, err := repo.FindTagsByOrganization(ctx, shared.OrganizationIDSample, "")
@@ -51,7 +50,10 @@ func TestInMemTagRepository(t *testing.T) {
 		activityID := uuid.New()
 		tagNames := []string{"development", "New Feature"}
 
-		err := repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, tagNames)
+		// Prepare tags with colors using the service
+		tagsWithColors := tagService.PrepareTagsWithColors(tagNames)
+
+		err := repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, tagsWithColors)
 		assert.NoError(t, err)
 
 		// Verify the tags were created/found
@@ -77,7 +79,8 @@ func TestInMemTagRepository(t *testing.T) {
 
 		// Create an activity with some tags
 		activityID := uuid.New()
-		err = repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, []string{"development"})
+		tagsWithColors := tagService.PrepareTagsWithColors([]string{"development"})
+		err = repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, tagsWithColors)
 		assert.NoError(t, err)
 
 		// Delete unused tags
@@ -96,12 +99,14 @@ func TestInMemTagRepository(t *testing.T) {
 	t.Run("SyncTagsForActivity generates colors for new tags", func(t *testing.T) {
 		repo := NewInMemTagRepository()
 		tagService := NewTagService(repo)
-		repo.SetTagService(tagService)
 		ctx := context.Background()
 		activityID := uuid.New()
 		tagNames := []string{"bug-fix", "new-feature"}
 
-		err := repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, tagNames)
+		// Prepare tags with colors using the service
+		tagsWithColors := tagService.PrepareTagsWithColors(tagNames)
+
+		err := repo.SyncTagsForActivity(ctx, activityID, shared.OrganizationIDSample, tagsWithColors)
 		assert.NoError(t, err)
 
 		// Verify tags were created with generated colors

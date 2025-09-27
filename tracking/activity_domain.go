@@ -118,7 +118,7 @@ type TagRepository interface {
 	// FindOrCreateTag gets existing or creates new tag for organization
 	FindOrCreateTag(ctx context.Context, name string, organizationID uuid.UUID) (*Tag, error)
 	// SyncTagsForActivity creates/updates tag relationships when activity is saved
-	SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tagNames []string) error
+	SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error
 	// DeleteUnusedTags cleanup method for organization-level cleanup
 	DeleteUnusedTags(ctx context.Context, organizationID uuid.UUID) error
 }

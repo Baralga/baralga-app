@@ -14,7 +14,6 @@ import (
 type InMemTagRepository struct {
 	tags         []*Tag
 	activityTags map[uuid.UUID][]uuid.UUID // activityID -> []tagID
-	tagService   *TagService
 }
 
 var _ TagRepository = (*InMemTagRepository)(nil)
@@ -111,34 +110,24 @@ func (r *InMemTagRepository) FindOrCreateTag(ctx context.Context, name string, o
 }
 
 // SyncTagsForActivity creates/updates tag relationships when activity is saved
-func (r *InMemTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tagNames []string) error {
+func (r *InMemTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error {
 	// First, clear existing relationships for this activity
 	delete(r.activityTags, activityID)
 
 	// If no tags provided, we're done
-	if len(tagNames) == 0 {
+	if len(tags) == 0 {
 		return nil
-	}
-
-	// Normalize and deduplicate tag names
-	normalizedTags := make(map[string]bool)
-	for _, tagName := range tagNames {
-		normalized := strings.ToLower(strings.TrimSpace(tagName))
-		if normalized != "" {
-			normalizedTags[normalized] = true
-		}
 	}
 
 	// Create or find each tag and create the relationship
 	var tagIDs []uuid.UUID
-	for tagName := range normalizedTags {
-		// Generate color for new tags (existing tags will keep their color)
-		color := r.tagService.GetTagColor(tagName)
-		tag, err := r.findOrCreateTagWithColor(ctx, tagName, organizationID, color)
+	for _, tag := range tags {
+		// Find or create the tag with the provided color
+		dbTag, err := r.findOrCreateTagWithColor(ctx, tag.Name, organizationID, tag.Color)
 		if err != nil {
 			return err
 		}
-		tagIDs = append(tagIDs, tag.ID)
+		tagIDs = append(tagIDs, dbTag.ID)
 	}
 
 	// Store the relationships
@@ -203,9 +192,4 @@ func (r *InMemTagRepository) DeleteUnusedTags(ctx context.Context, organizationI
 
 	r.tags = remainingTags
 	return nil
-}
-
-// SetTagService sets the tag service for color generation
-func (r *InMemTagRepository) SetTagService(tagService *TagService) {
-	r.tagService = tagService
 }

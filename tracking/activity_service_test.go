@@ -319,7 +319,6 @@ func TestActivityService_TagIntegration(t *testing.T) {
 
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
-	tagRepository.SetTagService(tagService)
 	activityRepository := NewInMemActivityRepository()
 
 	a := &ActitivityService{
@@ -372,7 +371,6 @@ func TestActivityService_CreateActivityWithTags(t *testing.T) {
 
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
-	tagRepository.SetTagService(tagService)
 	activityRepository := NewInMemActivityRepository()
 	repositoryTxer := &shared.InMemRepositoryTxer{}
 
@@ -424,7 +422,6 @@ func TestActivityService_UpdateActivityWithTags(t *testing.T) {
 
 	tagRepository := NewInMemTagRepository()
 	tagService := NewTagService(tagRepository)
-	tagRepository.SetTagService(tagService)
 	activityRepository := NewInMemActivityRepository()
 	repositoryTxer := &shared.InMemRepositoryTxer{}
 

@@ -21,7 +21,6 @@ import (
 func createTestActivityService(repo ActivityRepository) *ActitivityService {
 	tagRepo := NewInMemTagRepository()
 	tagService := NewTagService(tagRepo)
-	tagRepo.SetTagService(tagService)
 	return &ActitivityService{
 		repositoryTxer:     shared.NewInMemRepositoryTxer(),
 		activityRepository: repo,
@@ -858,7 +857,6 @@ func TestHandleGetTagsAutocomplete(t *testing.T) {
 	// Create test data
 	tagRepo := NewInMemTagRepository()
 	tagService := NewTagService(tagRepo)
-	tagRepo.SetTagService(tagService)
 	activityRepo := NewInMemActivityRepository()
 	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
 
@@ -896,7 +894,6 @@ func TestHandleGetTagsAutocompleteEmptyQuery(t *testing.T) {
 
 	tagRepo := NewInMemTagRepository()
 	tagService := NewTagService(tagRepo)
-	tagRepo.SetTagService(tagService)
 	activityRepo := NewInMemActivityRepository()
 	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
 
@@ -925,7 +922,6 @@ func TestHandleGetTagsAutocompleteLongQuery(t *testing.T) {
 
 	tagRepo := NewInMemTagRepository()
 	tagService := NewTagService(tagRepo)
-	tagRepo.SetTagService(tagService)
 	activityRepo := NewInMemActivityRepository()
 	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
 
@@ -951,7 +947,6 @@ func TestHandleGetTagsAutocompleteNoResults(t *testing.T) {
 
 	tagRepo := NewInMemTagRepository()
 	tagService := NewTagService(tagRepo)
-	tagRepo.SetTagService(tagService)
 	activityRepo := NewInMemActivityRepository()
 	activityService := NewActitivityService(shared.NewInMemRepositoryTxer(), activityRepo, tagRepo, tagService)
 

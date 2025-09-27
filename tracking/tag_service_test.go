@@ -258,7 +258,7 @@ func (m *mockTagRepository) FindOrCreateTag(ctx context.Context, name string, or
 	return nil, nil
 }
 
-func (m *mockTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tagNames []string) error {
+func (m *mockTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error {
 	return nil
 }
 
@@ -385,4 +385,34 @@ func TestTagService_GetTagColor(t *testing.T) {
 		color3 := service.GetTagColor("DEVELOPMENT")
 		is.Equal(color1, color3)
 	})
+}
+func TestTagService_GetTagColor_ValidLength(t *testing.T) {
+	is := is.New(t)
+	service := NewTagService(nil)
+
+	// Test a variety of tag names to ensure all generated colors are valid
+	testTags := []string{
+		"meeting", "development", "bug-fix", "testing", "review",
+		"deployment", "documentation", "research", "planning", "design",
+		"frontend", "backend", "database", "api", "ui", "ux",
+	}
+
+	for _, tagName := range testTags {
+		color := service.GetTagColor(tagName)
+
+		// Verify color is exactly 7 characters
+		is.Equal(len(color), 7)
+
+		// Verify color starts with #
+		is.True(strings.HasPrefix(color, "#"))
+
+		// Verify the rest are valid hex characters
+		hexPart := color[1:]
+		is.Equal(len(hexPart), 6)
+
+		// Check if all characters after # are valid hex
+		for _, char := range hexPart {
+			is.True((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F'))
+		}
+	}
 }
