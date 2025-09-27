@@ -15,6 +15,7 @@ The design introduces two new tables to support the tagging functionality:
 1. **tags table**: Stores unique tags per organization
    - `tag_id` (UUID, primary key)
    - `name` (VARCHAR, normalized lowercase name)
+   - `color` (VARCHAR, hex color code)
    - `org_id` (UUID, foreign key to organizations)
    - `created_at` (TIMESTAMP)
    - Unique constraint: (name, org_id) - ensures tag uniqueness within organization
@@ -39,6 +40,7 @@ type Activity struct {
 type Tag struct {
     ID             uuid.UUID
     Name           string // normalized (lowercase)
+    Color          string // hex color code
     OrganizationID uuid.UUID
     CreatedAt      time.Time
 }

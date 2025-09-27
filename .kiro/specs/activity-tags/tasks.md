@@ -58,6 +58,8 @@
   - Update mapFormToActivity and mapActivityToForm functions to handle tags
   - _Requirements: 1.1, 1.2, 1.5, 3.1_
 
+
+
 - [ ] 9. Implement tag filtering in activity list UI
   - Add tag filter input field to activity list page in tracking/activity_web.go
   - Update HandleTrackingPage to parse tag filter parameters from URL
@@ -96,11 +98,3 @@
   - Create database queries for organization-level tag usage analytics
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [x] 14. Write comprehensive tests for tag functionality
-  - Create unit tests for Tag domain model and validation in tracking/tag_service_test.go
-  - Write repository tests for all tag CRUD operations in tracking/tag_repository_mem_test.go
-  - Add service layer tests for tag business logic
-  - Create integration tests for tag API endpoints in tracking/activity_rest_test.go
-  - Write web handler tests for tag form processing in tracking/activity_web_test.go
-  - Add end-to-end tests for complete tag workflows
-  - _Requirements: All requirements_
