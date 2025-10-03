@@ -252,7 +252,6 @@ func (r *DbTagRepository) GetTagReportData(ctx context.Context, filter *Activiti
 	if filter.Username != "" {
 		baseQuery += ` AND username = $` + strconv.Itoa(argIndex)
 		args = append(args, filter.Username)
-		argIndex++
 	}
 
 	// For tag reports, we want to aggregate all activities for each tag across the time period

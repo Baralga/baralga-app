@@ -290,7 +290,6 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	if filter.Username != "" {
 		params = append(params, filter.Username)
 		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
-		paramIndex++
 	}
 
 	sortBy := "start"
@@ -429,7 +428,6 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	if filter.Username != "" {
 		countParams = append(countParams, filter.Username)
 		countFilter += fmt.Sprintf(" AND username = $%d", countParamIndex)
-		countParamIndex++
 	}
 
 	countSql := fmt.Sprintf(`
