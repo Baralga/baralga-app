@@ -1,7 +1,7 @@
 # Technology Stack
 
 ## Core Technologies
-- **Language**: Go 1.24+ with toolchain go1.24.5
+- **Language**: Go 1.25+
 - **Database**: PostgreSQL with pgx/v5 driver
 - **Web Framework**: Chi router (go-chi/chi/v5)
 - **Frontend**: Server-side rendered HTML with HTMX 2.0.6, Bootstrap 5.3.2, Bootstrap Icons 1.10.5
