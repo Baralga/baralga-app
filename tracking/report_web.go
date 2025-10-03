@@ -1008,33 +1008,6 @@ func (a *ReportWeb) reportTagView(pageContext *shared.PageContext, view *reportV
 	}), nil
 }
 
-// Helper functions for tag filtering in reports
-func reportContainsTag(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
-
-func reportToggleTag(tags []string, tag string) []string {
-	if reportContainsTag(tags, tag) {
-		return reportRemoveTag(tags, tag)
-	}
-	return append(tags, tag)
-}
-
-func reportRemoveTag(tags []string, tag string) []string {
-	var result []string
-	for _, t := range tags {
-		if t != tag {
-			result = append(result, t)
-		}
-	}
-	return result
-}
-
 type reportView struct {
 	main string
 	sub  string
