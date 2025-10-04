@@ -14,7 +14,7 @@ ADD CONSTRAINT pk_tags PRIMARY KEY (tag_id);
 
 ALTER TABLE tags
 ADD CONSTRAINT fk_tags_orgs
-FOREIGN KEY (org_id) REFERENCES organizations (org_id);
+FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE;
 
 -- Unique constraint on (name, org_id) for organization-level uniqueness
 ALTER TABLE tags
