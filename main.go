@@ -73,8 +73,10 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	projectRestHandlers := tracking.NewProjectController(&config, projectRepository, projectService)
 	projectWebHandlers := tracking.NewProjectWebHandlers(&config, projectService, projectRepository)
 
+	tagRepository := tracking.NewDbTagRepository(connPool)
+	tagService := tracking.NewTagService(tagRepository)
 	activityRepository := tracking.NewDbActivityRepository(connPool)
-	activityService := tracking.NewActitivityService(repositoryTxer, activityRepository)
+	activityService := tracking.NewActitivityService(repositoryTxer, activityRepository, tagRepository, tagService)
 	activityRestHandlers := tracking.NewActivityRestHandlers(&config, activityService, activityRepository)
 	activityWebHandlers := tracking.NewActivityWebHandlers(&config, activityService, activityRepository, projectRepository)
 
@@ -180,7 +182,14 @@ func registerWebRoutes(config *shared.Config, router *chi.Mux, authController *a
 		cookieName = "__Insecure-csrf"
 	}
 
-	CSRF := csrf.Protect([]byte(config.CSRFSecret), csrf.CookieName(cookieName), csrf.FieldName("CSRFToken"), csrf.Secure(config.IsProduction()))
+	CSRF := csrf.Protect([]byte(
+		config.CSRFSecret),
+		csrf.CookieName(cookieName),
+		csrf.FieldName("CSRFToken"),
+		csrf.Secure(config.IsProduction()),
+		csrf.SameSite(csrf.SameSiteStrictMode),
+		csrf.TrustedOrigins([]string{"localhost:8080"}),
+	)
 	router.Group(func(r chi.Router) {
 		r.Use(authWeb.WebVerifier())
 		r.Use(authController.JWTPrincipalMiddleware())

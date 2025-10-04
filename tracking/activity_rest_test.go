@@ -17,6 +17,18 @@ import (
 	"github.com/matryer/is"
 )
 
+// Helper function to create a properly initialized ActivityService for tests
+func createTestActivityServiceForRest(repo ActivityRepository) *ActitivityService {
+	tagRepo := NewInMemTagRepository()
+	tagService := NewTagService(tagRepo)
+	return &ActitivityService{
+		repositoryTxer:     shared.NewInMemRepositoryTxer(),
+		activityRepository: repo,
+		tagRepository:      tagRepo,
+		tagService:         tagService,
+	}
+}
+
 func TestMapToActivity(t *testing.T) {
 	is := is.New(t)
 
@@ -242,10 +254,7 @@ func TestHandleCreateActivity(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	countBefore := len(repo.activities)
@@ -312,10 +321,7 @@ func TestHandleDeleteActivityAsAdmin(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
@@ -343,10 +349,7 @@ func TestHandleDeleteActivityAsMatchingUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             config,
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
@@ -414,10 +417,7 @@ func TestHandleDeleteActivityAsNonMatchingUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	r, _ := http.NewRequest("DELETE", "/api/activities/00000000-0000-0000-2222-000000000001", nil)
@@ -443,10 +443,7 @@ func TestHandleUpdateActivity(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	body := `
@@ -526,10 +523,7 @@ func TestHandleUpdateActivityAsUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	body := `
@@ -572,10 +566,7 @@ func TestHandleUpdateActivityWithNonMatchingUser(t *testing.T) {
 	c := &ActivityRestHandlers{
 		config:             &shared.Config{},
 		activityRepository: repo,
-		actitivityService: &ActitivityService{
-			repositoryTxer:     shared.NewInMemRepositoryTxer(),
-			activityRepository: repo,
-		},
+		actitivityService:  createTestActivityServiceForRest(repo),
 	}
 
 	body := `
