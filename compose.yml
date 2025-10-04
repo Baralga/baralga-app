@@ -2,7 +2,7 @@ name: "baralga"
 services:
 
   postgres:
-    image: postgres:16
+    image: postgres:18
     ports:
       - "5432:5432"
     environment:
