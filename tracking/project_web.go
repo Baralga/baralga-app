@@ -22,7 +22,8 @@ import (
 type projectFormModel struct {
 	CSRFToken string
 	ID        string
-	Title     string ` validate:"required,min=3,max=50"`
+	Title     string `validate:"required,min=3,max=50"`
+	Billable  bool
 }
 
 type ProjectWeb struct {
@@ -520,19 +521,37 @@ func ProjectForm(formModel projectFormModel, editMode bool, errorMessage string)
 				),
 			),
 		),
+		Div(
+			Class("form-check mb-3"),
+			Input(
+				ID("ProjectBillable"),
+				Type("checkbox"),
+				Name("Billable"),
+				Value("true"),
+				Class("form-check-input"),
+				g.If(formModel.Billable, Checked()),
+			),
+			Label(
+				Class("form-check-label text-muted"),
+				g.Attr("for", "ProjectBillable"),
+				g.Text("Billable project"),
+			),
+		),
 	)
 }
 
 func mapFormToProject(projectFormModel projectFormModel) Project {
 	return Project{
-		Title:  projectFormModel.Title,
-		Active: true,
+		Title:    projectFormModel.Title,
+		Active:   true,
+		Billable: projectFormModel.Billable,
 	}
 }
 
 func mapProjectToForm(project Project) projectFormModel {
 	return projectFormModel{
-		ID:    project.ID.String(),
-		Title: project.Title,
+		ID:       project.ID.String(),
+		Title:    project.Title,
+		Billable: project.Billable,
 	}
 }

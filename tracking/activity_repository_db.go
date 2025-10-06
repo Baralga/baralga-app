@@ -33,10 +33,18 @@ func NewDbActivityRepository(connPool *pgxpool.Pool) *DbActivityRepository {
 func (r *DbActivityRepository) TimeReportByDay(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	filterSql := ""
+	paramIndex := 4
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $4"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	if filter.Billable == "billable" {
+		filterSql += " AND billable = true"
+	} else if filter.Billable == "non-billable" {
+		filterSql += " AND billable = false"
 	}
 
 	sql := fmt.Sprintf(
@@ -87,10 +95,18 @@ func (r *DbActivityRepository) TimeReportByDay(ctx context.Context, filter *Acti
 func (r *DbActivityRepository) TimeReportByWeek(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	filterSql := ""
+	paramIndex := 4
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $4"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	if filter.Billable == "billable" {
+		filterSql += " AND billable = true"
+	} else if filter.Billable == "non-billable" {
+		filterSql += " AND billable = false"
 	}
 
 	sql := fmt.Sprintf(
@@ -135,10 +151,18 @@ func (r *DbActivityRepository) TimeReportByWeek(ctx context.Context, filter *Act
 func (r *DbActivityRepository) TimeReportByMonth(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	filterSql := ""
+	paramIndex := 4
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $4"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	if filter.Billable == "billable" {
+		filterSql += " AND billable = true"
+	} else if filter.Billable == "non-billable" {
+		filterSql += " AND billable = false"
 	}
 
 	sql := fmt.Sprintf(
@@ -184,10 +208,18 @@ func (r *DbActivityRepository) TimeReportByMonth(ctx context.Context, filter *Ac
 func (r *DbActivityRepository) TimeReportByQuarter(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityTimeReportItem, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	filterSql := ""
+	paramIndex := 4
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $4"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	if filter.Billable == "billable" {
+		filterSql += " AND billable = true"
+	} else if filter.Billable == "non-billable" {
+		filterSql += " AND billable = false"
 	}
 
 	sql := fmt.Sprintf(
@@ -233,10 +265,18 @@ func (r *DbActivityRepository) TimeReportByQuarter(ctx context.Context, filter *
 func (r *DbActivityRepository) ProjectReport(ctx context.Context, filter *ActivitiesFilter) ([]*ActivityProjectReportItem, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End}
 	filterSql := ""
+	paramIndex := 4
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
-		filterSql = " AND username = $4"
+		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	if filter.Billable == "billable" {
+		filterSql += " AND billable = true"
+	} else if filter.Billable == "non-billable" {
+		filterSql += " AND billable = false"
 	}
 
 	sql := fmt.Sprintf(
@@ -285,11 +325,19 @@ func (r *DbActivityRepository) ProjectReport(ctx context.Context, filter *Activi
 func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *ActivitiesFilter, pageParams *paged.PageParams) (*ActivitiesPaged, []*Project, error) {
 	params := []interface{}{filter.OrganizationID, filter.Start, filter.End, pageParams.Size, pageParams.Offset()}
 	filterSql := ""
+	filterAfterJoin := ""
 	paramIndex := 6
 
 	if filter.Username != "" {
 		params = append(params, filter.Username)
 		filterSql += fmt.Sprintf(" AND username = $%d", paramIndex)
+		paramIndex++
+	}
+
+	if filter.Billable == "billable" {
+		filterAfterJoin = " AND projects.billable = true"
+	} else if filter.Billable == "non-billable" {
+		filterAfterJoin = " AND projects.billable = false"
 	}
 
 	sortBy := "start"
@@ -324,10 +372,12 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 		INNER JOIN projects ON projects.project_id = a.project_id
 		LEFT JOIN activity_tags at ON at.activity_id = a.id
 		LEFT JOIN tags t ON t.tag_id = at.tag_id
+		WHERE 1=1 %s
 		GROUP BY a.id, a.description, a.start, a.end, a.username, a.org_id, a.project_id, projects.title
 		ORDER by %s %s 
 		LIMIT $4 OFFSET $5`,
 		filterSql,
+		filterAfterJoin,
 		sortBy,
 		sortOrder,
 	)
@@ -428,13 +478,22 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 	if filter.Username != "" {
 		countParams = append(countParams, filter.Username)
 		countFilter += fmt.Sprintf(" AND username = $%d", countParamIndex)
+		countParamIndex++
+	}
+
+	countFilterAfterJoin := ""
+	if filter.Billable == "billable" {
+		countFilterAfterJoin = " AND projects.billable = true"
+	} else if filter.Billable == "non-billable" {
+		countFilterAfterJoin = " AND projects.billable = false"
 	}
 
 	countSql := fmt.Sprintf(`
      	SELECT count(activities.activity_id) as total 
 	    FROM activities
-	    WHERE org_id = $1 %s AND $2 <= start_time AND start_time < $3`,
-		countFilter)
+		INNER JOIN projects ON projects.project_id = activities.project_id
+	    WHERE activities.org_id = $1 %s AND $2 <= activities.start_time AND activities.start_time < $3 %s`,
+		countFilter, countFilterAfterJoin)
 	row := r.connPool.QueryRow(ctx, countSql, countParams...)
 	var total int
 	err = row.Scan(&total)

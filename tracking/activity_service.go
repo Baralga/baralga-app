@@ -256,6 +256,7 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 	_ = f.SetCellValue("Activities", "D1", "End")
 	_ = f.SetCellValue("Activities", "E1", "Hours")
 	_ = f.SetCellValue("Activities", "F1", "Description")
+	_ = f.SetCellValue("Activities", "G1", "Billable")
 
 	style, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
@@ -270,7 +271,7 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 	styleDuration, _ := f.NewStyle(&excelize.Style{
 		NumFmt: 4,
 	})
-	_ = f.SetCellStyle("Activities", "A1", "F1", style)
+	_ = f.SetCellStyle("Activities", "A1", "G1", style)
 
 	descriptionStyle, _ := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
@@ -282,8 +283,13 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 		idx := i + 2
 
 		duration, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", activity.DurationDecimal()), 64)
+		project := projectsById[activity.ProjectID]
+		billableText := "No"
+		if project.Billable {
+			billableText = "Yes"
+		}
 
-		_ = f.SetCellValue("Activities", fmt.Sprintf("A%v", idx), projectsById[activity.ProjectID].Title)
+		_ = f.SetCellValue("Activities", fmt.Sprintf("A%v", idx), project.Title)
 		_ = f.SetCellValue("Activities", fmt.Sprintf("B%v", idx), activity.Start.Format("2006-01-02"))
 		_ = f.SetCellValue("Activities", fmt.Sprintf("C%v", idx), activity.Start.Format("15:04"))
 		_ = f.SetCellValue("Activities", fmt.Sprintf("D%v", idx), activity.End.Format("15:04"))
@@ -293,6 +299,8 @@ func (a *ActitivityService) WriteAsExcel(activities []*Activity, projects []*Pro
 
 		_ = f.SetCellValue("Activities", fmt.Sprintf("F%v", idx), activity.Description)
 		_ = f.SetCellStyle("Activities", fmt.Sprintf("F%v", idx), fmt.Sprintf("F%v", idx), descriptionStyle)
+
+		_ = f.SetCellValue("Activities", fmt.Sprintf("G%v", idx), billableText)
 	}
 
 	return f.Write(w)
@@ -332,6 +340,7 @@ func toFilter(principal *shared.Principal, filter *ActivityFilter) *ActivitiesFi
 		SortBy:         filter.sortBy,
 		SortOrder:      filter.sortOrder,
 		OrganizationID: principal.OrganizationID,
+		Billable:       filter.Billable(),
 	}
 
 	if !principal.HasRole("ROLE_ADMIN") {

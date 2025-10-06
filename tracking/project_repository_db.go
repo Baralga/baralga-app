@@ -29,7 +29,7 @@ func NewDbProjectRepository(connPool *pgxpool.Pool) *DbProjectRepository {
 func (r *DbProjectRepository) FindProjects(ctx context.Context, organizationID uuid.UUID, pageParams *paged.PageParams) (*ProjectsPaged, error) {
 	rows, err := r.connPool.Query(
 		ctx,
-		`SELECT project_id as id, title, description, active 
+		`SELECT project_id as id, title, description, active, billable 
 		 FROM projects 
 		 WHERE org_id = $1 AND active = true
 		 ORDER BY title ASC 
@@ -48,9 +48,10 @@ func (r *DbProjectRepository) FindProjects(ctx context.Context, organizationID u
 			title       string
 			description sql.NullString
 			active      bool
+			billable    bool
 		)
 
-		err = rows.Scan(&id, &title, &description, &active)
+		err = rows.Scan(&id, &title, &description, &active, &billable)
 		if err != nil {
 			return nil, err
 		}
@@ -60,6 +61,7 @@ func (r *DbProjectRepository) FindProjects(ctx context.Context, organizationID u
 			Title:       title,
 			Description: description.String,
 			Active:      active,
+			Billable:    billable,
 		}
 		projects = append(projects, project)
 	}
@@ -88,7 +90,7 @@ func (r *DbProjectRepository) FindProjects(ctx context.Context, organizationID u
 func (r *DbProjectRepository) FindProjectsByIDs(ctx context.Context, organizationID uuid.UUID, projectIDs []uuid.UUID) ([]*Project, error) {
 	rows, err := r.connPool.Query(
 		ctx,
-		`SELECT project_id as id, title, description, active 
+		`SELECT project_id as id, title, description, active, billable 
 		 FROM projects 
 		 WHERE org_id = $1 AND project_id = any($2) 
 		 ORDER by title ASC`,
@@ -106,9 +108,10 @@ func (r *DbProjectRepository) FindProjectsByIDs(ctx context.Context, organizatio
 			title       string
 			description sql.NullString
 			active      bool
+			billable    bool
 		)
 
-		err = rows.Scan(&id, &title, &description, &active)
+		err = rows.Scan(&id, &title, &description, &active, &billable)
 		if err != nil {
 			return nil, err
 		}
@@ -118,6 +121,7 @@ func (r *DbProjectRepository) FindProjectsByIDs(ctx context.Context, organizatio
 			Title:       title,
 			Description: description.String,
 			Active:      active,
+			Billable:    billable,
 		}
 		projects = append(projects, project)
 	}
@@ -127,7 +131,7 @@ func (r *DbProjectRepository) FindProjectsByIDs(ctx context.Context, organizatio
 
 func (r *DbProjectRepository) FindProjectByID(ctx context.Context, organizationID, projectID uuid.UUID) (*Project, error) {
 	row := r.connPool.QueryRow(ctx,
-		`SELECT project_id as id, title, description, active  
+		`SELECT project_id as id, title, description, active, billable  
          FROM projects 
 	     WHERE project_id = $1 AND org_id = $2`,
 		projectID, organizationID)
@@ -137,9 +141,10 @@ func (r *DbProjectRepository) FindProjectByID(ctx context.Context, organizationI
 		title       string
 		description sql.NullString
 		active      bool
+		billable    bool
 	)
 
-	err := row.Scan(&id, &title, &description, &active)
+	err := row.Scan(&id, &title, &description, &active, &billable)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrProjectNotFound
@@ -153,6 +158,7 @@ func (r *DbProjectRepository) FindProjectByID(ctx context.Context, organizationI
 		Title:       title,
 		Description: description.String,
 		Active:      active,
+		Billable:    billable,
 	}
 
 	return project, nil
@@ -164,13 +170,14 @@ func (r *DbProjectRepository) InsertProject(ctx context.Context, project *Projec
 	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO projects 
-		   (project_id, title, active, description, org_id) 
+		   (project_id, title, active, description, billable, org_id) 
 		 VALUES 
-		   ($1, $2, $3, $4, $5)`,
+		   ($1, $2, $3, $4, $5, $6)`,
 		project.ID,
 		project.Title,
 		project.Active,
 		project.Description,
+		project.Billable,
 		project.OrganizationID,
 	)
 	if err != nil {
@@ -185,11 +192,11 @@ func (r *DbProjectRepository) UpdateProject(ctx context.Context, organizationID 
 
 	row := tx.QueryRow(ctx,
 		`UPDATE projects 
-		 SET title = $3, description = $4, active = $5 
+		 SET title = $3, description = $4, active = $5, billable = $6 
 		 WHERE project_id = $1 AND org_id = $2
 		 RETURNING project_id`,
 		project.ID, organizationID,
-		project.Title, project.Description, project.Active,
+		project.Title, project.Description, project.Active, project.Billable,
 	)
 
 	var id string

@@ -15,6 +15,7 @@ type Project struct {
 	Title          string
 	Description    string
 	Active         bool
+	Billable       bool
 	OrganizationID uuid.UUID
 }
 

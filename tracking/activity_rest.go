@@ -384,10 +384,19 @@ func filterFromQueryParams(params url.Values) (*ActivityFilter, error) {
 		}
 	}
 
+	billable := "all"
+	if len(params["b"]) != 0 {
+		billableParam := params["b"][0]
+		if billableParam == "billable" || billableParam == "non-billable" {
+			billable = billableParam
+		}
+	}
+
 	filter := &ActivityFilter{
 		Timespan:  timespan,
 		sortBy:    sortBy,
 		sortOrder: sortOrder,
+		billable:  billable,
 	}
 
 	if timespan == TimespanCustom && len(params["start"]) == 0 && len(params["end"]) == 0 {

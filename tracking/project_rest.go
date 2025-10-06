@@ -20,6 +20,7 @@ type projectModel struct {
 	Title       string     `json:"title" validate:"required,min=3,max=100"`
 	Description string     `json:"description" validate:"max=500"`
 	Active      bool       `json:"active"`
+	Billable    bool       `json:"billable"`
 	Links       *hal.Links `json:"_links"`
 }
 
@@ -281,6 +282,7 @@ func mapToProject(projectModel *projectModel) (*Project, error) {
 		Title:       projectModel.Title,
 		Description: projectModel.Description,
 		Active:      projectModel.Active,
+		Billable:    projectModel.Billable,
 	}, nil
 }
 
@@ -290,6 +292,7 @@ func mapToProjectModel(principal *shared.Principal, project *Project) *projectMo
 		Title:       project.Title,
 		Description: project.Description,
 		Active:      project.Active,
+		Billable:    project.Billable,
 	}
 	selfLink := hal.NewSelfLink(fmt.Sprintf("/api/projects/%s", projectModel.ID))
 	if principal.HasRole("ROLE_ADMIN") {

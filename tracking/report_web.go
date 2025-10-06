@@ -154,6 +154,33 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 				),
 			),
 			Div(
+				Class("col-md-3 col-12 mt-2"),
+				Select(
+					ghx.Get(fmt.Sprintf("/reports?c=%v", view.asParam())),
+					ghx.PushURL("true"),
+					ghx.Target("#baralga__report_content"),
+					ghx.Swap("outerHTML"),
+
+					Name("b"),
+					Class("form-select"),
+					Option(
+						Value("all"),
+						g.Text("All Activities"),
+						g.If(filter.Billable() == "all", Selected()),
+					),
+					Option(
+						Value("billable"),
+						g.Text("Billable Only"),
+						g.If(filter.Billable() == "billable", Selected()),
+					),
+					Option(
+						Value("non-billable"),
+						g.Text("Non-Billable Only"),
+						g.If(filter.Billable() == "non-billable", Selected()),
+					),
+				),
+			),
+			Div(
 				Class("col-md-4 col-6 text-center mt-2"),
 				Div(
 					Class("btn-group"),
@@ -1038,6 +1065,11 @@ func reportHref(filter *ActivityFilter, view *reportView) string {
 	// Add tag filters to URL
 	if len(filter.Tags()) > 0 {
 		reportHref += "&tags=" + strings.Join(filter.Tags(), ",")
+	}
+
+	// Add billable filter to URL
+	if filter.Billable() != "all" {
+		reportHref += "&b=" + filter.Billable()
 	}
 
 	return reportHref

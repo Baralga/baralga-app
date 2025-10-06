@@ -66,6 +66,7 @@ type ActivityFilter struct {
 	start     time.Time
 	end       time.Time
 	tags      []string // tag names to filter by
+	billable  string   // "all", "billable", or "non-billable"
 }
 
 type ActivityTimeReportItem struct {
@@ -89,6 +90,7 @@ type ActivitiesFilter struct {
 	SortOrder      string
 	Username       string
 	OrganizationID uuid.UUID
+	Billable       string // "all", "billable", or "non-billable"
 }
 
 func IsValidActivitySortField(f string) bool {
@@ -204,6 +206,11 @@ func (f *ActivityFilter) Tags() []string {
 	return f.tags
 }
 
+// Billable returns the filter's billable status
+func (f *ActivityFilter) Billable() string {
+	return f.billable
+}
+
 // WithTags returns a new filter with the specified tags
 func (f *ActivityFilter) WithTags(tags []string) *ActivityFilter {
 	return &ActivityFilter{
@@ -213,6 +220,20 @@ func (f *ActivityFilter) WithTags(tags []string) *ActivityFilter {
 		start:     f.start,
 		end:       f.end,
 		tags:      tags,
+		billable:  f.billable,
+	}
+}
+
+// WithBillable returns a new filter with the specified billable status
+func (f *ActivityFilter) WithBillable(billable string) *ActivityFilter {
+	return &ActivityFilter{
+		Timespan:  f.Timespan,
+		sortBy:    f.sortBy,
+		sortOrder: f.sortOrder,
+		start:     f.start,
+		end:       f.end,
+		tags:      f.tags,
+		billable:  billable,
 	}
 }
 
@@ -221,6 +242,7 @@ func (f *ActivityFilter) Home() *ActivityFilter {
 		Timespan: f.Timespan,
 		start:    time.Now(),
 		tags:     f.tags,
+		billable: f.billable,
 	}
 }
 
@@ -230,6 +252,7 @@ func (f *ActivityFilter) Next() *ActivityFilter {
 		start:    f.start,
 		end:      f.end,
 		tags:     f.tags,
+		billable: f.billable,
 	}
 
 	switch nextFilter.Timespan {
@@ -259,6 +282,7 @@ func (f *ActivityFilter) Previous() *ActivityFilter {
 		start:    f.start,
 		end:      f.end,
 		tags:     f.tags,
+		billable: f.billable,
 	}
 
 	switch previousFilter.Timespan {
@@ -289,6 +313,7 @@ func (f *ActivityFilter) WithSortToggle(sortBy string) *ActivityFilter {
 		start:    f.start,
 		end:      f.end,
 		tags:     f.tags,
+		billable: f.billable,
 	}
 
 	if f.sortOrder == "desc" {
