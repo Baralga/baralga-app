@@ -26,14 +26,14 @@
     - _Requirements: 1.4, 2.2, 3.3, 4.2_
 
 - [ ] 3. Implement MCP tool handlers for activity operations
-  - [ ] 3.1 Create tracking/activity_mcp.go with core MCP tool handlers
+  - [x] 3.1 Create tracking/activity_mcp.go with core MCP tool handlers
     - Implement create_entry tool handler mapping to ActivityService.CreateActivity()
     - Implement get_entry tool handler mapping to ActivityRepository.FindActivityByID()
     - Implement update_entry tool handler mapping to ActivityService.UpdateActivity()
     - Implement delete_entry tool handler mapping to ActivityService.DeleteActivityByID()
     - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4_
 
-  - [ ] 3.2 Implement list_entries tool handler
+  - [x] 3.2 Implement list_entries tool handler
     - Create tool handler mapping to ActivityService.ReadActivitiesWithProjects()
     - Add parameter parsing for date range and project filtering
     - Implement response formatting using existing activityModel structures
