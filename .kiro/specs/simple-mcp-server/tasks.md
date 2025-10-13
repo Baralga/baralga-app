@@ -19,7 +19,7 @@
     - Handle authentication errors with proper MCP error responses
     - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1_
 
-  - [ ] 2.3 Add MCP error handling utilities
+  - [x] 2.3 Add MCP error handling utilities
     - Create functions to convert domain errors to MCP error responses
     - Implement structured error response formatting according to MCP specification
     - Add logging for MCP-specific errors
