@@ -246,13 +246,30 @@ All errors will be returned as MCP error responses with structured error informa
 - Consistent error response formatting across all tools
 - Logging of errors for debugging and monitoring
 
-### Authentication Flow
+### Authentication Flow (No Service/Repository Changes Required)
 
 1. Extract API key from HTTP header (`X-API-Key` or `Authorization: Bearer <email>`)
-2. Validate email format and lookup user in database
-3. Create `shared.Principal` context with user's organization and roles
-4. Pass principal context to existing service methods
+2. Validate email format and lookup user using existing `UserRepository.FindUserByUsername(ctx, email)`
+3. Create `shared.Principal` context with user's organization and roles using existing patterns
+4. Pass principal context to existing service methods (no changes needed)
 5. Return authentication errors for invalid or missing API keys
+
+### Existing Methods Used (No Modifications Required)
+
+**ActivityService Methods:**
+- `CreateActivity(ctx, principal, activity)` - Create entries
+- `ReadActivitiesWithProjects(ctx, principal, filter, pageParams)` - List entries  
+- `UpdateActivity(ctx, principal, activity)` - Update entries
+- `DeleteActivityByID(ctx, principal, activityID)` - Delete entries
+- `TimeReports(ctx, principal, filter, aggregateBy)` - Time summaries
+- `ProjectReports(ctx, principal, filter)` - Project summaries
+
+**UserRepository Methods:**
+- `FindUserByUsername(ctx, username)` - User lookup for authentication
+
+**Existing API Models:**
+- `activityModel` - Request/response structure
+- `mapToActivity()` / `mapToActivityModel()` - Conversion functions
 
 ## Testing Strategy
 
