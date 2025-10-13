@@ -42,7 +42,8 @@ The server will implement the MCP specification by:
 - Exposing tools through the MCP tools interface via HTTP POST requests
 - Handling tool calls and returning structured JSON responses
 - Supporting MCP initialization and capability negotiation via HTTP endpoints
-- Using standard HTTP authentication and CORS headers for web compatibility
+- Using API key authentication via HTTP headers (user's email address as API key)
+- Supporting standard CORS headers for web compatibility
 
 ### Domain Architecture
 
@@ -89,6 +90,8 @@ The MCP integration follows existing patterns:
 - MCP protocol message parsing and response formatting
 - Tool registration and capability negotiation
 - Error handling and MCP error response formatting
+- API key authentication middleware (using email address as API key)
+- Principal context creation from authenticated email address
 - Integration with existing Chi router for `/mcp/*` routes
 
 ### Reused Domain Components
@@ -210,10 +213,12 @@ type projectModel struct {
 
 ### Error Categories
 
-1. **Validation Errors** - Invalid input parameters, constraint violations
-2. **Not Found Errors** - Requested resources don't exist
-3. **Business Logic Errors** - Domain rule violations (e.g., end time before start time)
-4. **System Errors** - Database connection issues, internal server errors
+1. **Authentication Errors** - Missing or invalid API key (email address)
+2. **Authorization Errors** - User not found or insufficient permissions
+3. **Validation Errors** - Invalid input parameters, constraint violations
+4. **Not Found Errors** - Requested resources don't exist
+5. **Business Logic Errors** - Domain rule violations (e.g., end time before start time)
+6. **System Errors** - Database connection issues, internal server errors
 
 ### Error Response Format
 
@@ -233,11 +238,21 @@ All errors will be returned as MCP error responses with structured error informa
 
 ### Error Handling Strategy
 
+- API key authentication at the middleware level (email address validation)
+- User lookup and principal context creation from authenticated email
 - Input validation at the tool handler level using go-playground/validator
 - Business rule validation in the service layer
 - Repository errors wrapped and propagated with context
 - Consistent error response formatting across all tools
 - Logging of errors for debugging and monitoring
+
+### Authentication Flow
+
+1. Extract API key from HTTP header (`X-API-Key` or `Authorization: Bearer <email>`)
+2. Validate email format and lookup user in database
+3. Create `shared.Principal` context with user's organization and roles
+4. Pass principal context to existing service methods
+5. Return authentication errors for invalid or missing API keys
 
 ## Testing Strategy
 
