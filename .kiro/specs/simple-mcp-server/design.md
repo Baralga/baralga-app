@@ -37,13 +37,14 @@ graph TB
 
 ### MCP Protocol Integration
 
-The server will implement the MCP specification by:
-- Accepting JSON-RPC 2.0 messages over HTTP at `/mcp` endpoints
-- Exposing tools through the MCP tools interface via HTTP POST requests
-- Handling tool calls and returning structured JSON responses
-- Supporting MCP initialization and capability negotiation via HTTP endpoints
-- Using API key authentication via HTTP headers (user's email address as API key)
+The server will implement the MCP specification using the official MCP Go SDK (https://github.com/modelcontextprotocol/go-sdk):
+- Leveraging the MCP Go SDK for JSON-RPC 2.0 message handling and protocol compliance
+- Exposing tools through the MCP tools interface via HTTP endpoints
+- Using SDK's built-in tool registration and capability negotiation
+- Handling tool calls and returning structured responses through SDK interfaces
+- Adding API key authentication middleware (user's email address as API key)
 - Supporting standard CORS headers for web compatibility
+- Following SDK patterns for server implementation and tool handlers
 
 ### Domain Architecture
 
@@ -79,20 +80,20 @@ The MCP integration follows existing patterns:
 
 ### MCP Server Core
 
-**ActivityMCPHandlers** (in `tracking/activity_mcp.go`) - MCP tool handlers for activity operations
-- Handles MCP tool calls for activity CRUD operations and reporting
-- Manages JSON-RPC 2.0 message parsing and tool execution
+**ActivityMCPHandlers** (in `tracking/activity_mcp.go`) - MCP tool handlers using Go SDK
+- Implements MCP tool interfaces from the Go SDK for activity operations
+- Registers tools using SDK's tool registration system
 - Integrates with existing `ActivityService` for business logic
 - Uses existing `activityModel` structures for consistent responses
-- Follows the same patterns as `ActivityRestHandlers`
+- Follows SDK patterns for tool implementation and error handling
 
-**SharedMCPUtilities** (in `shared/shared_mcp.go`) - Common MCP protocol utilities
-- MCP protocol message parsing and response formatting
-- Tool registration and capability negotiation
-- Error handling and MCP error response formatting
+**SharedMCPUtilities** (in `shared/shared_mcp.go`) - MCP server setup using Go SDK
+- MCP server initialization using the official Go SDK
+- Tool registration and capability negotiation through SDK
+- HTTP transport layer integration with existing Chi router
 - API key authentication middleware (using email address as API key)
 - Principal context creation from authenticated email address
-- Integration with existing Chi router for `/mcp/*` routes
+- Error handling using SDK's error response patterns
 
 ### Reused Domain Components
 
