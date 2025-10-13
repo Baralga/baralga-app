@@ -1,16 +1,13 @@
 package shared
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -23,18 +20,6 @@ type MCPServer struct {
 // MCPHandler interface for MCP tool handlers
 type MCPHandler interface {
 	RegisterMCPTools(server *mcp.Server)
-}
-
-// UserRepository interface for user lookup during authentication
-type UserRepository interface {
-	FindUserByUsername(ctx context.Context, username string) (User, error)
-}
-
-// User represents a user for authentication
-type User struct {
-	Username       string
-	OrganizationID uuid.UUID
-	Roles          []string
 }
 
 // NewMCPServer creates a new MCP server instance
@@ -52,7 +37,7 @@ func NewMCPServer() *MCPServer {
 }
 
 // RegisterMCPRoutes registers MCP endpoints with the Chi router
-func (m *MCPServer) RegisterMCPRoutes(router chi.Router, userRepo UserRepository, mcpHandlers []MCPHandler) {
+func (m *MCPServer) RegisterMCPRoutes(router chi.Router, authMiddleware func(http.Handler) http.Handler, mcpHandlers []MCPHandler) {
 	// Register all MCP tools from handlers
 	for _, handler := range mcpHandlers {
 		handler.RegisterMCPTools(m.server)
@@ -64,7 +49,7 @@ func (m *MCPServer) RegisterMCPRoutes(router chi.Router, userRepo UserRepository
 		r.Use(m.corsMiddleware)
 
 		// Add API key authentication middleware
-		r.Use(m.authenticationMiddleware(userRepo))
+		r.Use(authMiddleware)
 
 		// Handle MCP protocol requests
 		r.Post("/*", m.handleMCPRequest)
@@ -82,75 +67,6 @@ func (m *MCPServer) corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-// authenticationMiddleware validates API key and creates principal context
-func (m *MCPServer) authenticationMiddleware(userRepo UserRepository) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip authentication for OPTIONS requests
-			if r.Method == "OPTIONS" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			// Extract API key from headers
-			apiKey := m.extractAPIKey(r)
-			if apiKey == "" {
-				m.renderMCPError(w, -32602, "Missing API key", "API key must be provided in X-API-Key header or Authorization Bearer token")
-				return
-			}
-
-			// Validate email format (basic validation)
-			if !m.isValidEmail(apiKey) {
-				m.renderMCPError(w, -32602, "Invalid API key format", "API key must be a valid email address")
-				return
-			}
-
-			// Lookup user by email
-			user, err := userRepo.FindUserByUsername(r.Context(), apiKey)
-			if err != nil {
-				log.Printf("User lookup failed for email %s: %v", apiKey, err)
-				m.renderMCPError(w, -32603, "Authentication failed", "Invalid API key or user not found")
-				return
-			}
-
-			// Create principal context
-			principal := &Principal{
-				Name:           user.Username,
-				Username:       user.Username,
-				OrganizationID: user.OrganizationID,
-				Roles:          user.Roles,
-			}
-
-			// Add principal to context
-			ctx := ToContextWithPrincipal(r.Context(), principal)
-			r = r.WithContext(ctx)
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-// extractAPIKey extracts API key from X-API-Key header or Authorization Bearer token
-func (m *MCPServer) extractAPIKey(r *http.Request) string {
-	// Try X-API-Key header first
-	if apiKey := r.Header.Get("X-API-Key"); apiKey != "" {
-		return apiKey
-	}
-
-	// Try Authorization Bearer token
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		return strings.TrimPrefix(authHeader, "Bearer ")
-	}
-
-	return ""
-}
-
-// isValidEmail performs basic email validation
-func (m *MCPServer) isValidEmail(email string) bool {
-	return strings.Contains(email, "@") && strings.Contains(email, ".")
 }
 
 // handleMCPRequest handles incoming MCP protocol requests using StreamableHTTPHandler
@@ -171,15 +87,20 @@ func (m *MCPServer) handleOptions(w http.ResponseWriter, r *http.Request) {
 
 // renderMCPError renders an MCP-compliant error response
 func (m *MCPServer) renderMCPError(w http.ResponseWriter, code int, message, details string) {
+	RenderMCPError(w, code, message, details)
+}
+
+// RenderMCPError renders an MCP-compliant error response (public function)
+func RenderMCPError(w http.ResponseWriter, code int, message, details string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusBadRequest)
 
-	errorResponse := map[string]interface{}{
+	errorResponse := map[string]any{
 		"jsonrpc": "2.0",
-		"error": map[string]interface{}{
+		"error": map[string]any{
 			"code":    code,
 			"message": message,
-			"data": map[string]interface{}{
+			"data": map[string]any{
 				"type":    "mcp_error",
 				"details": details,
 			},
