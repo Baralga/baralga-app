@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/baralga/shared"
 	"github.com/baralga/shared/paged"
@@ -68,6 +69,18 @@ func (h *ActivityMCPHandlers) RegisterMCPTools(server *mcp.Server) {
 		Name:        "list_entries",
 		Description: "List time entries with optional filtering by date range and project",
 	}, h.handleListEntries)
+
+	// Register get_summary tool
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_summary",
+		Description: "Get time summaries for specified periods (day/week/month/quarter/year)",
+	}, h.handleGetSummary)
+
+	// Register get_hours_by_project tool
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_hours_by_project",
+		Description: "Get hours grouped by project for a date range",
+	}, h.handleGetHoursByProject)
 }
 
 // MCP parameter structures for tool calls
@@ -106,6 +119,18 @@ type ListEntriesParams struct {
 	FromDate  string `json:"from_date,omitempty" jsonschema:"description=Start date filter in YYYY-MM-DD format (optional)"`
 	ToDate    string `json:"to_date,omitempty" jsonschema:"description=End date filter in YYYY-MM-DD format (optional)"`
 	ProjectID string `json:"project_id,omitempty" validate:"omitempty,uuid" jsonschema:"description=UUID of the project to filter by (optional)"`
+}
+
+// GetSummaryParams represents parameters for get_summary tool
+type GetSummaryParams struct {
+	PeriodType string `json:"period_type" validate:"required,oneof=day week month quarter year" jsonschema:"description=Type of period (day/week/month/quarter/year)"`
+	Date       string `json:"date" validate:"required" jsonschema:"description=Date within the period in YYYY-MM-DD format"`
+}
+
+// GetHoursByProjectParams represents parameters for get_hours_by_project tool
+type GetHoursByProjectParams struct {
+	FromDate string `json:"from_date" validate:"required" jsonschema:"description=Start date in YYYY-MM-DD format"`
+	ToDate   string `json:"to_date" validate:"required" jsonschema:"description=End date in YYYY-MM-DD format"`
 }
 
 // MCP tool handlers
@@ -582,6 +607,207 @@ func (h *ActivityMCPHandlers) handleListEntries(ctx context.Context, req *mcp.Ca
 	}, response, nil
 }
 
+// handleGetSummary handles the get_summary MCP tool call
+func (h *ActivityMCPHandlers) handleGetSummary(ctx context.Context, req *mcp.CallToolRequest, params GetSummaryParams) (*mcp.CallToolResult, any, error) {
+	// Extract principal from context
+	principal := shared.MustPrincipalFromContext(ctx)
+
+	// Validate period type
+	validPeriods := map[string]bool{
+		"day":     true,
+		"week":    true,
+		"month":   true,
+		"quarter": true,
+		"year":    true,
+	}
+	if !validPeriods[params.PeriodType] {
+		err := errors.New("invalid period_type, must be one of: day, week, month, quarter, year")
+		shared.LogMCPError("get_summary", err, map[string]any{"period_type": params.PeriodType})
+		return nil, nil, err
+	}
+
+	// Parse the date
+	date, err := time_utils.ParseDate(params.Date)
+	if err != nil {
+		shared.LogMCPError("get_summary", err, map[string]any{"date": params.Date})
+		return nil, nil, errors.Wrap(err, "invalid date format, expected YYYY-MM-DD")
+	}
+
+	// Calculate period boundaries based on the period type and date
+	var startDate, endDate time.Time
+	switch params.PeriodType {
+	case "day":
+		startDate = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+		endDate = startDate.AddDate(0, 0, 1).Add(-time.Nanosecond)
+	case "week":
+		// Find Monday of the week containing the date
+		weekday := int(date.Weekday())
+		if weekday == 0 { // Sunday
+			weekday = 7
+		}
+		startDate = date.AddDate(0, 0, -(weekday - 1))
+		startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+		endDate = startDate.AddDate(0, 0, 7).Add(-time.Nanosecond)
+	case "month":
+		startDate = time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
+		endDate = startDate.AddDate(0, 1, 0).Add(-time.Nanosecond)
+	case "quarter":
+		quarter := time_utils.Quarter(*date)
+		startMonth := (quarter-1)*3 + 1
+		startDate = time.Date(date.Year(), time.Month(startMonth), 1, 0, 0, 0, 0, date.Location())
+		endDate = startDate.AddDate(0, 3, 0).Add(-time.Nanosecond)
+	case "year":
+		startDate = time.Date(date.Year(), 1, 1, 0, 0, 0, 0, date.Location())
+		endDate = startDate.AddDate(1, 0, 0).Add(-time.Nanosecond)
+	}
+
+	// Create activity filter for the period
+	filter := &ActivityFilter{
+		Timespan: TimespanCustom,
+		start:    startDate,
+		end:      endDate,
+	}
+
+	// Get time reports using the service
+	timeReports, err := h.activityService.TimeReports(ctx, principal, filter, params.PeriodType)
+	if err != nil {
+		shared.LogMCPError("get_summary", err, map[string]any{
+			"filter":      filter,
+			"period_type": params.PeriodType,
+		})
+		return nil, nil, errors.Wrap(err, "failed to retrieve time reports")
+	}
+
+	// Calculate total hours
+	var totalMinutes int
+	for _, report := range timeReports {
+		totalMinutes += report.DurationInMinutesTotal
+	}
+	totalHours := float64(totalMinutes) / 60.0
+
+	// Create response
+	response := map[string]any{
+		"period_type":   params.PeriodType,
+		"date":          params.Date,
+		"start_date":    time_utils.FormatDate(startDate),
+		"end_date":      time_utils.FormatDate(endDate),
+		"total_hours":   totalHours,
+		"total_minutes": totalMinutes,
+		"formatted":     time_utils.FormatMinutesAsDuration(float64(totalMinutes)),
+	}
+
+	var resultText string
+	if totalMinutes == 0 {
+		resultText = fmt.Sprintf("No time tracked for %s period containing %s", params.PeriodType, params.Date)
+	} else {
+		resultText = fmt.Sprintf("Total time for %s period containing %s: %s (%.2f hours)",
+			params.PeriodType, params.Date, time_utils.FormatMinutesAsDuration(float64(totalMinutes)), totalHours)
+	}
+
+	shared.LogMCPToolCall("get_summary", map[string]any{"params": params}, true)
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			&mcp.TextContent{
+				Text: resultText,
+			},
+			&mcp.TextContent{
+				Text: fmt.Sprintf("Summary details: %s", h.formatSummaryJSON(response)),
+			},
+		},
+	}, response, nil
+}
+
+// handleGetHoursByProject handles the get_hours_by_project MCP tool call
+func (h *ActivityMCPHandlers) handleGetHoursByProject(ctx context.Context, req *mcp.CallToolRequest, params GetHoursByProjectParams) (*mcp.CallToolResult, any, error) {
+	// Extract principal from context
+	principal := shared.MustPrincipalFromContext(ctx)
+
+	// Parse dates
+	fromDate, err := time_utils.ParseDate(params.FromDate)
+	if err != nil {
+		shared.LogMCPError("get_hours_by_project", err, map[string]any{"from_date": params.FromDate})
+		return nil, nil, errors.Wrap(err, "invalid from_date format, expected YYYY-MM-DD")
+	}
+
+	toDate, err := time_utils.ParseDate(params.ToDate)
+	if err != nil {
+		shared.LogMCPError("get_hours_by_project", err, map[string]any{"to_date": params.ToDate})
+		return nil, nil, errors.Wrap(err, "invalid to_date format, expected YYYY-MM-DD")
+	}
+
+	// Validate date range
+	if toDate.Before(*fromDate) {
+		err := errors.New("to_date must be on or after from_date")
+		shared.LogMCPError("get_hours_by_project", err, map[string]any{
+			"from_date": params.FromDate,
+			"to_date":   params.ToDate,
+		})
+		return nil, nil, err
+	}
+
+	// Create activity filter for the date range
+	filter := &ActivityFilter{
+		Timespan: TimespanCustom,
+		start:    *fromDate,
+		end:      toDate.AddDate(0, 0, 1).Add(-time.Nanosecond), // Include the entire end date
+	}
+
+	// Get project reports using the service
+	projectReports, err := h.activityService.ProjectReports(ctx, principal, filter)
+	if err != nil {
+		shared.LogMCPError("get_hours_by_project", err, map[string]any{
+			"filter": filter,
+		})
+		return nil, nil, errors.Wrap(err, "failed to retrieve project reports")
+	}
+
+	// Convert to response format
+	var projects []map[string]any
+	var totalMinutes int
+	for _, report := range projectReports {
+		totalMinutes += report.DurationInMinutesTotal
+		projectData := map[string]any{
+			"project_id":    report.ProjectID.String(),
+			"project_title": report.ProjectTitle,
+			"total_hours":   float64(report.DurationInMinutesTotal) / 60.0,
+			"total_minutes": report.DurationInMinutesTotal,
+			"formatted":     report.DurationFormatted(),
+		}
+		projects = append(projects, projectData)
+	}
+
+	// Create response
+	response := map[string]any{
+		"from_date":     params.FromDate,
+		"to_date":       params.ToDate,
+		"projects":      projects,
+		"total_hours":   float64(totalMinutes) / 60.0,
+		"total_minutes": totalMinutes,
+		"formatted":     time_utils.FormatMinutesAsDuration(float64(totalMinutes)),
+	}
+
+	var resultText string
+	if len(projects) == 0 {
+		resultText = fmt.Sprintf("No time tracked for any projects between %s and %s", params.FromDate, params.ToDate)
+	} else {
+		resultText = fmt.Sprintf("Found time tracked across %d projects between %s and %s. Total: %s (%.2f hours)",
+			len(projects), params.FromDate, params.ToDate,
+			time_utils.FormatMinutesAsDuration(float64(totalMinutes)), float64(totalMinutes)/60.0)
+	}
+
+	shared.LogMCPToolCall("get_hours_by_project", map[string]any{"params": params}, true)
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			&mcp.TextContent{
+				Text: resultText,
+			},
+			&mcp.TextContent{
+				Text: fmt.Sprintf("Project breakdown: %s", h.formatProjectReportJSON(response)),
+			},
+		},
+	}, response, nil
+}
+
 // Helper methods
 
 // mapActivityToMCPResponse converts an Activity to MCP response format
@@ -625,6 +851,26 @@ func (h *ActivityMCPHandlers) formatEntriesJSON(entries []map[string]any) string
 	if err != nil {
 		log.Printf("Failed to format entries JSON: %v", err)
 		return fmt.Sprintf("%+v", entries)
+	}
+	return string(jsonBytes)
+}
+
+// formatSummaryJSON formats summary response as JSON string for display
+func (h *ActivityMCPHandlers) formatSummaryJSON(response map[string]any) string {
+	jsonBytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		log.Printf("Failed to format summary JSON: %v", err)
+		return fmt.Sprintf("%+v", response)
+	}
+	return string(jsonBytes)
+}
+
+// formatProjectReportJSON formats project report response as JSON string for display
+func (h *ActivityMCPHandlers) formatProjectReportJSON(response map[string]any) string {
+	jsonBytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		log.Printf("Failed to format project report JSON: %v", err)
+		return fmt.Sprintf("%+v", response)
 	}
 	return string(jsonBytes)
 }
