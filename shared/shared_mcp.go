@@ -17,20 +17,24 @@ import (
 
 // MCPServer wraps the MCP server functionality
 type MCPServer struct {
-	server    *mcp.Server
-	validator *validator.Validate
-	handlers  []MCPHandler // Store handlers for stateless access
+	server       *mcp.Server
+	validator    *validator.Validate
+	handlers     []MCPHandler               // Store handlers for stateless access
+	tools        []*mcp.Tool                // Store registered tools for dynamic listing
+	toolHandlers map[string]ToolHandlerFunc // Map tool names to their handler functions
 }
+
+// ToolRegistrar interface for registering MCP tools
+type ToolRegistrar interface {
+	AddTool(tool *mcp.Tool, handler any)
+}
+
+// ToolHandlerFunc represents a function that handles a specific MCP tool
+type ToolHandlerFunc func(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error)
 
 // MCPHandler interface for MCP tool handlers
 type MCPHandler interface {
-	RegisterMCPTools(server *mcp.Server)
-}
-
-// ActivityMCPHandler interface for activity-specific MCP tool handlers
-type ActivityMCPHandler interface {
-	MCPHandler
-	CallTool(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error)
+	RegisterMCPTools(registrar ToolRegistrar)
 }
 
 // NewMCPServer creates a new MCP server instance
@@ -42,8 +46,20 @@ func NewMCPServer() *MCPServer {
 	server := mcp.NewServer(impl, nil)
 
 	return &MCPServer{
-		server:    server,
-		validator: validator.New(),
+		server:       server,
+		validator:    validator.New(),
+		toolHandlers: make(map[string]ToolHandlerFunc),
+	}
+}
+
+// registerToolsFromHandlers registers tools from all MCP handlers and stores them
+func (m *MCPServer) registerToolsFromHandlers(mcpHandlers []MCPHandler) {
+	// Clear existing tools
+	m.tools = nil
+
+	// Register tools from each handler using our intercepting server
+	for _, handler := range mcpHandlers {
+		handler.RegisterMCPTools(m)
 	}
 }
 
@@ -52,7 +68,10 @@ func (m *MCPServer) RegisterMCPRoutes(router chi.Router, authMiddleware func(htt
 	// Store handlers for stateless access
 	m.handlers = mcpHandlers
 
-	log.Printf("[MCP] Using STATELESS mode")
+	// Register tools from all handlers and store them
+	m.registerToolsFromHandlers(mcpHandlers)
+
+	log.Printf("[MCP] Using STATELESS mode with %d registered tools", len(m.tools))
 
 	// Mount MCP endpoints under /mcp path
 	router.Route("/mcp", func(r chi.Router) {
@@ -156,15 +175,27 @@ func (m *MCPServer) handleStatelessInitialize(w http.ResponseWriter, id interfac
 
 // handleStatelessToolsList handles tools/list requests without session state
 func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id interface{}) {
-	tools := []map[string]interface{}{
-		{"name": "create_entry", "description": "Create a new time tracking entry", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"start": map[string]interface{}{"type": "string"}, "end": map[string]interface{}{"type": "string"}, "project_id": map[string]interface{}{"type": "string"}}, "required": []string{"start", "end", "project_id"}}},
-		{"name": "get_entry", "description": "Retrieve a time entry by ID", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"entry_id": map[string]interface{}{"type": "string"}}, "required": []string{"entry_id"}}},
-		{"name": "update_entry", "description": "Update a time entry", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"entry_id": map[string]interface{}{"type": "string"}}, "required": []string{"entry_id"}}},
-		{"name": "delete_entry", "description": "Delete a time entry", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"entry_id": map[string]interface{}{"type": "string"}}, "required": []string{"entry_id"}}},
-		{"name": "list_entries", "description": "List time entries with optional filtering by date range and project", "inputSchema": map[string]any{"type": "object", "properties": map[string]interface{}{"from_date": map[string]interface{}{"type": "string", "description": "Start date filter in YYYY-MM-DD format (optional)", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}, "to_date": map[string]interface{}{"type": "string", "description": "End date filter in YYYY-MM-DD format (optional)", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}, "project_id": map[string]interface{}{"type": "string", "description": "UUID of the project to filter by (optional)", "format": "uuid"}}, "required": []string{}}},
-		{"name": "get_summary", "description": "Get time summary", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"period_type": map[string]interface{}{"type": "string"}, "date": map[string]interface{}{"type": "string"}}, "required": []string{"period_type", "date"}}},
-		{"name": "get_hours_by_project", "description": "Get hours by project", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"from_date": map[string]interface{}{"type": "string"}, "to_date": map[string]interface{}{"type": "string"}}, "required": []string{"from_date", "to_date"}}},
-		{"name": "list_projects", "description": "Retrieve a list of all available projects with their unique identifiers", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{}}},
+	// Generate tools list dynamically from registered tools
+	tools := make([]map[string]interface{}, len(m.tools))
+	for i, tool := range m.tools {
+		toolMap := map[string]interface{}{
+			"name":        tool.Name,
+			"description": tool.Description,
+		}
+
+		// Add input schema if available
+		if tool.InputSchema != nil {
+			toolMap["inputSchema"] = tool.InputSchema
+		} else {
+			// Provide a basic schema if none is specified
+			toolMap["inputSchema"] = map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+				"required":   []string{},
+			}
+		}
+
+		tools[i] = toolMap
 	}
 
 	response := map[string]interface{}{
@@ -187,6 +218,13 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 		return
 	}
 
+	// Find the handler for this tool
+	handler, exists := m.toolHandlers[toolName]
+	if !exists {
+		m.renderJSONRPCError(w, id, -32601, "Method not found", fmt.Sprintf("Tool '%s' not found", toolName))
+		return
+	}
+
 	// Create a mock MCP request for the tool call
 	argumentsJSON, err := json.Marshal(arguments)
 	if err != nil {
@@ -201,21 +239,8 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 		},
 	}
 
-	// Find and call the appropriate handler
-	var result *mcp.CallToolResult
-	var callErr error
-
-	// Try to find the tool in our registered handlers
-	for _, handler := range m.handlers {
-		// We need to call the handler's tool directly
-		// This is a simplified approach - in a full implementation you'd have a proper tool registry
-		if activityHandler, ok := handler.(ActivityMCPHandler); ok {
-			result, _, callErr = activityHandler.CallTool(ctx, mockRequest, toolName, arguments)
-			if callErr == nil {
-				break
-			}
-		}
-	}
+	// Call the tool handler using reflection or type assertion
+	result, callErr := m.callToolHandler(ctx, mockRequest, toolName, arguments, handler)
 
 	if callErr != nil {
 		log.Printf("[MCP] Tool call failed: %v", callErr)
@@ -224,7 +249,7 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 	}
 
 	if result == nil {
-		m.renderJSONRPCError(w, id, -32601, "Method not found", fmt.Sprintf("Tool '%s' not found", toolName))
+		m.renderJSONRPCError(w, id, -32603, "Internal error", "Tool handler returned nil result")
 		return
 	}
 
@@ -497,6 +522,59 @@ func isSystemError(err error) bool {
 // ValidateToolParams validates MCP tool parameters using struct tags
 func (m *MCPServer) ValidateToolParams(params interface{}) error {
 	return m.validator.Struct(params)
+}
+
+// AddTool adds a tool to the server and stores it for dynamic listing
+func (m *MCPServer) AddTool(tool *mcp.Tool, handler any) {
+	// Store the tool for dynamic listing
+	m.tools = append(m.tools, tool)
+
+	// Store the handler function for this tool
+	if handlerFunc, ok := handler.(ToolHandlerFunc); ok {
+		m.toolHandlers[tool.Name] = handlerFunc
+	} else {
+		log.Printf("[MCP] Warning: Handler for tool '%s' is not a ToolHandlerFunc", tool.Name)
+	}
+
+	// Note: We don't register with the underlying server in stateless mode
+	// The tools are handled directly in handleStatelessToolsCall
+}
+
+// GetTools returns the registered tools for testing
+func (m *MCPServer) GetTools() []*mcp.Tool {
+	return m.tools
+}
+
+// RegisterToolsFromHandlers is a public method for testing
+func (m *MCPServer) RegisterToolsFromHandlers(mcpHandlers []MCPHandler) {
+	m.registerToolsFromHandlers(mcpHandlers)
+}
+
+// callToolHandler calls the appropriate tool handler function
+func (m *MCPServer) callToolHandler(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}, handler ToolHandlerFunc) (*mcp.CallToolResult, error) {
+	// Call the tool handler function directly
+	result, _, err := handler(ctx, req, arguments)
+	return result, err
+}
+
+// parseArguments converts map[string]interface{} to typed parameters
+func (m *MCPServer) parseArguments(arguments map[string]interface{}, target interface{}) error {
+	// Convert arguments map to JSON and then unmarshal to target struct
+	jsonBytes, err := json.Marshal(arguments)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal arguments")
+	}
+
+	if err := json.Unmarshal(jsonBytes, target); err != nil {
+		return errors.Wrap(err, "failed to unmarshal arguments to target type")
+	}
+
+	// Validate the parsed parameters
+	if err := m.validator.Struct(target); err != nil {
+		return errors.Wrap(err, "parameter validation failed")
+	}
+
+	return nil
 }
 
 // GetServer returns the underlying MCP server for tool registration
