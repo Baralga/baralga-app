@@ -39,10 +39,15 @@ domain/
 - Business logic encapsulated in service classes
 - Services coordinate between repositories and handle transactions
 - Context-based principal propagation for security
+- If needed the principal is passed as parameter from the upper presentation layer.
+- When a service uses one or more repositories it starts a transaction using the `repositoryTxer` interface
 
 ### Handler Separation in the Presentation Layer
 - **REST handlers** (`*_rest.go`): JSON API endpoints under `/api`
 - **Web handlers** (`*_web.go`): Server-side rendered HTML with HTMX
+- The presentation layer handles validation.
+- The form models for the web belong to web in the presentation layer.
+- Checks for permissions are handled in the presenattion layer.
 
 ### Relaxed Layer Dependencies
 
