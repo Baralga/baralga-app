@@ -8,96 +8,134 @@ The MCP server will be accessible via HTTP requests to `/mcp/*` endpoints within
 
 ## Architecture
 
-### High-Level Architecture
+### Layered DDD Architecture
+
+The MCP server follows the existing Baralga layered DDD architecture with strict layer dependencies:
 
 ```mermaid
 graph TB
-    MCPClient[MCP Client Application] --> MCPEndpoints[/mcp/* HTTP Endpoints]
-    WebClient[Web Browser] --> WebEndpoints[/api/* & / HTTP Endpoints]
-    
-    MCPEndpoints --> MCPHandlers[MCP Tool Handlers]
-    WebEndpoints --> RestHandlers[REST API Handlers]
-    
-    MCPHandlers --> ActivityService[Existing ActivityService]
-    RestHandlers --> ActivityService
-    
-    ActivityService --> ActivityRepository[Existing ActivityRepository]
-    ActivityRepository --> Storage[(PostgreSQL Database)]
-    
-    subgraph "Baralga Web Application"
-        MCPEndpoints
-        WebEndpoints
-        MCPHandlers
-        RestHandlers
-        ActivityService
-        ActivityRepository
-        Storage
+    subgraph "Presentation Layer"
+        MCPHandlers[MCP Tool Handlers<br/>activity_mcp.go]
+        RestHandlers[REST API Handlers<br/>activity_rest.go]
+        WebHandlers[Web Handlers<br/>activity_web.go]
     end
+    
+    subgraph "Domain Layer"
+        ActivityService[Activity Service<br/>activity_service.go]
+        ActivityRepo[Activity Repository Interface<br/>activity_domain.go]
+        ProjectService[Project Service<br/>project_service.go]
+        ProjectRepo[Project Repository Interface<br/>project_domain.go]
+        DomainEntities[Domain Entities<br/>Activity, Project, Tag]
+    end
+    
+    subgraph "Infrastructure Layer"
+        ActivityRepoDB[Activity Repository DB<br/>activity_repository_db.go]
+        ActivityRepoMem[Activity Repository Mem<br/>activity_repository_mem.go]
+        ProjectRepoDB[Project Repository DB<br/>project_repository_db.go]
+        ProjectRepoMem[Project Repository Mem<br/>project_repository_mem.go]
+        Database[(PostgreSQL Database)]
+    end
+    
+    MCPHandlers --> ActivityService
+    MCPHandlers --> ProjectService
+    RestHandlers --> ActivityService
+    RestHandlers --> ProjectService
+    WebHandlers --> ActivityService
+    WebHandlers --> ProjectService
+    
+    ActivityService --> ActivityRepo
+    ProjectService --> ProjectRepo
+    
+    ActivityRepo -.-> ActivityRepoDB
+    ActivityRepo -.-> ActivityRepoMem
+    ProjectRepo -.-> ProjectRepoDB
+    ProjectRepo -.-> ProjectRepoMem
+    
+    ActivityRepoDB --> Database
+    ProjectRepoDB --> Database
 ```
+
+### Layer Dependencies
+
+Following the relaxed layered architecture rules:
+
+1. **Presentation Layer** (`activity_mcp.go`, `activity_rest.go`, `activity_web.go`)
+   - May depend on Domain Layer (services and domain interfaces)
+   - May access repository interfaces from their business domain (defined in domain layer)
+   - Cannot directly access Infrastructure Layer repository implementations
+   - Handles MCP protocol, HTTP requests, and web UI concerns
+
+2. **Domain Layer** (`activity_service.go`, `activity_domain.go`)
+   - Contains business logic, domain entities, and repository interfaces
+   - Has NO dependencies on other layers
+   - Defines contracts that Infrastructure Layer must implement
+
+3. **Infrastructure Layer** (`activity_repository_db.go`, `activity_repository_mem.go`)
+   - May ONLY depend on Domain Layer interfaces
+   - Implements repository interfaces defined in Domain Layer
+   - Handles data persistence and external system integration
 
 ### MCP Protocol Integration
 
-The server will implement the MCP specification using the official MCP Go SDK (https://github.com/modelcontextprotocol/go-sdk):
-- Leveraging the MCP Go SDK for JSON-RPC 2.0 message handling and protocol compliance
-- Exposing tools through the MCP tools interface via HTTP endpoints
-- Using SDK's built-in tool registration and capability negotiation
-- Handling tool calls and returning structured responses through SDK interfaces
-- Adding API key authentication middleware (user's email address as API key)
-- Supporting standard CORS headers for web compatibility
-- Following SDK patterns for server implementation and tool handlers
+The MCP server integrates at the Presentation Layer using the existing shared MCP utilities:
 
-### Domain Architecture
+- **MCP Tool Handlers** (`tracking/activity_mcp.go`) - Presentation Layer
+  - Implements MCP tool interfaces using existing `shared.MCPServer`
+  - May depend on Domain Layer services (`ActivityService`, `ProjectService`) OR repository interfaces from their business domain
+  - Can access `ActivityRepository` and `ProjectRepository` interfaces defined in domain layer
+  - Uses existing domain entities and service methods
+  - Handles MCP request/response formatting and validation
 
-The MCP server will be integrated into the existing Baralga layered architecture by adding MCP handlers alongside existing REST handlers:
+- **Shared MCP Utilities** (`shared/shared_mcp.go`) - Infrastructure support
+  - Provides MCP server setup and protocol handling
+  - Integrates with existing Chi router and middleware
+  - Handles authentication and principal context creation
+  - Supports existing error handling patterns
+
+### Domain Module Structure
+
+The MCP integration maintains the existing domain structure without violating layer boundaries:
 
 ```
-baralga/
-├── main.go                    # Existing entry point (updated to register MCP routes)
-├── tracking/                  # Existing domain (extended)
-│   ├── activity_domain.go     # Existing domain entities
-│   ├── activity_service.go    # Existing business logic
-│   ├── activity_repository_*.go # Existing data access
-│   ├── activity_rest.go       # Existing REST API handlers
-│   ├── activity_mcp.go        # NEW: MCP tool handlers
-│   ├── project_rest.go        # Existing project REST handlers
-│   └── project_mcp.go         # NEW: Project MCP tool handlers (if needed)
-├── shared/                    # Existing shared components (extended)
-│   ├── config.go
-│   ├── shared_domain.go
-│   ├── shared_rest.go         # Existing REST utilities
-│   └── shared_mcp.go          # NEW: MCP protocol utilities
-└── ...
-```
+tracking/                      # Domain module
+├── activity_domain.go         # Domain Layer: Entities, interfaces, business rules
+├── activity_service.go        # Domain Layer: Business logic and use cases
+├── activity_repository_db.go  # Infrastructure Layer: Database implementation
+├── activity_repository_mem.go # Infrastructure Layer: In-memory implementation
+├── activity_rest.go          # Presentation Layer: REST API handlers
+├── activity_web.go           # Presentation Layer: Web UI handlers
+└── activity_mcp.go           # Presentation Layer: MCP tool handlers (NEW)
 
-The MCP integration follows existing patterns:
-- `activity_mcp.go` - MCP tool handlers alongside `activity_rest.go`
-- `shared_mcp.go` - MCP protocol utilities alongside `shared_rest.go`
-- Reuses all existing domain entities, services, and repositories
-- Follows the same layered architecture and naming conventions
-- Integrates with existing Chi router and middleware stack
+shared/                        # Shared module
+├── shared_domain.go          # Domain Layer: Common domain types
+├── shared_rest.go            # Presentation Layer: REST utilities
+├── shared_web.go             # Presentation Layer: Web utilities
+└── shared_mcp.go             # Infrastructure Layer: MCP protocol utilities (NEW)
+```
 
 ## Components and Interfaces
 
-### MCP Server Core
+### Presentation Layer Components
 
-**ActivityMCPHandlers** (in `tracking/activity_mcp.go`) - MCP tool handlers using Go SDK
-- Implements MCP tool interfaces from the Go SDK for activity operations
-- Registers tools using SDK's tool registration system
-- Integrates with existing `ActivityService` for business logic
-- Uses existing `activityModel` structures for consistent responses
-- Follows SDK patterns for tool implementation and error handling
+**ActivityMCPHandlers** (in `tracking/activity_mcp.go`) - Presentation Layer
+- Implements MCP tool interfaces for activity operations
+- May depend on Domain Layer services (`ActivityService`, `ProjectService`) OR repository interfaces (`ActivityRepository`, `ProjectRepository`)
+- Can access repository interfaces defined in the domain layer for direct data operations
+- Uses existing domain entities and service contracts
+- Handles MCP request/response formatting and parameter validation
+- Converts domain errors to MCP error responses
+- Maintains consistency with existing REST API patterns
 
-**SharedMCPUtilities** (in `shared/shared_mcp.go`) - MCP server setup using Go SDK
-- MCP server initialization using the official Go SDK
-- Tool registration and capability negotiation through SDK
-- HTTP transport layer integration with existing Chi router
-- API key authentication middleware (using email address as API key)
-- Principal context creation from authenticated email address
-- Error handling using SDK's error response patterns
+**SharedMCPUtilities** (in `shared/shared_mcp.go`) - Infrastructure support for Presentation Layer
+- Provides MCP server initialization and protocol handling
+- Integrates with existing Chi router and middleware stack
+- Handles API key authentication and principal context creation
+- Supports existing error handling and logging patterns
+- Manages MCP tool registration and capability negotiation
 
-### Reused Domain Components
+### Domain Layer Components (Existing - No Changes)
 
-**Activity** - Existing domain entity from `tracking.Activity`
+**Activity** - Domain entity from `tracking.Activity`
 ```go
 type Activity struct {
     ID             uuid.UUID
@@ -111,7 +149,7 @@ type Activity struct {
 }
 ```
 
-**ActivityRepository** - Existing data access interface from `tracking.ActivityRepository`
+**ActivityRepository** - Domain interface from `tracking/activity_domain.go`
 - `FindActivityByID(ctx, activityID, organizationID)` - Get single activity
 - `InsertActivity(ctx, activity)` - Create new activity
 - `UpdateActivity(ctx, organizationID, activity)` - Update existing activity
@@ -120,7 +158,7 @@ type Activity struct {
 - `TimeReportByDay/Week/Month/Quarter(ctx, filter)` - Time aggregation reports
 - `ProjectReport(ctx, filter)` - Project-based reports
 
-**ActivityService** - Existing business logic from `tracking.ActivityService`
+**ActivityService** - Domain service from `tracking/activity_service.go`
 - `CreateActivity(ctx, principal, activity)` - Create with validation and tags
 - `UpdateActivity(ctx, principal, activity)` - Update with validation
 - `DeleteActivityByID(ctx, principal, activityID)` - Delete with authorization
@@ -128,26 +166,67 @@ type Activity struct {
 - `TimeReports(ctx, principal, filter, aggregateBy)` - Time summaries
 - `ProjectReports(ctx, principal, filter)` - Project summaries
 
-### MCP Tool Handlers
+**ProjectService** - Domain service from `tracking/project_service.go`
+- `ReadProjects(ctx, principal, filter, pageParams)` - List all projects with UUIDs
 
-**ActivityTools** - MCP tool implementations that bridge MCP calls to existing services
-- `create_entry` - Maps to `ActivityService.CreateActivity()` with proper principal context
-- `get_entry` - Maps to `ActivityRepository.FindActivityByID()` with organization filtering
-- `update_entry` - Maps to `ActivityService.UpdateActivity()` with validation
-- `delete_entry` - Maps to `ActivityService.DeleteActivityByID()` with authorization
-- `list_entries` - Maps to `ActivityService.ReadActivitiesWithProjects()` with filtering
-- `get_summary` - Maps to `ActivityService.TimeReports()` with period aggregation
-- `get_hours_by_project` - Maps to `ActivityService.ProjectReports()` with date filtering
+### Infrastructure Layer Components (Existing - No Changes)
 
-**ProjectTools** - MCP tool implementations for project management
-- `list_projects` - Maps to `ProjectService.ReadProjects()` to retrieve all available projects with UUIDs
+**ActivityRepositoryDB** - Database implementation from `tracking/activity_repository_db.go`
+- Implements `ActivityRepository` interface
+- Handles PostgreSQL database operations
+- Manages transactions and connection pooling
 
-Each tool handler will:
-- Parse and validate MCP tool call parameters
-- Create appropriate `shared.Principal` context for authorization
-- Convert MCP requests to existing service method calls
-- Transform existing domain objects to MCP response format
-- Handle existing domain errors and convert to MCP error responses
+**ActivityRepositoryMem** - In-memory implementation from `tracking/activity_repository_mem.go`
+- Implements `ActivityRepository` interface
+- Used for testing and development
+- Provides fast, isolated testing environment
+
+### MCP Tool Implementation Strategy
+
+**Layer Compliance**
+- MCP handlers in Presentation Layer may depend on Domain Layer services OR repository interfaces from their business domain
+- Can access repository interfaces defined in Domain Layer (e.g., `ActivityRepository`, `ProjectRepository`)
+- No direct access to Infrastructure Layer repository implementations (e.g., `ActivityRepositoryDB`)
+- Business logic can be handled in Domain Layer services or directly in handlers using repository interfaces
+- Data access abstracted through Domain Layer repository interfaces
+
+**Tool Handler Pattern**
+Each MCP tool handler will:
+1. Parse and validate MCP tool call parameters (Presentation Layer responsibility)
+2. Create appropriate `shared.Principal` context for authorization
+3. Call existing Domain Layer service methods OR use repository interfaces directly (maintaining layer boundaries)
+4. Transform domain objects to MCP response format (Presentation Layer responsibility)
+5. Handle domain errors and convert to MCP error responses
+
+**Repository Access Pattern**
+When accessing repositories directly, MCP handlers will:
+1. Use repository interfaces defined in domain layer (e.g., `ActivityRepository` from `activity_domain.go`)
+2. Receive repository implementations via dependency injection
+3. Apply business validation and authorization logic within the handler
+4. Handle transactions using existing `shared.RepositoryTxer` patterns
+
+**Service/Repository Integration Options**
+MCP handlers can choose between service layer or direct repository access:
+
+**Option 1: Service Layer Integration**
+- `create_entry` → `ActivityService.CreateActivity()` (Domain Layer)
+- `get_entry` → `ActivityService.ReadActivitiesWithProjects()` (Domain Layer)
+- `update_entry` → `ActivityService.UpdateActivity()` (Domain Layer)
+- `delete_entry` → `ActivityService.DeleteActivityByID()` (Domain Layer)
+- `list_entries` → `ActivityService.ReadActivitiesWithProjects()` (Domain Layer)
+- `get_summary` → `ActivityService.TimeReports()` (Domain Layer)
+- `get_hours_by_project` → `ActivityService.ProjectReports()` (Domain Layer)
+- `list_projects` → `ProjectService.ReadProjects()` (Domain Layer)
+
+**Option 2: Direct Repository Integration**
+- `create_entry` → `ActivityRepository.InsertActivity()` (Domain Interface)
+- `get_entry` → `ActivityRepository.FindActivityByID()` (Domain Interface)
+- `update_entry` → `ActivityRepository.UpdateActivity()` (Domain Interface)
+- `delete_entry` → `ActivityRepository.DeleteActivityByID()` (Domain Interface)
+- `list_entries` → `ActivityRepository.FindActivities()` (Domain Interface)
+- `get_summary` → `ActivityRepository.TimeReportByDay/Week/Month/Quarter()` (Domain Interface)
+- `get_hours_by_project` → `ActivityRepository.ProjectReport()` (Domain Interface)
+- `list_projects` → `ProjectRepository.FindProjects()` (Domain Interface)
 
 ## Data Models
 
@@ -250,71 +329,105 @@ All errors will be returned as MCP error responses with structured error informa
 - Consistent error response formatting across all tools
 - Logging of errors for debugging and monitoring
 
-### Authentication Flow (No Service/Repository Changes Required)
+### Authentication Flow (Respecting Layer Boundaries)
 
+**Presentation Layer Responsibilities:**
 1. Extract API key from HTTP header (`X-API-Key` or `Authorization: Bearer <email>`)
-2. Validate email format and lookup user using existing `UserRepository.FindUserByUsername(ctx, email)`
-3. Create `shared.Principal` context with user's organization and roles using existing patterns
-4. Pass principal context to existing service methods (no changes needed)
-5. Return authentication errors for invalid or missing API keys
+2. Validate email format and basic parameter validation
+3. Create `shared.Principal` context using existing authentication patterns
+4. Handle authentication errors and convert to MCP error responses
+5. Apply authorization logic when accessing repositories directly (organization-based filtering)
 
-### Existing Methods Used (No Modifications Required)
+**Domain Layer Integration:**
+1. Pass principal context to existing Domain Layer service methods OR repository interfaces
+2. Services handle authorization using existing business rules
+3. Repository interfaces accessible from Presentation Layer for direct data operations
+4. Authorization logic must be applied in handlers when bypassing service layer
 
-**ActivityService Methods:**
-- `CreateActivity(ctx, principal, activity)` - Create entries
-- `ReadActivitiesWithProjects(ctx, principal, filter, pageParams)` - List entries  
-- `UpdateActivity(ctx, principal, activity)` - Update entries
-- `DeleteActivityByID(ctx, principal, activityID)` - Delete entries
-- `TimeReports(ctx, principal, filter, aggregateBy)` - Time summaries
-- `ProjectReports(ctx, principal, filter)` - Project summaries
+**Infrastructure Layer (No Changes):**
+- User lookup via existing `UserRepository.FindUserByUsername(ctx, email)`
+- Database operations handled through existing repository implementations
 
-**ProjectService Methods:**
-- `ReadProjects(ctx, principal, filter, pageParams)` - List all projects with UUIDs
+### Layer-Compliant Service/Repository Integration
 
-**UserRepository Methods:**
-- `FindUserByUsername(ctx, username)` - User lookup for authentication
+**Domain Layer Services (No Modifications Required):**
+- `ActivityService.CreateActivity(ctx, principal, activity)` - Create entries
+- `ActivityService.ReadActivitiesWithProjects(ctx, principal, filter, pageParams)` - List entries  
+- `ActivityService.UpdateActivity(ctx, principal, activity)` - Update entries
+- `ActivityService.DeleteActivityByID(ctx, principal, activityID)` - Delete entries
+- `ActivityService.TimeReports(ctx, principal, filter, aggregateBy)` - Time summaries
+- `ActivityService.ProjectReports(ctx, principal, filter)` - Project summaries
+- `ProjectService.ReadProjects(ctx, principal, filter, pageParams)` - List all projects with UUIDs
 
-**Existing API Models:**
-- `activityModel` - Request/response structure
-- `mapToActivity()` / `mapToActivityModel()` - Conversion functions
+**Domain Layer Repository Interfaces (Available to Presentation Layer):**
+- `ActivityRepository.InsertActivity(ctx, activity)` - Create entries
+- `ActivityRepository.FindActivityByID(ctx, activityID, organizationID)` - Get single entry
+- `ActivityRepository.UpdateActivity(ctx, organizationID, activity)` - Update entries
+- `ActivityRepository.DeleteActivityByID(ctx, organizationID, activityID)` - Delete entries
+- `ActivityRepository.FindActivities(ctx, filter, pageParams)` - List entries with filtering
+- `ActivityRepository.TimeReportByDay/Week/Month/Quarter(ctx, filter)` - Time summaries
+- `ActivityRepository.ProjectReport(ctx, filter)` - Project summaries
+- `ProjectRepository.FindProjects(ctx, filter, pageParams)` - List all projects
+
+**Presentation Layer Models (Reused):**
+- `activityModel` - Request/response structure from `tracking/activity_rest.go`
+- `projectModel` - Project structure from `tracking/project_rest.go`
+- `mapToActivity()` / `mapToActivityModel()` - Existing conversion functions
+
+**Infrastructure Layer (No Changes):**
+- Repository implementations remain unchanged
+- Database schema and migrations unchanged
+- Transaction handling through existing `shared.RepositoryTxer`
 
 ## Testing Strategy
 
-### Unit Testing Approach
+### Unit Testing Approach (Layer-Compliant)
 
-**MCP Tool Handler Testing**
-- Use existing in-memory repository implementations (`tracking.*RepositoryMem`) for fast, isolated testing
-- Wire up real ActivityService with in-memory repositories for authentic business logic testing
-- Test MCP request/response formatting and validation
-- Verify parameter parsing and error handling
-- Test tool call routing and response marshaling
-- Validate principal context creation and authorization
+**Presentation Layer Testing (MCP Handlers)**
+- Test MCP tool handlers in isolation using mocked Domain Layer services OR in-memory repository implementations
+- Verify MCP request/response formatting and parameter validation
+- Test error handling and conversion from domain errors to MCP errors
+- Validate principal context creation and authentication flow
+- Test tool registration and capability negotiation
+- Use existing validation patterns from REST handler tests
+- When testing direct repository access, use in-memory implementations for fast, isolated tests
 
-**Service Integration Testing**
-- Use existing in-memory repository implementations from Baralga
-- Test complete flow from MCP tool call through real services to in-memory storage
-- Verify compatibility with existing domain validation rules
-- Test error propagation from domain layer to MCP responses
-- Validate business logic like tag handling, authorization, and data transformations
+**Domain Layer Testing (No Changes)**
+- Continue using existing in-memory repository implementations for service testing
+- Test business logic in isolation from presentation concerns
+- Verify domain validation rules and authorization logic
+- Test service methods with various principal contexts and scenarios
+- Maintain existing test coverage and patterns
 
-**MCP Protocol Testing**
-- Test JSON-RPC 2.0 compliance with MCP specification
-- Verify tool discovery and capability negotiation
-- Test error response formatting according to MCP standards
+**Infrastructure Layer Testing (No Changes)**
+- Continue using existing database integration tests
+- Test repository implementations against real PostgreSQL database
+- Verify transaction handling and data persistence
+- Use existing dockertest setup for database testing
+
+**Integration Testing (Respecting Layer Boundaries)**
+- Test complete MCP flow using real Domain Layer services OR direct repository access with in-memory repositories
+- Verify layer boundaries are maintained (repository interfaces from domain layer, no direct infrastructure access)
+- Test authentication and authorization through existing service layer OR handler-level authorization logic
+- Validate compatibility with existing domain validation rules
+- Test error propagation through all layers while maintaining separation
+- Test both service-based and repository-based handler implementations
 
 ### Integration Testing
 
-**End-to-End MCP Testing**
-- Test complete MCP protocol communication flow using existing PostgreSQL database
-- Verify tool discovery and capability negotiation
-- Test real database operations through existing repositories
-- Validate JSON-RPC 2.0 compliance with actual Baralga data
+**End-to-End MCP Testing (Layer-Aware)**
+- Test complete MCP protocol communication through all layers
+- Verify tool discovery and capability negotiation at Presentation Layer
+- Test business logic through Domain Layer services OR direct repository interface access
+- Validate JSON-RPC 2.0 compliance with existing Baralga data patterns
+- Ensure layer boundaries are maintained throughout the testing flow (domain interfaces only, no infrastructure implementations)
 
-**Database Integration**
+**Database Integration (Infrastructure Layer)**
 - Reuse existing PostgreSQL database and schema from Baralga
-- Test with existing migration system and data structures
+- Test through Domain Layer services OR repository interfaces (not direct infrastructure implementations)
 - Leverage existing transaction handling through `shared.RepositoryTxer`
 - Use existing test data fixtures and organization setup
+- Maintain existing migration system and data structures
 
 ### Test Data Management
 

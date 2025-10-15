@@ -24,6 +24,7 @@ domain/
 ├── *_service.go     # Business logic and use cases
 ├── *_repository_*.go # Data access implementations (db, mem)
 ├── *_rest.go        # REST API handlers
+├── *_mcp.go         # MCP Tool handlers
 ├── *_web.go         # Web UI handlers
 └── *_test.go        # Unit tests
 ```
@@ -57,8 +58,11 @@ The dependencies between the layers are:
 * presentation layer -> service layer -> domain layer
 * interface layer -> domain layer
 
+<<<<<<< HEAD
 So e.g. activity_rest my use the activity service from activity_service.go and ActivityRepository from activity_domain.go.
 
+=======
+>>>>>>> ce0367c (Updated design)
 ## File Organization
 
 ### Root Level
