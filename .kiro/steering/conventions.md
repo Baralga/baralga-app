@@ -22,7 +22,7 @@ A layered ddd architecture is used. The dependencies between the layers is:
 
 - Repositories are in the Infrastructure Layer
 - There's no need to unit test the in memory repositories.
-
+- Don't allow any SQL injections.
 
 ## Code Conventions
 
