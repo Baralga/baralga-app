@@ -189,8 +189,8 @@ func (h *ActivityMCPHandlers) listProjectsHandler(ctx context.Context, req *mcp.
 
 // CreateEntryParams represents parameters for create_entry tool
 type CreateEntryParams struct {
-	Start       string   `json:"start" validate:"required" jsonschema:"description:Start time in ISO 8601 format"`
-	End         string   `json:"end" validate:"required" jsonschema:"description:End time in ISO 8601 format"`
+	Start       string   `json:"start,omitempty" jsonschema:"description:Start time in ISO 8601 format (optional, defaults to current time)"`
+	End         string   `json:"end,omitempty" jsonschema:"description:End time in ISO 8601 format (optional, defaults to current time)"`
 	Description string   `json:"description" validate:"max=500" jsonschema:"description:Description of the work performed"`
 	ProjectID   string   `json:"project_id" validate:"required,uuid" jsonschema:"description:UUID of the project"`
 	Tags        []string `json:"tags,omitempty" jsonschema:"description:Optional array of tag names"`
@@ -226,13 +226,13 @@ type ListEntriesParams struct {
 // GetSummaryParams represents parameters for get_summary tool
 type GetSummaryParams struct {
 	PeriodType string `json:"period_type" validate:"required,oneof=day week month quarter year" jsonschema:"description:Type of period (day/week/month/quarter/year)"`
-	Date       string `json:"date" validate:"required" jsonschema:"description:Date within the period in YYYY-MM-DD format"`
+	Date       string `json:"date,omitempty" jsonschema:"description:Date within the period in YYYY-MM-DD format (optional, defaults to current date)"`
 }
 
 // GetHoursByProjectParams represents parameters for get_hours_by_project tool
 type GetHoursByProjectParams struct {
-	FromDate string `json:"from_date" validate:"required" jsonschema:"description:Start date in YYYY-MM-DD format"`
-	ToDate   string `json:"to_date" validate:"required" jsonschema:"description:End date in YYYY-MM-DD format"`
+	FromDate string `json:"from_date,omitempty" jsonschema:"description:Start date in YYYY-MM-DD format (optional, defaults to first day of current month)"`
+	ToDate   string `json:"to_date,omitempty" jsonschema:"description:End date in YYYY-MM-DD format (optional, defaults to current date)"`
 }
 
 // ListProjectsParams represents parameters for list_projects tool (no parameters needed)
@@ -246,16 +246,27 @@ func (h *ActivityMCPHandlers) handleCreateEntry(ctx context.Context, req *mcp.Ca
 	// Extract principal from context
 	principal := shared.MustPrincipalFromContext(ctx)
 
+	// Apply default values for missing time parameters
+	startTimeStr := params.Start
+	if startTimeStr == "" {
+		startTimeStr = time_utils.FormatDateTime(time.Now())
+	}
+
+	endTimeStr := params.End
+	if endTimeStr == "" {
+		endTimeStr = time_utils.FormatDateTime(time.Now())
+	}
+
 	// Parse start and end times
-	startTime, err := time_utils.ParseDateTime(params.Start)
+	startTime, err := time_utils.ParseDateTime(startTimeStr)
 	if err != nil {
-		shared.LogMCPError("create_entry", err, map[string]any{"start": params.Start})
+		shared.LogMCPError("create_entry", err, map[string]any{"start": startTimeStr})
 		return nil, nil, errors.Wrap(err, "invalid start time format")
 	}
 
-	endTime, err := time_utils.ParseDateTime(params.End)
+	endTime, err := time_utils.ParseDateTime(endTimeStr)
 	if err != nil {
-		shared.LogMCPError("create_entry", err, map[string]any{"end": params.End})
+		shared.LogMCPError("create_entry", err, map[string]any{"end": endTimeStr})
 		return nil, nil, errors.Wrap(err, "invalid end time format")
 	}
 
@@ -263,8 +274,8 @@ func (h *ActivityMCPHandlers) handleCreateEntry(ctx context.Context, req *mcp.Ca
 	if endTime.Before(*startTime) || endTime.Equal(*startTime) {
 		err := errors.New("end time must be after start time")
 		shared.LogMCPError("create_entry", err, map[string]any{
-			"start": params.Start,
-			"end":   params.End,
+			"start": startTimeStr,
+			"end":   endTimeStr,
 		})
 		return nil, nil, err
 	}
@@ -570,36 +581,48 @@ func (h *ActivityMCPHandlers) handleListEntries(ctx context.Context, req *mcp.Ca
 	// Extract principal from context
 	principal := shared.MustPrincipalFromContext(ctx)
 
+	// Apply default date range values (current month)
+	fromDateStr := params.FromDate
+	toDateStr := params.ToDate
+
+	if fromDateStr == "" || toDateStr == "" {
+		now := time.Now()
+		// Default to first day of current month to current date
+		if fromDateStr == "" {
+			firstDayOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			fromDateStr = time_utils.FormatDate(firstDayOfMonth)
+		}
+		if toDateStr == "" {
+			toDateStr = time_utils.FormatDate(now)
+		}
+	}
+
 	// Create activity filter
 	filter := &ActivityFilter{
 		Timespan: TimespanCustom,
 	}
 
-	// Parse and set date filters if provided
-	if params.FromDate != "" {
-		fromDate, err := time_utils.ParseDate(params.FromDate)
-		if err != nil {
-			shared.LogMCPError("list_entries", err, map[string]any{"from_date": params.FromDate})
-			return nil, nil, errors.Wrap(err, "invalid from_date format, expected YYYY-MM-DD")
-		}
-		filter.start = *fromDate
+	// Parse and set date filters
+	fromDate, err := time_utils.ParseDate(fromDateStr)
+	if err != nil {
+		shared.LogMCPError("list_entries", err, map[string]any{"from_date": fromDateStr})
+		return nil, nil, errors.Wrap(err, "invalid from_date format, expected YYYY-MM-DD")
 	}
+	filter.start = *fromDate
 
-	if params.ToDate != "" {
-		toDate, err := time_utils.ParseDate(params.ToDate)
-		if err != nil {
-			shared.LogMCPError("list_entries", err, map[string]any{"to_date": params.ToDate})
-			return nil, nil, errors.Wrap(err, "invalid to_date format, expected YYYY-MM-DD")
-		}
-		filter.end = *toDate
+	toDate, err := time_utils.ParseDate(toDateStr)
+	if err != nil {
+		shared.LogMCPError("list_entries", err, map[string]any{"to_date": toDateStr})
+		return nil, nil, errors.Wrap(err, "invalid to_date format, expected YYYY-MM-DD")
 	}
+	filter.end = *toDate
 
-	// Validate date range if both dates are provided
-	if !filter.start.IsZero() && !filter.end.IsZero() && filter.end.Before(filter.start) {
+	// Validate date range
+	if filter.end.Before(filter.start) {
 		err := errors.New("to_date must be on or after from_date")
 		shared.LogMCPError("list_entries", err, map[string]any{
-			"from_date": params.FromDate,
-			"to_date":   params.ToDate,
+			"from_date": fromDateStr,
+			"to_date":   toDateStr,
 		})
 		return nil, nil, err
 	}
@@ -675,8 +698,8 @@ func (h *ActivityMCPHandlers) handleListEntries(ctx context.Context, req *mcp.Ca
 		"entries": responseEntries,
 		"total":   len(responseEntries),
 		"filters": map[string]any{
-			"from_date":  params.FromDate,
-			"to_date":    params.ToDate,
+			"from_date":  fromDateStr,
+			"to_date":    toDateStr,
 			"project_id": params.ProjectID,
 		},
 	}
@@ -686,15 +709,7 @@ func (h *ActivityMCPHandlers) handleListEntries(ctx context.Context, req *mcp.Ca
 		resultText = "No time entries found matching the specified criteria"
 	} else {
 		resultText = fmt.Sprintf("Found %d time entries", len(responseEntries))
-		if params.FromDate != "" || params.ToDate != "" {
-			if params.FromDate != "" && params.ToDate != "" {
-				resultText += fmt.Sprintf(" between %s and %s", params.FromDate, params.ToDate)
-			} else if params.FromDate != "" {
-				resultText += fmt.Sprintf(" from %s onwards", params.FromDate)
-			} else {
-				resultText += fmt.Sprintf(" up to %s", params.ToDate)
-			}
-		}
+		resultText += fmt.Sprintf(" between %s and %s", fromDateStr, toDateStr)
 		if projectFilter != nil {
 			resultText += fmt.Sprintf(" for project '%s'", projectFilter.Title)
 		}
@@ -732,10 +747,16 @@ func (h *ActivityMCPHandlers) handleGetSummary(ctx context.Context, req *mcp.Cal
 		return nil, nil, err
 	}
 
+	// Apply default date value (current date)
+	dateStr := params.Date
+	if dateStr == "" {
+		dateStr = time_utils.FormatDate(time.Now())
+	}
+
 	// Parse the date
-	date, err := time_utils.ParseDate(params.Date)
+	date, err := time_utils.ParseDate(dateStr)
 	if err != nil {
-		shared.LogMCPError("get_summary", err, map[string]any{"date": params.Date})
+		shared.LogMCPError("get_summary", err, map[string]any{"date": dateStr})
 		return nil, nil, errors.Wrap(err, "invalid date format, expected YYYY-MM-DD")
 	}
 
@@ -794,7 +815,7 @@ func (h *ActivityMCPHandlers) handleGetSummary(ctx context.Context, req *mcp.Cal
 	// Create response
 	response := map[string]any{
 		"period_type":   params.PeriodType,
-		"date":          params.Date,
+		"date":          dateStr,
 		"start_date":    time_utils.FormatDate(startDate),
 		"end_date":      time_utils.FormatDate(endDate),
 		"total_hours":   totalHours,
@@ -804,10 +825,10 @@ func (h *ActivityMCPHandlers) handleGetSummary(ctx context.Context, req *mcp.Cal
 
 	var resultText string
 	if totalMinutes == 0 {
-		resultText = fmt.Sprintf("No time tracked for %s period containing %s", params.PeriodType, params.Date)
+		resultText = fmt.Sprintf("No time tracked for %s period containing %s", params.PeriodType, dateStr)
 	} else {
 		resultText = fmt.Sprintf("Total time for %s period containing %s: %s (%.2f hours)",
-			params.PeriodType, params.Date, time_utils.FormatMinutesAsDuration(float64(totalMinutes)), totalHours)
+			params.PeriodType, dateStr, time_utils.FormatMinutesAsDuration(float64(totalMinutes)), totalHours)
 	}
 
 	shared.LogMCPToolCall("get_summary", map[string]any{"params": params}, true)
@@ -828,16 +849,32 @@ func (h *ActivityMCPHandlers) handleGetHoursByProject(ctx context.Context, req *
 	// Extract principal from context
 	principal := shared.MustPrincipalFromContext(ctx)
 
+	// Apply default date range values (current month)
+	fromDateStr := params.FromDate
+	toDateStr := params.ToDate
+
+	if fromDateStr == "" || toDateStr == "" {
+		now := time.Now()
+		// Default to first day of current month to current date
+		if fromDateStr == "" {
+			firstDayOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			fromDateStr = time_utils.FormatDate(firstDayOfMonth)
+		}
+		if toDateStr == "" {
+			toDateStr = time_utils.FormatDate(now)
+		}
+	}
+
 	// Parse dates
-	fromDate, err := time_utils.ParseDate(params.FromDate)
+	fromDate, err := time_utils.ParseDate(fromDateStr)
 	if err != nil {
-		shared.LogMCPError("get_hours_by_project", err, map[string]any{"from_date": params.FromDate})
+		shared.LogMCPError("get_hours_by_project", err, map[string]any{"from_date": fromDateStr})
 		return nil, nil, errors.Wrap(err, "invalid from_date format, expected YYYY-MM-DD")
 	}
 
-	toDate, err := time_utils.ParseDate(params.ToDate)
+	toDate, err := time_utils.ParseDate(toDateStr)
 	if err != nil {
-		shared.LogMCPError("get_hours_by_project", err, map[string]any{"to_date": params.ToDate})
+		shared.LogMCPError("get_hours_by_project", err, map[string]any{"to_date": toDateStr})
 		return nil, nil, errors.Wrap(err, "invalid to_date format, expected YYYY-MM-DD")
 	}
 
@@ -845,8 +882,8 @@ func (h *ActivityMCPHandlers) handleGetHoursByProject(ctx context.Context, req *
 	if toDate.Before(*fromDate) {
 		err := errors.New("to_date must be on or after from_date")
 		shared.LogMCPError("get_hours_by_project", err, map[string]any{
-			"from_date": params.FromDate,
-			"to_date":   params.ToDate,
+			"from_date": fromDateStr,
+			"to_date":   toDateStr,
 		})
 		return nil, nil, err
 	}
@@ -884,8 +921,8 @@ func (h *ActivityMCPHandlers) handleGetHoursByProject(ctx context.Context, req *
 
 	// Create response
 	response := map[string]any{
-		"from_date":     params.FromDate,
-		"to_date":       params.ToDate,
+		"from_date":     fromDateStr,
+		"to_date":       toDateStr,
 		"projects":      projects,
 		"total_hours":   float64(totalMinutes) / 60.0,
 		"total_minutes": totalMinutes,
@@ -894,10 +931,10 @@ func (h *ActivityMCPHandlers) handleGetHoursByProject(ctx context.Context, req *
 
 	var resultText string
 	if len(projects) == 0 {
-		resultText = fmt.Sprintf("No time tracked for any projects between %s and %s", params.FromDate, params.ToDate)
+		resultText = fmt.Sprintf("No time tracked for any projects between %s and %s", fromDateStr, toDateStr)
 	} else {
 		resultText = fmt.Sprintf("Found time tracked across %d projects between %s and %s. Total: %s (%.2f hours)",
-			len(projects), params.FromDate, params.ToDate,
+			len(projects), fromDateStr, toDateStr,
 			time_utils.FormatMinutesAsDuration(float64(totalMinutes)), float64(totalMinutes)/60.0)
 	}
 
