@@ -5,6 +5,7 @@ app.yaml
 tmp
 dist
 __debug_bin
+baralga
 
 .env
 .vscode/*.log

@@ -78,7 +78,7 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 	homeFilter := filter.Home()
 	nextFilter := filter.Next()
 
-	var reportGeneralView, reportTimeView, reportProjectView g.Node
+	var reportGeneralView, reportTimeView, reportProjectView, reportTagView g.Node
 	var err error
 	if view.main == "general" {
 		reportGeneralView, err = a.reportGeneralView(pageContext, filter, view)
@@ -94,6 +94,12 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 	}
 	if view.main == "project" {
 		reportProjectView, err = a.reportProjectView(pageContext, view, filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if view.main == "tag" {
+		reportTagView, err = a.reportTagView(pageContext, view, filter)
 		if err != nil {
 			return nil, err
 		}
@@ -271,6 +277,23 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 						g.Text("Project"),
 						Class("nav-link"),
 					),
+					A(
+						g.If(view.main == "tag",
+							Class("nav-link active"),
+						),
+						g.If(view.main != "tag",
+							g.Group([]g.Node{
+								Class("btn nav-link"),
+								ghx.Get(reportHrefForView(filter, "tag", "")),
+								ghx.PushURL("true"),
+								ghx.Target("#baralga__report_content"),
+								ghx.Swap("outerHTML"),
+							}),
+						),
+						I(Class("bi-tags me-2")),
+						g.Text("Tag"),
+						Class("nav-link"),
+					),
 				),
 			),
 		),
@@ -282,6 +305,9 @@ func (a *ReportWeb) ReportView(pageContext *shared.PageContext, view *reportView
 		),
 		g.If(view.main == "project",
 			reportProjectView,
+		),
+		g.If(view.main == "tag",
+			reportTagView,
 		),
 	), nil
 }
@@ -647,6 +673,10 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							),
 						),
 						Th(
+							Class("d-none"),
+							g.Attr("aria-label", "Tags"),
+						),
+						Th(
 							A(
 								ghx.Get(reportHref(filter.WithSortToggle("start"), view)),
 								ghx.PushURL("true"),
@@ -672,6 +702,15 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							TitleAttr(activity.Description),
 
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
+							Td(
+								g.Group(g.Map(activity.Tags, func(tag *Tag) g.Node {
+									return Span(
+										Class("badge"),
+										Style(fmt.Sprintf("background-color: %s; color: white;", tag.Color)),
+										g.Text(tag.Name),
+									)
+								})),
+							),
 							Td(g.Text(time_utils.FormatDateDEShort(activity.Start))),
 							Td(
 								Class("text-end"),
@@ -722,6 +761,7 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 								g.Text("Project"),
 							),
 						),
+						Th(g.Text("Tags")),
 						Th(
 							A(
 								ghx.Get(reportHref(filter.WithSortToggle("start"), view)),
@@ -750,6 +790,19 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							TitleAttr(activity.Description),
 
 							Td(g.Text(projectsById[activity.ProjectID].Title)),
+							Td(
+								Div(
+									Class("d-flex flex-wrap gap-1"),
+									g.Group(g.Map(activity.Tags, func(tag *Tag) g.Node {
+
+										return Span(
+											Class("badge"),
+											Style(fmt.Sprintf("background-color: %s; color: white;", tag.Color)),
+											g.Text(tag.Name),
+										)
+									})),
+								),
+							),
 							Td(g.Text(time_utils.FormatDateDE(activity.Start))),
 							Td(g.Text(time_utils.FormatTime(activity.Start))),
 							Td(g.Text(time_utils.FormatTime(activity.End))),
@@ -864,13 +917,91 @@ func (a *ReportWeb) reportGeneralView(pageContext *shared.PageContext, filter *A
 							),
 						),
 						g.If(
-							!(activitiesPage.Page.TotalPages-1 > activitiesPage.Page.Number),  //nolint:all
+							!(activitiesPage.Page.TotalPages-1 > activitiesPage.Page.Number), //nolint:all
 							Span(
 								Class("page-link active"),
 								g.Raw("&raquo;"),
 							),
 						),
 					),
+				),
+			),
+		),
+	}), nil
+}
+
+func (a *ReportWeb) reportTagView(pageContext *shared.PageContext, view *reportView, filter *ActivityFilter) (g.Node, error) {
+	// Get all tags for the organization for the tag selection interface
+	allTags, err := a.activityService.GetTagsForAutocomplete(pageContext.Ctx, pageContext.Principal, "")
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate tag reports without tag filtering
+	tagReportData, err := a.activityService.GenerateTagReports(pageContext.Ctx, pageContext.Principal, filter, "day", []string{})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tagReportData.Items) == 0 {
+		return Div(
+			Class("alert alert-info"),
+			Role("alert"),
+			g.Text(fmt.Sprintf("No tagged activities found in %v.", filter.String())),
+		), nil
+	}
+
+	return g.Group([]g.Node{
+		// Tag selection interface
+		Div(
+			Class("row mb-3"),
+			Div(
+				Class("col-12"),
+				Div(
+					Class("d-flex flex-wrap gap-2 mb-2"),
+					g.Group(g.Map(allTags, func(tag *Tag) g.Node {
+						return Span(
+							Class("badge"),
+							Style(fmt.Sprintf("background-color: %s !important;", tag.Color)),
+							g.Text(tag.Name),
+						)
+					})),
+				),
+			),
+		),
+		// Tag report table
+		Div(
+			Class("table-responsive"),
+			Table(
+				ID("tag-report"),
+				Class("table table-striped"),
+				THead(
+					Tr(
+						Th(g.Text("Tag")),
+						Th(g.Text("Activity Count")),
+						Th(
+							Class("text-end"),
+							g.Text("Duration"),
+						),
+					),
+				),
+				TBody(
+					g.Group(g.Map(tagReportData.Items, func(item *TagReportItem) g.Node {
+						return Tr(
+							Td(
+								Span(
+									Class("badge me-2"),
+									Style(fmt.Sprintf("background-color: %s;", item.TagColor)),
+									g.Text(item.TagName),
+								),
+							),
+							Td(g.Text(fmt.Sprintf("%d", item.ActivityCount))),
+							Td(
+								Class("text-end"),
+								g.Text(item.DurationFormatted()),
+							),
+						)
+					})),
 				),
 			),
 		),
@@ -902,6 +1033,11 @@ func reportHref(filter *ActivityFilter, view *reportView) string {
 
 	if filter.sortBy != "" && filter.sortOrder != "" {
 		reportHref += fmt.Sprintf("&sort=%v", fmt.Sprintf("%v:%v", filter.sortBy, filter.sortOrder))
+	}
+
+	// Add tag filters to URL
+	if len(filter.Tags()) > 0 {
+		reportHref += "&tags=" + strings.Join(filter.Tags(), ",")
 	}
 
 	return reportHref
@@ -942,6 +1078,11 @@ func reportViewFromQueryParams(params url.Values, timespan string) *reportView {
 		} else {
 			reportView.sub = "d"
 		}
+	}
+
+	// Tag view doesn't need sub-views for now
+	if reportView.main == "tag" {
+		reportView.sub = ""
 	}
 
 	return reportView
