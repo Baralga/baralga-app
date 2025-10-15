@@ -87,50 +87,50 @@ func (h *ActivityMCPHandlers) RegisterMCPTools(server *mcp.Server) {
 
 // CreateEntryParams represents parameters for create_entry tool
 type CreateEntryParams struct {
-	Start       string   `json:"start" validate:"required" jsonschema:"description=Start time in ISO 8601 format"`
-	End         string   `json:"end" validate:"required" jsonschema:"description=End time in ISO 8601 format"`
-	Description string   `json:"description" validate:"max=500" jsonschema:"description=Description of the work performed"`
-	ProjectID   string   `json:"project_id" validate:"required,uuid" jsonschema:"description=UUID of the project"`
-	Tags        []string `json:"tags,omitempty" jsonschema:"description=Optional array of tag names"`
+	Start       string   `json:"start" validate:"required" jsonschema:"description:Start time in ISO 8601 format"`
+	End         string   `json:"end" validate:"required" jsonschema:"description:End time in ISO 8601 format"`
+	Description string   `json:"description" validate:"max=500" jsonschema:"description:Description of the work performed"`
+	ProjectID   string   `json:"project_id" validate:"required,uuid" jsonschema:"description:UUID of the project"`
+	Tags        []string `json:"tags,omitempty" jsonschema:"description:Optional array of tag names"`
 }
 
 // GetEntryParams represents parameters for get_entry tool
 type GetEntryParams struct {
-	EntryID string `json:"entry_id" validate:"required,uuid" jsonschema:"description=UUID of the time entry to retrieve"`
+	EntryID string `json:"entry_id" validate:"required,uuid" jsonschema:"description:UUID of the time entry to retrieve"`
 }
 
 // UpdateEntryParams represents parameters for update_entry tool
 type UpdateEntryParams struct {
-	EntryID     string   `json:"entry_id" validate:"required,uuid" jsonschema:"description=UUID of the time entry to update"`
-	Start       string   `json:"start,omitempty" jsonschema:"description=Start time in ISO 8601 format (optional)"`
-	End         string   `json:"end,omitempty" jsonschema:"description=End time in ISO 8601 format (optional)"`
-	Description string   `json:"description" validate:"max=500" jsonschema:"description=Description of the work performed (optional)"`
-	ProjectID   string   `json:"project_id,omitempty" jsonschema:"description=UUID of the project (optional)"`
-	Tags        []string `json:"tags,omitempty" jsonschema:"description=Optional array of tag names"`
+	EntryID     string   `json:"entry_id" validate:"required,uuid" jsonschema:"description:UUID of the time entry to update"`
+	Start       string   `json:"start,omitempty" jsonschema:"description:Start time in ISO 8601 format (optional)"`
+	End         string   `json:"end,omitempty" jsonschema:"description:End time in ISO 8601 format (optional)"`
+	Description string   `json:"description" validate:"max=500" jsonschema:"description:Description of the work performed (optional)"`
+	ProjectID   string   `json:"project_id,omitempty" jsonschema:"description:UUID of the project (optional)"`
+	Tags        []string `json:"tags,omitempty" jsonschema:"description:Optional array of tag names"`
 }
 
 // DeleteEntryParams represents parameters for delete_entry tool
 type DeleteEntryParams struct {
-	EntryID string `json:"entry_id" validate:"required,uuid" jsonschema:"description=UUID of the time entry to delete"`
+	EntryID string `json:"entry_id" validate:"required,uuid" jsonschema:"description:UUID of the time entry to delete"`
 }
 
 // ListEntriesParams represents parameters for list_entries tool
 type ListEntriesParams struct {
-	FromDate  string `json:"from_date,omitempty" jsonschema:"description=Start date filter in YYYY-MM-DD format (optional)"`
-	ToDate    string `json:"to_date,omitempty" jsonschema:"description=End date filter in YYYY-MM-DD format (optional)"`
-	ProjectID string `json:"project_id,omitempty" validate:"omitempty,uuid" jsonschema:"description=UUID of the project to filter by (optional)"`
+	FromDate  string `json:"from_date,omitempty" jsonschema:"description:Start date filter in YYYY-MM-DD format (optional)"`
+	ToDate    string `json:"to_date,omitempty" jsonschema:"description:End date filter in YYYY-MM-DD format (optional)"`
+	ProjectID string `json:"project_id,omitempty" validate:"omitempty,uuid" jsonschema:"description:UUID of the project to filter by (optional)"`
 }
 
 // GetSummaryParams represents parameters for get_summary tool
 type GetSummaryParams struct {
-	PeriodType string `json:"period_type" validate:"required,oneof=day week month quarter year" jsonschema:"description=Type of period (day/week/month/quarter/year)"`
-	Date       string `json:"date" validate:"required" jsonschema:"description=Date within the period in YYYY-MM-DD format"`
+	PeriodType string `json:"period_type" validate:"required,oneof=day week month quarter year" jsonschema:"description:Type of period (day/week/month/quarter/year)"`
+	Date       string `json:"date" validate:"required" jsonschema:"description:Date within the period in YYYY-MM-DD format"`
 }
 
 // GetHoursByProjectParams represents parameters for get_hours_by_project tool
 type GetHoursByProjectParams struct {
-	FromDate string `json:"from_date" validate:"required" jsonschema:"description=Start date in YYYY-MM-DD format"`
-	ToDate   string `json:"to_date" validate:"required" jsonschema:"description=End date in YYYY-MM-DD format"`
+	FromDate string `json:"from_date" validate:"required" jsonschema:"description:Start date in YYYY-MM-DD format"`
+	ToDate   string `json:"to_date" validate:"required" jsonschema:"description:End date in YYYY-MM-DD format"`
 }
 
 // MCP tool handlers
@@ -873,4 +873,82 @@ func (h *ActivityMCPHandlers) formatProjectReportJSON(response map[string]any) s
 		return fmt.Sprintf("%+v", response)
 	}
 	return string(jsonBytes)
+}
+
+// CallTool implements the ActivityMCPHandler interface for stateless tool calls
+func (h *ActivityMCPHandlers) CallTool(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	switch toolName {
+	case "create_entry":
+		// Parse arguments into CreateEntryParams
+		var params CreateEntryParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleCreateEntry(ctx, req, params)
+
+	case "get_entry":
+		var params GetEntryParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleGetEntry(ctx, req, params)
+
+	case "update_entry":
+		var params UpdateEntryParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleUpdateEntry(ctx, req, params)
+
+	case "delete_entry":
+		var params DeleteEntryParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleDeleteEntry(ctx, req, params)
+
+	case "list_entries":
+		var params ListEntriesParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleListEntries(ctx, req, params)
+
+	case "get_summary":
+		var params GetSummaryParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleGetSummary(ctx, req, params)
+
+	case "get_hours_by_project":
+		var params GetHoursByProjectParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleGetHoursByProject(ctx, req, params)
+
+	default:
+		return nil, nil, fmt.Errorf("unknown tool: %s", toolName)
+	}
+}
+
+// parseArguments converts map[string]interface{} to typed parameters
+func (h *ActivityMCPHandlers) parseArguments(arguments map[string]interface{}, target interface{}) error {
+	// Convert arguments map to JSON and then unmarshal to target struct
+	jsonBytes, err := json.Marshal(arguments)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal arguments")
+	}
+
+	if err := json.Unmarshal(jsonBytes, target); err != nil {
+		return errors.Wrap(err, "failed to unmarshal arguments to target type")
+	}
+
+	// Validate the parsed parameters
+	if err := h.validator.Struct(target); err != nil {
+		return errors.Wrap(err, "parameter validation failed")
+	}
+
+	return nil
 }

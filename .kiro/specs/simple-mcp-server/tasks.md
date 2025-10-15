@@ -53,7 +53,7 @@
     - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6_
 
 - [ ] 4. Integrate MCP server with main application
-  - [ ] 4.1 Update main.go to register MCP routes
+  - [x] 4.1 Update main.go to register MCP routes
     - Add MCP server initialization to newApp() function
     - Register MCP routes under /mcp/* path prefix
     - Wire up MCP handlers with existing dependency injection

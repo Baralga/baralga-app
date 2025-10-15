@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,11 +19,18 @@ import (
 type MCPServer struct {
 	server    *mcp.Server
 	validator *validator.Validate
+	handlers  []MCPHandler // Store handlers for stateless access
 }
 
 // MCPHandler interface for MCP tool handlers
 type MCPHandler interface {
 	RegisterMCPTools(server *mcp.Server)
+}
+
+// ActivityMCPHandler interface for activity-specific MCP tool handlers
+type ActivityMCPHandler interface {
+	MCPHandler
+	CallTool(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error)
 }
 
 // NewMCPServer creates a new MCP server instance
@@ -41,10 +49,10 @@ func NewMCPServer() *MCPServer {
 
 // RegisterMCPRoutes registers MCP endpoints with the Chi router
 func (m *MCPServer) RegisterMCPRoutes(router chi.Router, authMiddleware func(http.Handler) http.Handler, mcpHandlers []MCPHandler) {
-	// Register all MCP tools from handlers
-	for _, handler := range mcpHandlers {
-		handler.RegisterMCPTools(m.server)
-	}
+	// Store handlers for stateless access
+	m.handlers = mcpHandlers
+
+	log.Printf("[MCP] Using STATELESS mode")
 
 	// Mount MCP endpoints under /mcp path
 	router.Route("/mcp", func(r chi.Router) {
@@ -54,8 +62,10 @@ func (m *MCPServer) RegisterMCPRoutes(router chi.Router, authMiddleware func(htt
 		// Add API key authentication middleware
 		r.Use(authMiddleware)
 
-		// Handle MCP protocol requests
-		r.Post("/*", m.handleMCPRequest)
+		// Handle MCP protocol requests (stateless only)
+		r.HandleFunc("/", m.handleMCPRequest)
+		r.HandleFunc("/*", m.handleMCPRequest)
+		r.Options("/", m.handleOptions)
 		r.Options("/*", m.handleOptions)
 	})
 }
@@ -72,15 +82,167 @@ func (m *MCPServer) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// handleMCPRequest handles incoming MCP protocol requests using StreamableHTTPHandler
+// handleMCPRequest handles incoming MCP protocol requests in stateless mode
 func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
-	// Create a StreamableHTTPHandler that returns our server
-	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
-		return m.server
-	}, nil)
+	// Only handle POST requests for JSON-RPC
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-	// Delegate to the MCP HTTP handler
-	handler.ServeHTTP(w, r)
+	// Parse JSON-RPC request
+	var jsonRPCReq map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&jsonRPCReq); err != nil {
+		m.renderMCPError(w, -32700, "Parse error", "Invalid JSON")
+		return
+	}
+
+	// Handle the request statelessly
+	m.handleStatelessJSONRPC(r.Context(), w, jsonRPCReq)
+}
+
+// handleStatelessJSONRPC handles JSON-RPC requests without maintaining session state
+func (m *MCPServer) handleStatelessJSONRPC(ctx context.Context, w http.ResponseWriter, req map[string]interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+
+	method, _ := req["method"].(string)
+	id := req["id"]
+	params, _ := req["params"].(map[string]interface{})
+
+	switch method {
+	case "initialize":
+		m.handleStatelessInitialize(w, id)
+	case "tools/list":
+		m.handleStatelessToolsList(w, id)
+	case "tools/call":
+		m.handleStatelessToolsCall(ctx, w, id, params)
+	default:
+		m.renderJSONRPCError(w, id, -32601, "Method not found", fmt.Sprintf("Unknown method: %s", method))
+	}
+}
+
+// handleStatelessInitialize handles initialize requests without session state
+func (m *MCPServer) handleStatelessInitialize(w http.ResponseWriter, id interface{}) {
+	response := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      id,
+		"result": map[string]interface{}{
+			"protocolVersion": "2024-11-05",
+			"capabilities": map[string]interface{}{
+				"tools": map[string]interface{}{
+					"listChanged": false,
+				},
+			},
+			"serverInfo": map[string]interface{}{
+				"name":    "baralga-time-tracker",
+				"version": "1.0.0",
+			},
+		},
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleStatelessToolsList handles tools/list requests without session state
+func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id interface{}) {
+	tools := []map[string]interface{}{
+		{"name": "create_entry", "description": "Create a new time tracking entry", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"start": map[string]interface{}{"type": "string"}, "end": map[string]interface{}{"type": "string"}, "project_id": map[string]interface{}{"type": "string"}}, "required": []string{"start", "end", "project_id"}}},
+		{"name": "get_entry", "description": "Retrieve a time entry by ID", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"entry_id": map[string]interface{}{"type": "string"}}, "required": []string{"entry_id"}}},
+		{"name": "update_entry", "description": "Update a time entry", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"entry_id": map[string]interface{}{"type": "string"}}, "required": []string{"entry_id"}}},
+		{"name": "delete_entry", "description": "Delete a time entry", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"entry_id": map[string]interface{}{"type": "string"}}, "required": []string{"entry_id"}}},
+		{"name": "list_entries", "description": "List time entries", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{}}},
+		{"name": "get_summary", "description": "Get time summary", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"period_type": map[string]interface{}{"type": "string"}, "date": map[string]interface{}{"type": "string"}}, "required": []string{"period_type", "date"}}},
+		{"name": "get_hours_by_project", "description": "Get hours by project", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"from_date": map[string]interface{}{"type": "string"}, "to_date": map[string]interface{}{"type": "string"}}, "required": []string{"from_date", "to_date"}}},
+	}
+
+	response := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      id,
+		"result": map[string]interface{}{
+			"tools": tools,
+		},
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleStatelessToolsCall handles tools/call requests without session state
+func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.ResponseWriter, id interface{}, params map[string]interface{}) {
+	toolName, _ := params["name"].(string)
+	arguments, _ := params["arguments"].(map[string]interface{})
+
+	if toolName == "" {
+		m.renderJSONRPCError(w, id, -32602, "Invalid params", "Tool name is required")
+		return
+	}
+
+	// Create a mock MCP request for the tool call
+	argumentsJSON, err := json.Marshal(arguments)
+	if err != nil {
+		m.renderJSONRPCError(w, id, -32602, "Invalid params", "Failed to marshal arguments")
+		return
+	}
+
+	mockRequest := &mcp.CallToolRequest{
+		Params: &mcp.CallToolParamsRaw{
+			Name:      toolName,
+			Arguments: argumentsJSON,
+		},
+	}
+
+	// Find and call the appropriate handler
+	var result *mcp.CallToolResult
+	var toolResult interface{}
+	var callErr error
+
+	// Try to find the tool in our registered handlers
+	for _, handler := range m.handlers {
+		// We need to call the handler's tool directly
+		// This is a simplified approach - in a full implementation you'd have a proper tool registry
+		if activityHandler, ok := handler.(ActivityMCPHandler); ok {
+			result, toolResult, callErr = activityHandler.CallTool(ctx, mockRequest, toolName, arguments)
+			if callErr == nil {
+				break
+			}
+		}
+	}
+
+	if callErr != nil {
+		log.Printf("[MCP] Tool call failed: %v", callErr)
+		m.renderJSONRPCError(w, id, -32603, "Internal error", callErr.Error())
+		return
+	}
+
+	if result == nil {
+		m.renderJSONRPCError(w, id, -32601, "Method not found", fmt.Sprintf("Tool '%s' not found", toolName))
+		return
+	}
+
+	// Convert the MCP result to JSON-RPC response
+	response := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      id,
+		"result":  result,
+	}
+
+	// If we have additional tool result data, include it
+	if toolResult != nil {
+		response["toolResult"] = toolResult
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+// renderJSONRPCError renders a JSON-RPC error response
+func (m *MCPServer) renderJSONRPCError(w http.ResponseWriter, id interface{}, code int, message, details string) {
+	response := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      id,
+		"error": map[string]interface{}{
+			"code":    code,
+			"message": message,
+			"data":    details,
+		},
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // handleOptions handles CORS preflight requests

@@ -94,6 +94,15 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	authController := auth.NewAuthRestHandlers(&config, authService, tokenAuth)
 	authWeb := auth.NewAuthWebHandlers(&config, authService, userService, tokenAuth)
 
+	// MCP
+	mcpServer := shared.NewMCPServer()
+	mcpAuthService := auth.NewMCPAuthService(userRepository)
+	activityMCPHandlers := tracking.NewActivityMCPHandlers(activityService, activityRepository, projectRepository)
+
+	mcpHandlers := []shared.MCPHandler{
+		activityMCPHandlers,
+	}
+
 	apiHandlers := []shared.DomainHandler{
 		authController,
 		activityRestHandlers,
@@ -108,7 +117,7 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	}
 
 	router := chi.NewRouter()
-	registerRoutes(&config, router, authController, authWeb, apiHandlers, webHandlers)
+	registerRoutes(&config, router, authController, authWeb, apiHandlers, webHandlers, mcpServer, mcpAuthService, mcpHandlers)
 	registerHealthcheck(&config, router)
 
 	return &config, connPool, router, nil
@@ -128,13 +137,14 @@ func registerHealthcheck(config *shared.Config, router *chi.Mux) {
 	router.Get("/health", h.HandlerFunc)
 }
 
-func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthRestHandlers, authWeb *auth.AuthWebHandlers, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler) {
+func registerRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthRestHandlers, authWeb *auth.AuthWebHandlers, apiHandlers []shared.DomainHandler, webHandlers []shared.DomainHandler, mcpServer *shared.MCPServer, mcpAuthService *auth.MCPAuthService, mcpHandlers []shared.MCPHandler) {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Compress(5))
 
 	router.Mount("/api", apiRouteHandler(authController, apiHandlers))
 	registerWebRoutes(config, router, authController, authWeb, webHandlers)
+	registerMCPRoutes(router, mcpServer, mcpAuthService, mcpHandlers)
 }
 
 func apiRouteHandler(authController *auth.AuthRestHandlers, apiHandlers []shared.DomainHandler) http.Handler {
@@ -154,6 +164,11 @@ func apiRouteHandler(authController *auth.AuthRestHandlers, apiHandlers []shared
 	})
 
 	return r
+}
+
+func registerMCPRoutes(router *chi.Mux, mcpServer *shared.MCPServer, mcpAuthService *auth.MCPAuthService, mcpHandlers []shared.MCPHandler) {
+	// Register MCP routes under /mcp/* path prefix with authentication middleware
+	mcpServer.RegisterMCPRoutes(router, mcpAuthService.AuthenticationMiddleware(), mcpHandlers)
 }
 
 func registerWebRoutes(config *shared.Config, router *chi.Mux, authController *auth.AuthRestHandlers, authWeb *auth.AuthWebHandlers, webHandlers []shared.DomainHandler) {
