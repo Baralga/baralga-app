@@ -97,7 +97,7 @@ func newApp() (*shared.Config, *pgxpool.Pool, *chi.Mux, error) {
 	// MCP
 	mcpServer := shared.NewMCPServer()
 	mcpAuthService := auth.NewMCPAuthService(userRepository)
-	activityMCPHandlers := tracking.NewActivityMCPHandlers(activityService, activityRepository, projectRepository)
+	activityMCPHandlers := tracking.NewActivityMCPHandlers(activityService, activityRepository, projectRepository, projectService)
 
 	mcpHandlers := []shared.MCPHandler{
 		activityMCPHandlers,

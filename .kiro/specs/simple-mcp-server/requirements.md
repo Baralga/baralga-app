@@ -92,3 +92,15 @@ This feature involves creating a simple Model Context Protocol (MCP) server that
 4. WHEN entries exist without a project association THEN the system SHALL group them under a default category (e.g., "Unassigned")
 5. WHEN no entries exist in the specified date range THEN the system SHALL return an empty result set
 6. WHEN calculating project totals THEN the system SHALL return hours with appropriate precision for each project
+
+### Requirement 8
+
+**User Story:** As a developer, I want to retrieve a list of all available projects with their unique identifiers, so that I can reference valid projects when creating or filtering time entries.
+
+#### Acceptance Criteria
+
+1. WHEN I call the `list_projects` tool THEN the system SHALL return all projects available in the system
+2. WHEN listing projects THEN the system SHALL include both the project name and its unique UUID for each project
+3. WHEN no projects exist in the system THEN the system SHALL return an empty list
+4. WHEN listing projects THEN the system SHALL return projects in a consistent order (e.g., alphabetical by name)
+5. WHEN listing projects THEN the system SHALL include all active projects that can be associated with time entries
