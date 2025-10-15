@@ -22,6 +22,7 @@ A layered ddd architecture is used. The dependencies between the layers is:
 
 - Repositories are in the Infrastructure Layer
 - There's no need to unit test the in memory repositories.
+<<<<<<< HEAD
 # Layered DDD Architecture
 
 On top level there are modules by domain repsponsibility like user, auth, tracking and shared. The layers have to be met for each module. Dependencies between the modules may only occurr on the domain layer. The shared module may not depend on any other module.
@@ -49,6 +50,11 @@ A layered ddd architecture is used. The dependencies between the layers is:
 - Don't allow any SQL injections.
 
 ## Code Conventions
+=======
+
+
+## Coding Conventions
+>>>>>>> 40e74ac (more tasks)
 
 ### Err Checking on new Line
 
@@ -64,6 +70,7 @@ if err != nil {
 
 ### Either log error or return it, never both
 
+<<<<<<< HEAD
 An error should either be logged and handled or return, but never both.
 
 
@@ -72,3 +79,6 @@ An error should either be logged and handled or return, but never both.
 ### Sample Ids for Tests
 
 Use the sample ids of the in memory repositories for tests.
+=======
+An error should either be logged and handled or return, but never both.
+>>>>>>> 40e74ac (more tasks)
