@@ -22,3 +22,22 @@ A layered ddd architecture is used. The dependencies between the layers is:
 
 - Repositories are in the Infrastructure Layer
 - There's no need to unit test the in memory repositories.
+
+
+## Coding Conventions
+
+### Err Checking on new Line
+
+Error variable storage and handling shall be on diferent lines like:
+
+```
+err := json.NewDecoder(r.Body).Decode(&loginModel)
+if err != nil {
+    // handle it
+	return
+}
+```
+
+### Either log error or return it, never both
+
+An error should either be logged and handled or return, but never both.

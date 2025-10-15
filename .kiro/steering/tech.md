@@ -37,6 +37,9 @@ go test -v -timeout 60s -coverprofile=cover.out -cover ./...
 go tool cover -func=cover.out
 ```
 
+#### Guidelines for Testing
+* Do not mock services for testing but use the inmemory repo implementations.
+
 ### Linting
 ```bash
 # Run linter before commits

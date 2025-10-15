@@ -8,15 +8,22 @@ The project follows a domain-driven design with clear separation of concerns acr
 - **`user/`** - User and organization management
 - **`shared/`** - Common utilities, domain types, and infrastructure
 
+## Dependenies between Business Domains
+
+The following dependencies between business domains are allowed:
+- all may depend on shared, but shared may not depend on any other business domain
+- auth may depend on user
+
 ## Layered Architecture Pattern
 Each domain follows a consistent layered architecture:
 
 ```
 domain/
-├── *_domain.go      # Domain entities, value objects, interfaces
+├── *_domain.go      # Domain entities, value objects, interfaces or repositories, structs
 ├── *_service.go     # Business logic and use cases
 ├── *_repository_*.go # Data access implementations (db, mem)
 ├── *_rest.go        # REST API handlers
+├── *_mcp.go         # MCP Tool handlers
 ├── *_web.go         # Web UI handlers
 └── *_test.go        # Unit tests
 ```
@@ -34,9 +41,18 @@ domain/
 - Services coordinate between repositories and handle transactions
 - Context-based principal propagation for security
 
-### Handler Separation
+### Handler Separation in the Presentation Layer
 - **REST handlers** (`*_rest.go`): JSON API endpoints under `/api`
 - **Web handlers** (`*_web.go`): Server-side rendered HTML with HTMX
+
+### Relaxed Layer Dependencies
+
+The dependencies between the layers are:
+
+* presentation layer -> service layer -> domain layer
+* interface layer -> domain layer
+
+So e.g. activity_rest my use the activity service from activity_service.go and ActivityRepository from activity_domain.go.
 
 ## File Organization
 
