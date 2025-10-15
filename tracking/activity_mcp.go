@@ -42,54 +42,128 @@ func NewActivityMCPHandlers(
 }
 
 // RegisterMCPTools registers all activity-related MCP tools
-func (h *ActivityMCPHandlers) RegisterMCPTools(server *mcp.Server) {
+func (h *ActivityMCPHandlers) RegisterMCPTools(registrar shared.ToolRegistrar) {
 	// Register create_entry tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "create_entry",
 		Description: "Create a new time tracking entry with start/end times, description, and project association",
-	}, h.handleCreateEntry)
+	}, shared.ToolHandlerFunc(h.createEntryHandler))
 
 	// Register get_entry tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "get_entry",
 		Description: "Retrieve a specific time entry by its ID",
-	}, h.handleGetEntry)
+	}, shared.ToolHandlerFunc(h.getEntryHandler))
 
 	// Register update_entry tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "update_entry",
 		Description: "Update an existing time entry with new values",
-	}, h.handleUpdateEntry)
+	}, shared.ToolHandlerFunc(h.updateEntryHandler))
 
 	// Register delete_entry tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "delete_entry",
 		Description: "Delete a time entry by its ID",
-	}, h.handleDeleteEntry)
+	}, shared.ToolHandlerFunc(h.deleteEntryHandler))
 
 	// Register list_entries tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "list_entries",
 		Description: "List time entries with optional filtering by date range and project",
-	}, h.handleListEntries)
+	}, shared.ToolHandlerFunc(h.listEntriesHandler))
 
 	// Register get_summary tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "get_summary",
 		Description: "Get time summaries for specified periods (day/week/month/quarter/year)",
-	}, h.handleGetSummary)
+	}, shared.ToolHandlerFunc(h.getSummaryHandler))
 
 	// Register get_hours_by_project tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "get_hours_by_project",
 		Description: "Get hours grouped by project for a date range",
-	}, h.handleGetHoursByProject)
+	}, shared.ToolHandlerFunc(h.getHoursByProjectHandler))
 
 	// Register list_projects tool
-	mcp.AddTool(server, &mcp.Tool{
+	registrar.AddTool(&mcp.Tool{
 		Name:        "list_projects",
 		Description: "Retrieve a list of all available projects with their unique identifiers",
-	}, h.handleListProjects)
+	}, shared.ToolHandlerFunc(h.listProjectsHandler))
+}
+
+// Individual tool handler functions
+
+// createEntryHandler handles create_entry tool calls
+func (h *ActivityMCPHandlers) createEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params CreateEntryParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleCreateEntry(ctx, req, params)
+}
+
+// getEntryHandler handles get_entry tool calls
+func (h *ActivityMCPHandlers) getEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params GetEntryParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleGetEntry(ctx, req, params)
+}
+
+// updateEntryHandler handles update_entry tool calls
+func (h *ActivityMCPHandlers) updateEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params UpdateEntryParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleUpdateEntry(ctx, req, params)
+}
+
+// deleteEntryHandler handles delete_entry tool calls
+func (h *ActivityMCPHandlers) deleteEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params DeleteEntryParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleDeleteEntry(ctx, req, params)
+}
+
+// listEntriesHandler handles list_entries tool calls
+func (h *ActivityMCPHandlers) listEntriesHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params ListEntriesParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleListEntries(ctx, req, params)
+}
+
+// getSummaryHandler handles get_summary tool calls
+func (h *ActivityMCPHandlers) getSummaryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params GetSummaryParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleGetSummary(ctx, req, params)
+}
+
+// getHoursByProjectHandler handles get_hours_by_project tool calls
+func (h *ActivityMCPHandlers) getHoursByProjectHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params GetHoursByProjectParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleGetHoursByProject(ctx, req, params)
+}
+
+// listProjectsHandler handles list_projects tool calls
+func (h *ActivityMCPHandlers) listProjectsHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+	var params ListProjectsParams
+	if err := h.parseArguments(arguments, &params); err != nil {
+		return nil, nil, err
+	}
+	return h.handleListProjects(ctx, req, params)
 }
 
 // MCP parameter structures for tool calls
@@ -963,71 +1037,6 @@ func (h *ActivityMCPHandlers) formatProjectsJSON(projects []map[string]any) stri
 		return fmt.Sprintf("%+v", projects)
 	}
 	return string(jsonBytes)
-}
-
-// CallTool implements the ActivityMCPHandler interface for stateless tool calls
-func (h *ActivityMCPHandlers) CallTool(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
-	switch toolName {
-	case "create_entry":
-		// Parse arguments into CreateEntryParams
-		var params CreateEntryParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleCreateEntry(ctx, req, params)
-
-	case "get_entry":
-		var params GetEntryParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleGetEntry(ctx, req, params)
-
-	case "update_entry":
-		var params UpdateEntryParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleUpdateEntry(ctx, req, params)
-
-	case "delete_entry":
-		var params DeleteEntryParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleDeleteEntry(ctx, req, params)
-
-	case "list_entries":
-		var params ListEntriesParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleListEntries(ctx, req, params)
-
-	case "get_summary":
-		var params GetSummaryParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleGetSummary(ctx, req, params)
-
-	case "get_hours_by_project":
-		var params GetHoursByProjectParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleGetHoursByProject(ctx, req, params)
-
-	case "list_projects":
-		var params ListProjectsParams
-		if err := h.parseArguments(arguments, &params); err != nil {
-			return nil, nil, err
-		}
-		return h.handleListProjects(ctx, req, params)
-
-	default:
-		return nil, nil, fmt.Errorf("unknown tool: %s", toolName)
-	}
 }
 
 // parseArguments converts map[string]interface{} to typed parameters

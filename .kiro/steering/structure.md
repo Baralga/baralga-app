@@ -20,7 +20,6 @@ Each domain follows a consistent layered architecture:
 ```
 domain/
 ├── *_domain.go      # Domain entities, value objects, interfaces or repositories, structs
-├── *_domain.go      # Domain entities, value objects, interfaces
 ├── *_service.go     # Business logic and use cases
 ├── *_repository_*.go # Data access implementations (db, mem)
 ├── *_rest.go        # REST API handlers
@@ -59,10 +58,15 @@ The dependencies between the layers are:
 * interface layer -> domain layer
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 So e.g. activity_rest my use the activity service from activity_service.go and ActivityRepository from activity_domain.go.
 
 =======
 >>>>>>> ce0367c (Updated design)
+=======
+So e.g. activity_rest my use the activity service from activity_service.go and ActivityRepository from activity_domain.go.
+
+>>>>>>> 9946dc0 (Refactor)
 ## File Organization
 
 ### Root Level
