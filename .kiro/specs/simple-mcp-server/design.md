@@ -139,6 +139,9 @@ type Activity struct {
 - `get_summary` - Maps to `ActivityService.TimeReports()` with period aggregation
 - `get_hours_by_project` - Maps to `ActivityService.ProjectReports()` with date filtering
 
+**ProjectTools** - MCP tool implementations for project management
+- `list_projects` - Maps to `ProjectService.ReadProjects()` to retrieve all available projects with UUIDs
+
 Each tool handler will:
 - Parse and validate MCP tool call parameters
 - Create appropriate `shared.Principal` context for authorization
@@ -264,6 +267,9 @@ All errors will be returned as MCP error responses with structured error informa
 - `DeleteActivityByID(ctx, principal, activityID)` - Delete entries
 - `TimeReports(ctx, principal, filter, aggregateBy)` - Time summaries
 - `ProjectReports(ctx, principal, filter)` - Project summaries
+
+**ProjectService Methods:**
+- `ReadProjects(ctx, principal, filter, pageParams)` - List all projects with UUIDs
 
 **UserRepository Methods:**
 - `FindUserByUsername(ctx, username)` - User lookup for authentication

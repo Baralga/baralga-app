@@ -45,12 +45,20 @@
     - Add period type validation and date range processing
     - _Requirements: 6.1-6.8, 7.1-7.6_
 
-  - [ ]* 3.4 Write unit tests for MCP tool handlers
+  - [x] 3.4 Implement project listing tool
+    - Create list_projects tool handler mapping to ProjectService.ReadProjects()
+    - Implement response formatting to include project names and UUIDs
+    - Add proper error handling for empty project lists
+    - Ensure consistent ordering of projects in response
+    - _Requirements: 8.1-8.5_
+
+  - [ ]* 3.5 Write unit tests for MCP tool handlers
     - Create unit tests using in-memory repository implementations
     - Test MCP request/response formatting and validation
     - Test parameter parsing and error handling scenarios
     - Verify principal context creation and authorization flows
-    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6_
+    - Include tests for list_projects tool handler
+    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6, 8.1-8.5_
 
 - [ ] 4. Integrate MCP server with main application
   - [x] 4.1 Update main.go to register MCP routes
@@ -77,7 +85,8 @@
     - Define parameter structures for create_entry, update_entry, delete_entry tools
     - Add parameter structures for list_entries with filtering options
     - Create parameter structures for get_summary and get_hours_by_project tools
-    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6_
+    - Add parameter structure for list_projects tool (minimal parameters needed)
+    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6, 8.1-8.5_
 
   - [ ] 5.2 Add input validation for MCP tool parameters
     - Implement validation using go-playground/validator for all tool parameters
@@ -89,14 +98,15 @@
     - Create functions to convert Activity domain objects to MCP responses
     - Reuse existing activityModel and projectModel structures for consistency
     - Add response formatting for summary and report data
-    - _Requirements: 1.5, 2.3, 3.4, 4.3, 5.1-5.7, 6.8, 7.6_
+    - Add response mapping for project list with UUIDs and names
+    - _Requirements: 1.5, 2.3, 3.4, 4.3, 5.1-5.7, 6.8, 7.6, 8.1-8.5_
 
 - [ ] 6. Add MCP tool discovery and capability negotiation
   - [ ] 6.1 Implement MCP server capabilities
-    - Register all available tools with the MCP server
-    - Add tool descriptions and parameter schemas
+    - Register all available tools with the MCP server including list_projects
+    - Add tool descriptions and parameter schemas for all tools
     - Implement capability negotiation according to MCP specification
-    - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1_
+    - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1_
 
   - [ ] 6.2 Add MCP protocol compliance features
     - Implement JSON-RPC 2.0 message handling through SDK

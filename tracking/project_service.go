@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/baralga/shared"
+	"github.com/baralga/shared/paged"
 	"github.com/google/uuid"
 )
 
@@ -84,6 +85,10 @@ func (a *ProjectService) DeleteProjectByID(ctx context.Context, principal *share
 			return a.projectRepository.DeleteProjectByID(ctx, principal.OrganizationID, projectID)
 		},
 	)
+}
+
+func (a *ProjectService) ReadProjects(ctx context.Context, principal *shared.Principal, pageParams *paged.PageParams) (*ProjectsPaged, error) {
+	return a.projectRepository.FindProjects(ctx, principal.OrganizationID, pageParams)
 }
 
 func (a *ProjectService) OrganizationInitializer() func(ctx context.Context, organizationID uuid.UUID) error {

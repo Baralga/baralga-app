@@ -21,6 +21,7 @@ type ActivityMCPHandlers struct {
 	activityService    *ActitivityService
 	activityRepository ActivityRepository
 	projectRepository  ProjectRepository
+	projectService     *ProjectService
 	validator          *validator.Validate
 }
 
@@ -29,11 +30,13 @@ func NewActivityMCPHandlers(
 	activityService *ActitivityService,
 	activityRepository ActivityRepository,
 	projectRepository ProjectRepository,
+	projectService *ProjectService,
 ) *ActivityMCPHandlers {
 	return &ActivityMCPHandlers{
 		activityService:    activityService,
 		activityRepository: activityRepository,
 		projectRepository:  projectRepository,
+		projectService:     projectService,
 		validator:          validator.New(),
 	}
 }
@@ -81,6 +84,12 @@ func (h *ActivityMCPHandlers) RegisterMCPTools(server *mcp.Server) {
 		Name:        "get_hours_by_project",
 		Description: "Get hours grouped by project for a date range",
 	}, h.handleGetHoursByProject)
+
+	// Register list_projects tool
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "list_projects",
+		Description: "Retrieve a list of all available projects with their unique identifiers",
+	}, h.handleListProjects)
 }
 
 // MCP parameter structures for tool calls
@@ -131,6 +140,10 @@ type GetSummaryParams struct {
 type GetHoursByProjectParams struct {
 	FromDate string `json:"from_date" validate:"required" jsonschema:"description:Start date in YYYY-MM-DD format"`
 	ToDate   string `json:"to_date" validate:"required" jsonschema:"description:End date in YYYY-MM-DD format"`
+}
+
+// ListProjectsParams represents parameters for list_projects tool (no parameters needed)
+type ListProjectsParams struct {
 }
 
 // MCP tool handlers
@@ -808,6 +821,73 @@ func (h *ActivityMCPHandlers) handleGetHoursByProject(ctx context.Context, req *
 	}, response, nil
 }
 
+// handleListProjects handles the list_projects MCP tool call
+func (h *ActivityMCPHandlers) handleListProjects(ctx context.Context, req *mcp.CallToolRequest, params ListProjectsParams) (*mcp.CallToolResult, any, error) {
+	// Extract principal from context
+	principal := shared.MustPrincipalFromContext(ctx)
+
+	// Use a large page size to get all projects (or implement pagination later)
+	pageParams := &paged.PageParams{
+		Page: 0,
+		Size: 1000, // Large enough to get all projects
+	}
+
+	// Get projects using the service
+	projectsPaged, err := h.projectService.ReadProjects(ctx, principal, pageParams)
+	if err != nil {
+		shared.LogMCPError("list_projects", err, map[string]any{
+			"pageParams": pageParams,
+		})
+		return nil, nil, errors.Wrap(err, "failed to retrieve projects")
+	}
+
+	// Convert projects to MCP response format with consistent ordering (alphabetical by title)
+	var responseProjects []map[string]any
+	for _, project := range projectsPaged.Projects {
+		projectData := map[string]any{
+			"id":          project.ID.String(),
+			"title":       project.Title,
+			"description": project.Description,
+			"active":      project.Active,
+		}
+		responseProjects = append(responseProjects, projectData)
+	}
+
+	// Sort projects alphabetically by title for consistent ordering
+	// Using a simple bubble sort for simplicity since project count is typically small
+	for i := 0; i < len(responseProjects); i++ {
+		for j := i + 1; j < len(responseProjects); j++ {
+			if responseProjects[i]["title"].(string) > responseProjects[j]["title"].(string) {
+				responseProjects[i], responseProjects[j] = responseProjects[j], responseProjects[i]
+			}
+		}
+	}
+
+	response := map[string]any{
+		"projects": responseProjects,
+		"total":    len(responseProjects),
+	}
+
+	var resultText string
+	if len(responseProjects) == 0 {
+		resultText = "No projects found in the system"
+	} else {
+		resultText = fmt.Sprintf("Found %d projects", len(responseProjects))
+	}
+
+	shared.LogMCPToolCall("list_projects", map[string]any{"params": params}, true)
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			&mcp.TextContent{
+				Text: resultText,
+			},
+			&mcp.TextContent{
+				Text: fmt.Sprintf("Projects: %s", h.formatProjectsJSON(responseProjects)),
+			},
+		},
+	}, response, nil
+}
+
 // Helper methods
 
 // mapActivityToMCPResponse converts an Activity to MCP response format
@@ -875,6 +955,16 @@ func (h *ActivityMCPHandlers) formatProjectReportJSON(response map[string]any) s
 	return string(jsonBytes)
 }
 
+// formatProjectsJSON formats projects list as JSON string for display
+func (h *ActivityMCPHandlers) formatProjectsJSON(projects []map[string]any) string {
+	jsonBytes, err := json.MarshalIndent(projects, "", "  ")
+	if err != nil {
+		log.Printf("Failed to format projects JSON: %v", err)
+		return fmt.Sprintf("%+v", projects)
+	}
+	return string(jsonBytes)
+}
+
 // CallTool implements the ActivityMCPHandler interface for stateless tool calls
 func (h *ActivityMCPHandlers) CallTool(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
 	switch toolName {
@@ -927,6 +1017,13 @@ func (h *ActivityMCPHandlers) CallTool(ctx context.Context, req *mcp.CallToolReq
 			return nil, nil, err
 		}
 		return h.handleGetHoursByProject(ctx, req, params)
+
+	case "list_projects":
+		var params ListProjectsParams
+		if err := h.parseArguments(arguments, &params); err != nil {
+			return nil, nil, err
+		}
+		return h.handleListProjects(ctx, req, params)
 
 	default:
 		return nil, nil, fmt.Errorf("unknown tool: %s", toolName)
