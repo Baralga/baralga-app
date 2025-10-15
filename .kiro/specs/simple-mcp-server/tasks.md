@@ -37,26 +37,30 @@
 
 - [ ] 4. Implement MCP tool handlers for activity operations (Presentation Layer)
   - [x] 4.1 Create tracking/activity_mcp.go with core MCP tool handlers
-    - Implement create_entry tool handler using ActivityService.CreateActivity() OR ActivityRepository.InsertActivity()
+    - Implement create_entry tool handler with default time handling using ActivityService.CreateActivity() OR ActivityRepository.InsertActivity()
     - Implement get_entry tool handler using ActivityService.ReadActivitiesWithProjects() OR ActivityRepository.FindActivityByID()
-    - Implement update_entry tool handler using ActivityService.UpdateActivity() OR ActivityRepository.UpdateActivity()
+    - Implement update_entry tool handler with default time handling using ActivityService.UpdateActivity() OR ActivityRepository.UpdateActivity()
     - Implement delete_entry tool handler using ActivityService.DeleteActivityByID() OR ActivityRepository.DeleteActivityByID()
+    - Apply default values for missing start/end times before domain layer interaction
     - Ensure handlers access only Domain Layer services or repository interfaces, not Infrastructure Layer implementations
-    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4_
+    - _Requirements: 1.1-1.7, 2.1-2.3, 3.1-3.5, 4.1-4.4_
 
   - [x] 4.2 Implement list_entries tool handler
     - Create tool handler using ActivityService.ReadActivitiesWithProjects() OR ActivityRepository.FindActivities()
-    - Add parameter parsing for date range and project filtering
+    - Add parameter parsing for date range and project filtering with default date range handling
+    - Apply default date range (first day of current month to current date) when dates not provided
     - Implement response formatting using existing activityModel structures
     - Apply organization-based filtering when using repository interfaces directly
-    - _Requirements: 5.1-5.7_
+    - _Requirements: 5.1-5.9_
 
   - [x] 4.3 Implement time summary and reporting tools
-    - Create get_summary tool handler using ActivityService.TimeReports() OR ActivityRepository.TimeReportByDay/Week/Month/Quarter()
-    - Implement get_hours_by_project tool handler using ActivityService.ProjectReports() OR ActivityRepository.ProjectReport()
+    - Create get_summary tool handler with default date handling using ActivityService.TimeReports() OR ActivityRepository.TimeReportByDay/Week/Month/Quarter()
+    - Implement get_hours_by_project tool handler with default date range handling using ActivityService.ProjectReports() OR ActivityRepository.ProjectReport()
+    - Apply default date (current date) for summary periods when not provided
+    - Apply default date range (first day of current month to current date) for project reports when not provided
     - Add period type validation and date range processing
     - Apply organization-based filtering when using repository interfaces directly
-    - _Requirements: 6.1-6.8, 7.1-7.6_
+    - _Requirements: 6.1-6.9, 7.1-7.8_
 
   - [x] 4.4 Implement project listing tool
     - Create list_projects tool handler using ProjectService.ReadProjects() OR ProjectRepository.FindProjects()
@@ -69,12 +73,14 @@
   - [ ]* 4.5 Write unit tests for MCP tool handlers (layer-compliant testing)
     - Create unit tests for Presentation Layer handlers using mocked Domain Layer services OR in-memory repository implementations
     - Test MCP request/response formatting and validation at Presentation Layer
-    - Test parameter parsing and error handling scenarios
+    - Test default value application for missing time parameters (start/end times, date ranges, period dates)
+    - Test parameter parsing and error handling scenarios including validation after default application
     - Verify principal context creation and authentication flows
     - Ensure tests maintain layer boundaries (domain interfaces allowed, infrastructure implementations forbidden)
     - Include tests for both service-based and repository-based handler implementations
     - Include tests for list_projects tool handler
-    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6, 8.1-8.5_
+    - Test edge cases for default value handling (month boundaries, time zones)
+    - _Requirements: 1.1-1.7, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.9, 6.1-6.9, 7.1-7.8, 8.1-8.5_
 
 - [ ] 5. Integrate MCP server with main application
   - [x] 5.1 Update main.go to register MCP routes
@@ -92,42 +98,58 @@
   - [ ]* 5.3 Write integration tests for MCP endpoints (layer-aware testing)
     - Create end-to-end tests using existing PostgreSQL database setup
     - Test complete MCP protocol communication flow through all layers
+    - Test default value handling in real scenarios (missing time parameters, date ranges)
     - Verify tool discovery and capability negotiation at Presentation Layer
     - Test business logic through Domain Layer services OR repository interfaces (not infrastructure implementations)
     - Ensure layer boundaries are maintained throughout testing flow
     - Test both service-based and repository-based handler implementations
     - Test JSON-RPC 2.0 compliance with actual Baralga data
-    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6_
+    - Verify default values work correctly with existing database constraints and business rules
+    - _Requirements: 1.1-1.7, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.9, 6.1-6.9, 7.1-7.8_
 
-- [ ] 6. Implement MCP request/response models and validation
-  - [ ] 6.1 Create MCP parameter structures for tool calls
-    - Define parameter structures for create_entry, update_entry, delete_entry tools
-    - Add parameter structures for list_entries with filtering options
-    - Create parameter structures for get_summary and get_hours_by_project tools
+- [ ] 6. Update existing MCP implementation with default value handling
+
+  - [x] 6.0 Update existing MCP tool handlers to support default values
+    - Modify create_entry tool handler to apply current time defaults for missing start/end times
+    - Update list_entries tool handler to apply current month date range defaults when dates not provided
+    - Enhance get_summary tool handler to use current date default when date parameter is missing
+    - Update get_hours_by_project tool handler to apply current month date range defaults
+    - Ensure default values are applied before calling existing domain layer services or repository interfaces
+    - Validate that applied defaults still meet existing business rules (e.g., end time after start time)
+    - _Requirements: 1.2-1.3, 5.4-5.5, 6.2, 7.2-7.3_
+
+- [ ] 7. Implement MCP request/response models and validation
+  - [ ] 7.1 Create MCP parameter structures for tool calls
+    - Define parameter structures for create_entry, update_entry, delete_entry tools with optional time fields
+    - Add parameter structures for list_entries with optional date range filtering
+    - Create parameter structures for get_summary and get_hours_by_project tools with optional date parameters
     - Add parameter structure for list_projects tool (minimal parameters needed)
-    - _Requirements: 1.1-1.5, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.7, 6.1-6.8, 7.1-7.6, 8.1-8.5_
+    - Mark time-related fields as optional to support default value handling
+    - _Requirements: 1.1-1.7, 2.1-2.3, 3.1-3.5, 4.1-4.4, 5.1-5.9, 6.1-6.9, 7.1-7.8, 8.1-8.5_
 
-  - [ ] 6.2 Add input validation for MCP tool parameters
+  - [ ] 7.2 Add input validation and default value handling for MCP tool parameters
     - Implement validation using go-playground/validator for all tool parameters
-    - Add business rule validation (e.g., end time after start time)
+    - Add default value application logic for missing time parameters (current time for start/end, current month for date ranges)
+    - Add business rule validation (e.g., end time after start time) after applying defaults
     - Create validation error responses in MCP format
-    - _Requirements: 1.2, 1.4, 3.2, 6.2-6.7_
+    - Ensure defaults are applied before domain layer interaction
+    - _Requirements: 1.2-1.4, 3.2, 5.4-5.5, 6.2-6.9, 7.2-7.3_
 
-  - [ ] 6.3 Implement response mapping functions
+  - [ ] 7.3 Implement response mapping functions
     - Create functions to convert Activity domain objects to MCP responses
     - Reuse existing activityModel and projectModel structures for consistency
     - Add response formatting for summary and report data
     - Add response mapping for project list with UUIDs and names
     - _Requirements: 1.5, 2.3, 3.4, 4.3, 5.1-5.7, 6.8, 7.6, 8.1-8.5_
 
-- [ ] 7. Add MCP tool discovery and capability negotiation
-  - [ ] 7.1 Implement MCP server capabilities
+- [ ] 8. Add MCP tool discovery and capability negotiation
+  - [ ] 8.1 Implement MCP server capabilities
     - Register all available tools with the MCP server including list_projects
     - Add tool descriptions and parameter schemas for all tools
     - Implement capability negotiation according to MCP specification
     - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1_
 
-  - [ ] 7.2 Add MCP protocol compliance features
+  - [ ] 8.2 Add MCP protocol compliance features
     - Implement JSON-RPC 2.0 message handling through SDK
     - Add proper error codes and message formatting
     - Ensure compatibility with MCP client applications

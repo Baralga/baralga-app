@@ -193,10 +193,11 @@ type Activity struct {
 **Tool Handler Pattern**
 Each MCP tool handler will:
 1. Parse and validate MCP tool call parameters (Presentation Layer responsibility)
-2. Create appropriate `shared.Principal` context for authorization
-3. Call existing Domain Layer service methods OR use repository interfaces directly (maintaining layer boundaries)
-4. Transform domain objects to MCP response format (Presentation Layer responsibility)
-5. Handle domain errors and convert to MCP error responses
+2. Apply default values for missing time parameters (current time for start/end, current month range for date filters)
+3. Create appropriate `shared.Principal` context for authorization
+4. Call existing Domain Layer service methods OR use repository interfaces directly (maintaining layer boundaries)
+5. Transform domain objects to MCP response format (Presentation Layer responsibility)
+6. Handle domain errors and convert to MCP error responses
 
 **Repository Access Pattern**
 When accessing repositories directly, MCP handlers will:
@@ -209,24 +210,63 @@ When accessing repositories directly, MCP handlers will:
 MCP handlers can choose between service layer or direct repository access:
 
 **Option 1: Service Layer Integration**
-- `create_entry` → `ActivityService.CreateActivity()` (Domain Layer)
+- `create_entry` → Apply time defaults → `ActivityService.CreateActivity()` (Domain Layer)
 - `get_entry` → `ActivityService.ReadActivitiesWithProjects()` (Domain Layer)
-- `update_entry` → `ActivityService.UpdateActivity()` (Domain Layer)
+- `update_entry` → Apply time defaults → `ActivityService.UpdateActivity()` (Domain Layer)
 - `delete_entry` → `ActivityService.DeleteActivityByID()` (Domain Layer)
-- `list_entries` → `ActivityService.ReadActivitiesWithProjects()` (Domain Layer)
-- `get_summary` → `ActivityService.TimeReports()` (Domain Layer)
-- `get_hours_by_project` → `ActivityService.ProjectReports()` (Domain Layer)
+- `list_entries` → Apply date range defaults → `ActivityService.ReadActivitiesWithProjects()` (Domain Layer)
+- `get_summary` → Apply date defaults → `ActivityService.TimeReports()` (Domain Layer)
+- `get_hours_by_project` → Apply date range defaults → `ActivityService.ProjectReports()` (Domain Layer)
 - `list_projects` → `ProjectService.ReadProjects()` (Domain Layer)
 
 **Option 2: Direct Repository Integration**
-- `create_entry` → `ActivityRepository.InsertActivity()` (Domain Interface)
+- `create_entry` → Apply time defaults → `ActivityRepository.InsertActivity()` (Domain Interface)
 - `get_entry` → `ActivityRepository.FindActivityByID()` (Domain Interface)
-- `update_entry` → `ActivityRepository.UpdateActivity()` (Domain Interface)
+- `update_entry` → Apply time defaults → `ActivityRepository.UpdateActivity()` (Domain Interface)
 - `delete_entry` → `ActivityRepository.DeleteActivityByID()` (Domain Interface)
-- `list_entries` → `ActivityRepository.FindActivities()` (Domain Interface)
-- `get_summary` → `ActivityRepository.TimeReportByDay/Week/Month/Quarter()` (Domain Interface)
-- `get_hours_by_project` → `ActivityRepository.ProjectReport()` (Domain Interface)
+- `list_entries` → Apply date range defaults → `ActivityRepository.FindActivities()` (Domain Interface)
+- `get_summary` → Apply date defaults → `ActivityRepository.TimeReportByDay/Week/Month/Quarter()` (Domain Interface)
+- `get_hours_by_project` → Apply date range defaults → `ActivityRepository.ProjectReport()` (Domain Interface)
 - `list_projects` → `ProjectRepository.FindProjects()` (Domain Interface)
+
+## Default Value Handling
+
+### Time Parameter Defaults
+
+The MCP server implements intelligent defaults for time-related parameters to improve usability:
+
+**Entry Creation Defaults**
+- `start_time`: When not provided, defaults to current timestamp (`time.Now()`)
+- `end_time`: When not provided, defaults to current timestamp (`time.Now()`)
+- Both defaults are applied at the Presentation Layer before calling Domain Layer services
+
+**Date Range Filter Defaults**
+- `from_date`: When not provided, defaults to first day of current month
+- `to_date`: When not provided, defaults to current date
+- Applied to `list_entries` and `get_hours_by_project` tools
+
+**Summary Period Defaults**
+- `date`: When not provided for period summaries, defaults to current date
+- Applied to `get_summary` tool for all period types (day/week/month/quarter/year)
+
+### Default Value Implementation Strategy
+
+**Presentation Layer Responsibility**
+- Default value application occurs in MCP tool handlers before domain layer interaction
+- Uses Go's `time.Now()` for current timestamp defaults
+- Calculates month boundaries using standard time package functions
+- Validates that applied defaults still meet business rules (e.g., end time after start time)
+
+**Domain Layer Compatibility**
+- Default values are applied before calling existing Domain Layer services
+- No changes required to existing service methods or repository interfaces
+- Maintains existing validation and business rule enforcement
+- Ensures consistency with REST API behavior when explicit values are provided
+
+**Time Zone Handling**
+- All default timestamps use server local time zone (consistent with existing Baralga behavior)
+- Date calculations respect server time zone for month boundaries
+- Maintains compatibility with existing database time storage patterns
 
 ## Data Models
 
@@ -288,6 +328,10 @@ type projectModel struct {
 
 **MCP Tool Parameters** (Simple parameter structures for MCP tools)
 - MCP tools will accept simple parameter objects with basic validation
+- Missing time parameters will be handled with sensible defaults:
+  - Start/end times default to current time when not provided
+  - Date range filters default to current month (first day to current date) when not provided
+  - Summary period dates default to current date when not provided
 - Responses will use the existing `activityModel` and `projectModel` structures
 - Existing mapping functions (`mapToActivity`, `mapToActivityModel`, etc.) will be reused
 - This ensures consistency between REST API and MCP server responses
