@@ -47,123 +47,134 @@ func (h *ActivityMCPHandlers) RegisterMCPTools(registrar shared.ToolRegistrar) {
 	registrar.AddTool(&mcp.Tool{
 		Name:        "create_entry",
 		Description: "Create a new time tracking entry with start/end times, description, and project association",
-	}, shared.ToolHandlerFunc(h.createEntryHandler))
+	}, h.createEntryHandler)
 
 	// Register get_entry tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "get_entry",
 		Description: "Retrieve a specific time entry by its ID",
-	}, shared.ToolHandlerFunc(h.getEntryHandler))
+	}, h.getEntryHandler)
 
 	// Register update_entry tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "update_entry",
 		Description: "Update an existing time entry with new values",
-	}, shared.ToolHandlerFunc(h.updateEntryHandler))
+	}, h.updateEntryHandler)
 
 	// Register delete_entry tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "delete_entry",
 		Description: "Delete a time entry by its ID",
-	}, shared.ToolHandlerFunc(h.deleteEntryHandler))
+	}, h.deleteEntryHandler)
 
 	// Register list_entries tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "list_entries",
 		Description: "List time entries with optional filtering by date range and project",
-	}, shared.ToolHandlerFunc(h.listEntriesHandler))
+	}, h.listEntriesHandler)
 
 	// Register get_summary tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "get_summary",
 		Description: "Get time summaries for specified periods (day/week/month/quarter/year)",
-	}, shared.ToolHandlerFunc(h.getSummaryHandler))
+	}, h.getSummaryHandler)
 
 	// Register get_hours_by_project tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "get_hours_by_project",
 		Description: "Get hours grouped by project for a date range",
-	}, shared.ToolHandlerFunc(h.getHoursByProjectHandler))
+	}, h.getHoursByProjectHandler)
 
 	// Register list_projects tool
 	registrar.AddTool(&mcp.Tool{
 		Name:        "list_projects",
 		Description: "Retrieve a list of all available projects with their unique identifiers",
-	}, shared.ToolHandlerFunc(h.listProjectsHandler))
+	}, h.listProjectsHandler)
 }
 
 // Individual tool handler functions
 
 // createEntryHandler handles create_entry tool calls
-func (h *ActivityMCPHandlers) createEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) createEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params CreateEntryParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleCreateEntry(ctx, req, params)
+	result, response, err := h.handleCreateEntry(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // getEntryHandler handles get_entry tool calls
-func (h *ActivityMCPHandlers) getEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) getEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params GetEntryParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleGetEntry(ctx, req, params)
+	result, response, err := h.handleGetEntry(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // updateEntryHandler handles update_entry tool calls
-func (h *ActivityMCPHandlers) updateEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) updateEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params UpdateEntryParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleUpdateEntry(ctx, req, params)
+	result, response, err := h.handleUpdateEntry(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // deleteEntryHandler handles delete_entry tool calls
-func (h *ActivityMCPHandlers) deleteEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) deleteEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params DeleteEntryParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleDeleteEntry(ctx, req, params)
+	result, response, err := h.handleDeleteEntry(ctx, req, params)
+	if response == nil {
+		return result, nil, err
+	}
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // listEntriesHandler handles list_entries tool calls
-func (h *ActivityMCPHandlers) listEntriesHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) listEntriesHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params ListEntriesParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleListEntries(ctx, req, params)
+	result, response, err := h.handleListEntries(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // getSummaryHandler handles get_summary tool calls
-func (h *ActivityMCPHandlers) getSummaryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) getSummaryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params GetSummaryParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleGetSummary(ctx, req, params)
+	result, response, err := h.handleGetSummary(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // getHoursByProjectHandler handles get_hours_by_project tool calls
-func (h *ActivityMCPHandlers) getHoursByProjectHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) getHoursByProjectHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params GetHoursByProjectParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleGetHoursByProject(ctx, req, params)
+	result, response, err := h.handleGetHoursByProject(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // listProjectsHandler handles list_projects tool calls
-func (h *ActivityMCPHandlers) listProjectsHandler(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error) {
+func (h *ActivityMCPHandlers) listProjectsHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params ListProjectsParams
 	if err := h.parseArguments(arguments, &params); err != nil {
 		return nil, nil, err
 	}
-	return h.handleListProjects(ctx, req, params)
+	result, response, err := h.handleListProjects(ctx, req, params)
+	return result, shared.ToolResponse(response.(map[string]any)), err
 }
 
 // MCP parameter structures for tool calls
@@ -1039,8 +1050,8 @@ func (h *ActivityMCPHandlers) formatProjectsJSON(projects []map[string]any) stri
 	return string(jsonBytes)
 }
 
-// parseArguments converts map[string]interface{} to typed parameters
-func (h *ActivityMCPHandlers) parseArguments(arguments map[string]interface{}, target interface{}) error {
+// parseArguments converts ToolArguments to typed parameters
+func (h *ActivityMCPHandlers) parseArguments(arguments shared.ToolArguments, target any) error {
 	// Convert arguments map to JSON and then unmarshal to target struct
 	jsonBytes, err := json.Marshal(arguments)
 	if err != nil {

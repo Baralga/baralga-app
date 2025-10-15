@@ -24,13 +24,34 @@ type MCPServer struct {
 	toolHandlers map[string]ToolHandlerFunc // Map tool names to their handler functions
 }
 
+// ToolArguments represents the arguments passed to an MCP tool
+type ToolArguments map[string]any
+
+// ToolResponse represents the response data from an MCP tool
+type ToolResponse map[string]any
+
+// JSONRPCRequest represents a JSON-RPC request
+type JSONRPCRequest map[string]any
+
+// JSONRPCParams represents JSON-RPC parameters
+type JSONRPCParams map[string]any
+
+// JSONRPCResponse represents a JSON-RPC response
+type JSONRPCResponse map[string]any
+
+// ServerInfo represents server information
+type ServerInfo map[string]any
+
+// ToolInfo represents tool information for tools/list response
+type ToolInfo map[string]any
+
 // ToolRegistrar interface for registering MCP tools
 type ToolRegistrar interface {
-	AddTool(tool *mcp.Tool, handler any)
+	AddTool(tool *mcp.Tool, handler ToolHandlerFunc)
 }
 
 // ToolHandlerFunc represents a function that handles a specific MCP tool
-type ToolHandlerFunc func(ctx context.Context, req *mcp.CallToolRequest, arguments map[string]interface{}) (*mcp.CallToolResult, interface{}, error)
+type ToolHandlerFunc func(ctx context.Context, req *mcp.CallToolRequest, arguments ToolArguments) (*mcp.CallToolResult, ToolResponse, error)
 
 // MCPHandler interface for MCP tool handlers
 type MCPHandler interface {
@@ -106,7 +127,7 @@ func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
 	// Handle GET requests for server availability check
 	if r.Method == "GET" {
 		w.Header().Set("Content-Type", "application/json")
-		response := map[string]interface{}{
+		response := ServerInfo{
 			"name":    "baralga-time-tracker",
 			"version": "1.0.0",
 			"status":  "ready",
@@ -122,7 +143,7 @@ func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse JSON-RPC request
-	var jsonRPCReq map[string]interface{}
+	var jsonRPCReq JSONRPCRequest
 	if err := json.NewDecoder(r.Body).Decode(&jsonRPCReq); err != nil {
 		m.renderMCPError(w, -32700, "Parse error", "Invalid JSON")
 		return
@@ -133,12 +154,12 @@ func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleStatelessJSONRPC handles JSON-RPC requests without maintaining session state
-func (m *MCPServer) handleStatelessJSONRPC(ctx context.Context, w http.ResponseWriter, req map[string]interface{}) {
+func (m *MCPServer) handleStatelessJSONRPC(ctx context.Context, w http.ResponseWriter, req JSONRPCRequest) {
 	w.Header().Set("Content-Type", "application/json")
 
 	method, _ := req["method"].(string)
 	id := req["id"]
-	params, _ := req["params"].(map[string]interface{})
+	params, _ := req["params"].(JSONRPCParams)
 
 	switch method {
 	case "initialize":
@@ -153,18 +174,18 @@ func (m *MCPServer) handleStatelessJSONRPC(ctx context.Context, w http.ResponseW
 }
 
 // handleStatelessInitialize handles initialize requests without session state
-func (m *MCPServer) handleStatelessInitialize(w http.ResponseWriter, id interface{}) {
-	response := map[string]interface{}{
+func (m *MCPServer) handleStatelessInitialize(w http.ResponseWriter, id any) {
+	response := JSONRPCResponse{
 		"jsonrpc": "2.0",
 		"id":      id,
-		"result": map[string]interface{}{
+		"result": map[string]any{
 			"protocolVersion": "2024-11-05",
-			"capabilities": map[string]interface{}{
-				"tools": map[string]interface{}{
+			"capabilities": map[string]any{
+				"tools": map[string]any{
 					"listChanged": false,
 				},
 			},
-			"serverInfo": map[string]interface{}{
+			"serverInfo": ServerInfo{
 				"name":    "baralga-time-tracker",
 				"version": "1.0.0",
 			},
@@ -174,11 +195,11 @@ func (m *MCPServer) handleStatelessInitialize(w http.ResponseWriter, id interfac
 }
 
 // handleStatelessToolsList handles tools/list requests without session state
-func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id interface{}) {
+func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id any) {
 	// Generate tools list dynamically from registered tools
-	tools := make([]map[string]interface{}, len(m.tools))
+	tools := make([]ToolInfo, len(m.tools))
 	for i, tool := range m.tools {
-		toolMap := map[string]interface{}{
+		toolMap := ToolInfo{
 			"name":        tool.Name,
 			"description": tool.Description,
 		}
@@ -188,9 +209,9 @@ func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id interface
 			toolMap["inputSchema"] = tool.InputSchema
 		} else {
 			// Provide a basic schema if none is specified
-			toolMap["inputSchema"] = map[string]interface{}{
+			toolMap["inputSchema"] = map[string]any{
 				"type":       "object",
-				"properties": map[string]interface{}{},
+				"properties": map[string]any{},
 				"required":   []string{},
 			}
 		}
@@ -198,10 +219,10 @@ func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id interface
 		tools[i] = toolMap
 	}
 
-	response := map[string]interface{}{
+	response := JSONRPCResponse{
 		"jsonrpc": "2.0",
 		"id":      id,
-		"result": map[string]interface{}{
+		"result": map[string]any{
 			"tools": tools,
 		},
 	}
@@ -209,9 +230,9 @@ func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id interface
 }
 
 // handleStatelessToolsCall handles tools/call requests without session state
-func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.ResponseWriter, id interface{}, params map[string]interface{}) {
+func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.ResponseWriter, id any, params JSONRPCParams) {
 	toolName, _ := params["name"].(string)
-	arguments, _ := params["arguments"].(map[string]interface{})
+	arguments, _ := params["arguments"].(ToolArguments)
 
 	if toolName == "" {
 		m.renderJSONRPCError(w, id, -32602, "Invalid params", "Tool name is required")
@@ -254,7 +275,7 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 	}
 
 	// Convert the MCP result to JSON-RPC response
-	response := map[string]interface{}{
+	response := JSONRPCResponse{
 		"jsonrpc": "2.0",
 		"id":      id,
 		"result":  result,
@@ -264,11 +285,11 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 }
 
 // renderJSONRPCError renders a JSON-RPC error response
-func (m *MCPServer) renderJSONRPCError(w http.ResponseWriter, id interface{}, code int, message, details string) {
-	response := map[string]interface{}{
+func (m *MCPServer) renderJSONRPCError(w http.ResponseWriter, id any, code int, message, details string) {
+	response := JSONRPCResponse{
 		"jsonrpc": "2.0",
 		"id":      id,
-		"error": map[string]interface{}{
+		"error": map[string]any{
 			"code":    code,
 			"message": message,
 			"data":    details,
@@ -520,21 +541,17 @@ func isSystemError(err error) bool {
 }
 
 // ValidateToolParams validates MCP tool parameters using struct tags
-func (m *MCPServer) ValidateToolParams(params interface{}) error {
+func (m *MCPServer) ValidateToolParams(params any) error {
 	return m.validator.Struct(params)
 }
 
 // AddTool adds a tool to the server and stores it for dynamic listing
-func (m *MCPServer) AddTool(tool *mcp.Tool, handler any) {
+func (m *MCPServer) AddTool(tool *mcp.Tool, handler ToolHandlerFunc) {
 	// Store the tool for dynamic listing
 	m.tools = append(m.tools, tool)
 
 	// Store the handler function for this tool
-	if handlerFunc, ok := handler.(ToolHandlerFunc); ok {
-		m.toolHandlers[tool.Name] = handlerFunc
-	} else {
-		log.Printf("[MCP] Warning: Handler for tool '%s' is not a ToolHandlerFunc", tool.Name)
-	}
+	m.toolHandlers[tool.Name] = handler
 
 	// Note: We don't register with the underlying server in stateless mode
 	// The tools are handled directly in handleStatelessToolsCall
@@ -551,14 +568,14 @@ func (m *MCPServer) RegisterToolsFromHandlers(mcpHandlers []MCPHandler) {
 }
 
 // callToolHandler calls the appropriate tool handler function
-func (m *MCPServer) callToolHandler(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments map[string]interface{}, handler ToolHandlerFunc) (*mcp.CallToolResult, error) {
+func (m *MCPServer) callToolHandler(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments ToolArguments, handler ToolHandlerFunc) (*mcp.CallToolResult, error) {
 	// Call the tool handler function directly
 	result, _, err := handler(ctx, req, arguments)
 	return result, err
 }
 
-// parseArguments converts map[string]interface{} to typed parameters
-func (m *MCPServer) parseArguments(arguments map[string]interface{}, target interface{}) error {
+// ParseArguments converts ToolArguments to typed parameters
+func (m *MCPServer) ParseArguments(arguments ToolArguments, target any) error {
 	// Convert arguments map to JSON and then unmarshal to target struct
 	jsonBytes, err := json.Marshal(arguments)
 	if err != nil {
