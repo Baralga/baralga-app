@@ -13,7 +13,7 @@
 - **Validation**: go-playground/validator/v10
 - **Security**: unrolled/secure middleware, golang.org/x/crypto for bcrypt
 - **OAuth**: dghubble/gologin/v2, golang.org/x/oauth2
-- **Testing**: testify/assert, matryer/is, ory/dockertest/v3 for integration tests
+- **Testing**: `matryer/is` for assertions, ory/dockertest/v3 for integration tests
 - **Utilities**: google/uuid, kelseyhightower/envconfig, pkg/errors
 
 ## Build System & Commands

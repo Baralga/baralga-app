@@ -71,7 +71,7 @@ So e.g. activity_rest my use the activity service from activity_service.go and A
 - Unit tests alongside source files (`*_test.go`)
 - In-memory repository implementations for fast testing
 - Integration tests using dockertest for database testing
-- Test utilities: `matryer/is` for assertions, `testify` for mocking
+- Test utilities: `matryer/is` for assertions, no mocking preferred
 
 ## Naming Conventions
 - **Files**: snake_case with domain prefix (e.g., `activity_service.go`)

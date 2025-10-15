@@ -24,7 +24,7 @@ A layered ddd architecture is used. The dependencies between the layers is:
 - There's no need to unit test the in memory repositories.
 
 
-## Coding Conventions
+## Code Conventions
 
 ### Err Checking on new Line
 
@@ -41,3 +41,10 @@ if err != nil {
 ### Either log error or return it, never both
 
 An error should either be logged and handled or return, but never both.
+
+
+## Test Conventions
+
+### Sample Ids for Tests
+
+Use the sampe ids of the in memory repositories for tests.
