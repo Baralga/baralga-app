@@ -144,7 +144,8 @@ func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Parse JSON-RPC request
 	var jsonRPCReq JSONRPCRequest
-	if err := json.NewDecoder(r.Body).Decode(&jsonRPCReq); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&jsonRPCReq)
+	if err != nil {
 		m.renderMCPError(w, -32700, "Parse error", "Invalid JSON")
 		return
 	}
@@ -261,7 +262,7 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 	}
 
 	// Call the tool handler using reflection or type assertion
-	result, callErr := m.callToolHandler(ctx, mockRequest, toolName, arguments, handler)
+	result, callErr := m.callToolHandler(ctx, mockRequest, arguments, handler)
 
 	if callErr != nil {
 		log.Printf("[MCP] Tool call failed: %v", callErr)
@@ -335,7 +336,8 @@ func RenderMCPErrorWithType(w http.ResponseWriter, code int, message, details st
 	log.Printf("[MCP] Sending error response: code=%d, message=%s, type=%s, details=%s",
 		code, message, errorType, details)
 
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
+	err := json.NewEncoder(w).Encode(errorResponse)
+	if err != nil {
 		log.Printf("[MCP] Failed to encode error response: %v", err)
 	}
 }
@@ -568,7 +570,7 @@ func (m *MCPServer) RegisterToolsFromHandlers(mcpHandlers []MCPHandler) {
 }
 
 // callToolHandler calls the appropriate tool handler function
-func (m *MCPServer) callToolHandler(ctx context.Context, req *mcp.CallToolRequest, toolName string, arguments ToolArguments, handler ToolHandlerFunc) (*mcp.CallToolResult, error) {
+func (m *MCPServer) callToolHandler(ctx context.Context, req *mcp.CallToolRequest, arguments ToolArguments, handler ToolHandlerFunc) (*mcp.CallToolResult, error) {
 	// Call the tool handler function directly
 	result, _, err := handler(ctx, req, arguments)
 	return result, err
@@ -582,12 +584,14 @@ func (m *MCPServer) ParseArguments(arguments ToolArguments, target any) error {
 		return errors.Wrap(err, "failed to marshal arguments")
 	}
 
-	if err := json.Unmarshal(jsonBytes, target); err != nil {
+	err = json.Unmarshal(jsonBytes, target)
+	if err != nil {
 		return errors.Wrap(err, "failed to unmarshal arguments to target type")
 	}
 
 	// Validate the parsed parameters
-	if err := m.validator.Struct(target); err != nil {
+	err = m.validator.Struct(target)
+	if err != nil {
 		return errors.Wrap(err, "parameter validation failed")
 	}
 
@@ -642,7 +646,8 @@ func RenderMCPSystemError(w http.ResponseWriter, details string) {
 func LogMCPError(operation string, err error, context map[string]any) {
 	contextStr := ""
 	if context != nil {
-		if contextBytes, marshalErr := json.Marshal(context); marshalErr == nil {
+		contextBytes, marshalErr := json.Marshal(context)
+		if marshalErr == nil {
 			contextStr = string(contextBytes)
 		}
 	}
@@ -659,7 +664,8 @@ func LogMCPToolCall(toolName string, params map[string]any, success bool) {
 
 	paramsStr := ""
 	if params != nil {
-		if paramsBytes, err := json.Marshal(params); err == nil {
+		paramsBytes, err := json.Marshal(params)
+		if err == nil {
 			paramsStr = string(paramsBytes)
 		}
 	}

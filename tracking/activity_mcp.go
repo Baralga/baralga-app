@@ -97,7 +97,8 @@ func (h *ActivityMCPHandlers) RegisterMCPTools(registrar shared.ToolRegistrar) {
 // createEntryHandler handles create_entry tool calls
 func (h *ActivityMCPHandlers) createEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params CreateEntryParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleCreateEntry(ctx, req, params)
@@ -107,7 +108,8 @@ func (h *ActivityMCPHandlers) createEntryHandler(ctx context.Context, req *mcp.C
 // getEntryHandler handles get_entry tool calls
 func (h *ActivityMCPHandlers) getEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params GetEntryParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleGetEntry(ctx, req, params)
@@ -117,7 +119,8 @@ func (h *ActivityMCPHandlers) getEntryHandler(ctx context.Context, req *mcp.Call
 // updateEntryHandler handles update_entry tool calls
 func (h *ActivityMCPHandlers) updateEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params UpdateEntryParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleUpdateEntry(ctx, req, params)
@@ -127,7 +130,8 @@ func (h *ActivityMCPHandlers) updateEntryHandler(ctx context.Context, req *mcp.C
 // deleteEntryHandler handles delete_entry tool calls
 func (h *ActivityMCPHandlers) deleteEntryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params DeleteEntryParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleDeleteEntry(ctx, req, params)
@@ -140,7 +144,8 @@ func (h *ActivityMCPHandlers) deleteEntryHandler(ctx context.Context, req *mcp.C
 // listEntriesHandler handles list_entries tool calls
 func (h *ActivityMCPHandlers) listEntriesHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params ListEntriesParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleListEntries(ctx, req, params)
@@ -150,7 +155,8 @@ func (h *ActivityMCPHandlers) listEntriesHandler(ctx context.Context, req *mcp.C
 // getSummaryHandler handles get_summary tool calls
 func (h *ActivityMCPHandlers) getSummaryHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params GetSummaryParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleGetSummary(ctx, req, params)
@@ -160,7 +166,8 @@ func (h *ActivityMCPHandlers) getSummaryHandler(ctx context.Context, req *mcp.Ca
 // getHoursByProjectHandler handles get_hours_by_project tool calls
 func (h *ActivityMCPHandlers) getHoursByProjectHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params GetHoursByProjectParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleGetHoursByProject(ctx, req, params)
@@ -170,7 +177,8 @@ func (h *ActivityMCPHandlers) getHoursByProjectHandler(ctx context.Context, req 
 // listProjectsHandler handles list_projects tool calls
 func (h *ActivityMCPHandlers) listProjectsHandler(ctx context.Context, req *mcp.CallToolRequest, arguments shared.ToolArguments) (*mcp.CallToolResult, shared.ToolResponse, error) {
 	var params ListProjectsParams
-	if err := h.parseArguments(arguments, &params); err != nil {
+	err := h.parseArguments(arguments, &params)
+	if err != nil {
 		return nil, nil, err
 	}
 	result, response, err := h.handleListProjects(ctx, req, params)
@@ -1058,12 +1066,14 @@ func (h *ActivityMCPHandlers) parseArguments(arguments shared.ToolArguments, tar
 		return errors.Wrap(err, "failed to marshal arguments")
 	}
 
-	if err := json.Unmarshal(jsonBytes, target); err != nil {
+	err = json.Unmarshal(jsonBytes, target)
+	if err != nil {
 		return errors.Wrap(err, "failed to unmarshal arguments to target type")
 	}
 
 	// Validate the parsed parameters
-	if err := h.validator.Struct(target); err != nil {
+	err = h.validator.Struct(target)
+	if err != nil {
 		return errors.Wrap(err, "parameter validation failed")
 	}
 
