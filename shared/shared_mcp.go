@@ -190,7 +190,6 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 
 	// Find and call the appropriate handler
 	var result *mcp.CallToolResult
-	var toolResult interface{}
 	var callErr error
 
 	// Try to find the tool in our registered handlers
@@ -198,7 +197,7 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 		// We need to call the handler's tool directly
 		// This is a simplified approach - in a full implementation you'd have a proper tool registry
 		if activityHandler, ok := handler.(ActivityMCPHandler); ok {
-			result, toolResult, callErr = activityHandler.CallTool(ctx, mockRequest, toolName, arguments)
+			result, _, callErr = activityHandler.CallTool(ctx, mockRequest, toolName, arguments)
 			if callErr == nil {
 				break
 			}
@@ -221,11 +220,6 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 		"jsonrpc": "2.0",
 		"id":      id,
 		"result":  result,
-	}
-
-	// If we have additional tool result data, include it
-	if toolResult != nil {
-		response["toolResult"] = toolResult
 	}
 
 	json.NewEncoder(w).Encode(response)
