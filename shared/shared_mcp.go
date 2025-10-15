@@ -84,6 +84,18 @@ func (m *MCPServer) corsMiddleware(next http.Handler) http.Handler {
 
 // handleMCPRequest handles incoming MCP protocol requests in stateless mode
 func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
+	// Handle GET requests for server availability check
+	if r.Method == "GET" {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"name":    "baralga-time-tracker",
+			"version": "1.0.0",
+			"status":  "ready",
+		}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	// Only handle POST requests for JSON-RPC
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
