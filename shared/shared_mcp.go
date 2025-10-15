@@ -430,6 +430,18 @@ func ConvertDomainErrorToMCP(err error) (int, string, string) {
 	// Handle specific domain errors by checking error types
 	errMsg := err.Error()
 
+	// Handle enhanced validation errors (from MCP parameter validation)
+	if strings.Contains(errMsg, "validation error:") {
+		log.Printf("[MCP] Enhanced validation error: %s", errMsg)
+		return -32602, "Invalid params", strings.TrimPrefix(errMsg, "validation error: ")
+	}
+
+	// Handle business rule violations (from MCP parameter validation)
+	if strings.Contains(errMsg, "business rule violation:") {
+		log.Printf("[MCP] Business rule violation: %s", errMsg)
+		return -32602, "Invalid params", strings.TrimPrefix(errMsg, "business rule violation: ")
+	}
+
 	// Handle authentication errors (missing or invalid API key)
 	if strings.Contains(errMsg, "authentication") || strings.Contains(errMsg, "invalid api key") || strings.Contains(errMsg, "missing api key") {
 		log.Printf("[MCP] Authentication error: %s", errMsg)
@@ -510,10 +522,12 @@ func isNotFoundError(err error) bool {
 // isBusinessLogicError checks if the error is a business logic violation
 func isBusinessLogicError(errMsg string) bool {
 	return strings.Contains(errMsg, "end time must be after start time") ||
+		strings.Contains(errMsg, "to_date must be on or after from_date") ||
 		strings.Contains(errMsg, "invalid time range") ||
 		strings.Contains(errMsg, "duration must be positive") ||
 		strings.Contains(errMsg, "invalid date") ||
-		strings.Contains(errMsg, "business rule")
+		strings.Contains(errMsg, "business rule") ||
+		strings.Contains(errMsg, "business rule violation:")
 }
 
 // isDatabaseConstraintError checks if the error is a database constraint violation

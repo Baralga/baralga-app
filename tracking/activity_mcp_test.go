@@ -2,6 +2,7 @@ package tracking
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -209,6 +210,7 @@ func TestActivityMCPHandlers_ValidationAfterDefaults(t *testing.T) {
 
 		_, _, err := handlers.handleCreateEntry(ctx, &mcp.CallToolRequest{}, params)
 		is.True(err != nil) // Should return an error
-		is.True(err.Error() == "end time must be after start time")
+		t.Logf("Actual error: %s", err.Error())
+		is.True(strings.Contains(err.Error(), "end time must be after start time"))
 	})
 }
