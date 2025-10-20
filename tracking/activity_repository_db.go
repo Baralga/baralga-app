@@ -372,7 +372,8 @@ func (r *DbActivityRepository) FindActivities(ctx context.Context, filter *Activ
 				CreatedAt      string `json:"created_at"`
 			}
 
-			if err := json.Unmarshal([]byte(tagsJSON), &tagData); err == nil {
+			err := json.Unmarshal([]byte(tagsJSON), &tagData)
+			if err == nil {
 				for _, td := range tagData {
 					// Parse the timestamp manually
 					createdAt, err := time.Parse("2006-01-02T15:04:05.999999", td.CreatedAt)

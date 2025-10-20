@@ -25,7 +25,7 @@ func (a *ProjectService) CreateProject(ctx context.Context, principal *shared.Pr
 
 	var projectCreated *Project
 	err := a.repositoryTxer.InTx(
-		context.Background(),
+		ctx,
 		func(ctx context.Context) error {
 			a, err := a.projectRepository.InsertProject(ctx, project)
 			if err != nil {
@@ -44,7 +44,7 @@ func (a *ProjectService) CreateProject(ctx context.Context, principal *shared.Pr
 func (a *ProjectService) UpdateProject(ctx context.Context, organizationID uuid.UUID, project *Project) (*Project, error) {
 	var projectUpdated *Project
 	err := a.repositoryTxer.InTx(
-		context.Background(),
+		ctx,
 		func(ctx context.Context) error {
 			p, err := a.projectRepository.UpdateProject(ctx, organizationID, project)
 			if err != nil {
@@ -62,7 +62,7 @@ func (a *ProjectService) UpdateProject(ctx context.Context, organizationID uuid.
 
 func (a *ProjectService) ArchiveProject(ctx context.Context, organizationID, projectID uuid.UUID) error {
 	err := a.repositoryTxer.InTx(
-		context.Background(),
+		ctx,
 		func(ctx context.Context) error {
 			err := a.projectRepository.ArchiveProjectByID(ctx, organizationID, projectID)
 			if err != nil {
