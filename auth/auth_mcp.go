@@ -33,7 +33,7 @@ func (m *MCPAuthService) AuthenticationMiddleware() func(http.Handler) http.Hand
 
 			// For MCP streamable transport, we might need to allow some requests without API key initially
 			// The MCP SDK handles session management internally
-			apiKey := "admin@baralga.com" // m.extractAPIKey(r)
+			apiKey := m.extractAPIKey(r)
 			if apiKey == "" {
 				// Log the request for debugging
 				log.Printf("[MCP Auth] No API key provided for %s %s", r.Method, r.URL.Path)
@@ -80,7 +80,8 @@ func (m *MCPAuthService) AuthenticationMiddleware() func(http.Handler) http.Hand
 // extractAPIKey extracts API key from X-API-Key header or Authorization Bearer token
 func (m *MCPAuthService) extractAPIKey(r *http.Request) string {
 	// Try X-API-Key header first
-	if apiKey := r.Header.Get("X-API-Key"); apiKey != "" {
+	apiKey := r.Header.Get("X-API-Key")
+	if apiKey != "" {
 		return apiKey
 	}
 

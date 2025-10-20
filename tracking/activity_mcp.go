@@ -78,6 +78,124 @@ func (h *ActivityMCPHandlers) RegisterMCPTools(registrar shared.ToolRegistrar) {
 	registrar.AddTool(&mcp.Tool{
 		Name:        "list_entries",
 		Description: "List time entries with optional filtering by date range and project",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"from_date": map[string]any{
+					"type":        "string",
+					"format":      "date",
+					"description": "Start date filter in YYYY-MM-DD format (optional, default is today)",
+				},
+				"to_date": map[string]any{
+					"type":        "string",
+					"format":      "date",
+					"description": "End date filter in YYYY-MM-DD format (optional, default is one week from today)",
+				},
+				"project_id": map[string]any{
+					"type":        "string",
+					"format":      "uuid",
+					"description": "UUID of the project to filter by (optional)",
+				},
+			},
+			"required": []string{},
+		},
+		OutputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"entries": map[string]any{
+					"type": "array",
+					"items": map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"id": map[string]any{
+								"type":        "string",
+								"format":      "uuid",
+								"description": "Unique identifier of the time entry",
+							},
+							"start": map[string]any{
+								"type":        "string",
+								"format":      "date-time",
+								"description": "Start time of the entry in ISO 8601 format",
+							},
+							"end": map[string]any{
+								"type":        "string",
+								"format":      "date-time",
+								"description": "End time of the entry in ISO 8601 format",
+							},
+							"description": map[string]any{
+								"type":        "string",
+								"description": "Description of the work performed",
+							},
+							"project_id": map[string]any{
+								"type":        "string",
+								"format":      "uuid",
+								"description": "UUID of the associated project",
+							},
+							"project_name": map[string]any{
+								"type":        "string",
+								"description": "Name of the associated project",
+							},
+							"username": map[string]any{
+								"type":        "string",
+								"description": "Username who created the entry",
+							},
+							"tags": map[string]any{
+								"type":        "array",
+								"items":       map[string]any{"type": "string"},
+								"description": "Array of tag names associated with the entry",
+							},
+							"duration": map[string]any{
+								"type": "object",
+								"properties": map[string]any{
+									"hours": map[string]any{
+										"type":        "number",
+										"description": "Duration in hours",
+									},
+									"minutes": map[string]any{
+										"type":        "number",
+										"description": "Duration in minutes",
+									},
+									"decimal": map[string]any{
+										"type":        "number",
+										"description": "Duration as decimal hours",
+									},
+									"formatted": map[string]any{
+										"type":        "string",
+										"description": "Human-readable duration format (e.g., '2h 30m')",
+									},
+								},
+								"description": "Duration information in various formats",
+							},
+						},
+						"description": "Individual time entry",
+					},
+					"description": "Array of time entries matching the filter criteria",
+				},
+				"total": map[string]any{
+					"type":        "number",
+					"description": "Total number of entries returned",
+				},
+				"filters": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"from_date": map[string]any{
+							"type":        "string",
+							"description": "Applied start date filter",
+						},
+						"to_date": map[string]any{
+							"type":        "string",
+							"description": "Applied end date filter",
+						},
+						"project_id": map[string]any{
+							"type":        "string",
+							"description": "Applied project filter",
+						},
+					},
+					"description": "Applied filter parameters",
+				},
+			},
+			"required": []string{"entries", "total", "filters"},
+		},
 	}, h.listEntriesHandler)
 
 	// Register get_summary tool
@@ -1113,11 +1231,10 @@ func (h *ActivityMCPHandlers) applyDefaultValues(target any) error {
 		if params.FromDate == "" || params.ToDate == "" {
 			now := time.Now()
 			if params.FromDate == "" {
-				firstDayOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-				params.FromDate = time_utils.FormatDate(firstDayOfMonth)
+				params.FromDate = time_utils.FormatDate(now)
 			}
 			if params.ToDate == "" {
-				params.ToDate = time_utils.FormatDate(now)
+				params.ToDate = time_utils.FormatDate(now.Add(7 * 24 * time.Hour))
 			}
 		}
 

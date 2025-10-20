@@ -146,9 +146,12 @@ func (m *MCPServer) handleMCPRequest(w http.ResponseWriter, r *http.Request) {
 	var jsonRPCReq JSONRPCRequest
 	err := json.NewDecoder(r.Body).Decode(&jsonRPCReq)
 	if err != nil {
+		log.Printf("[MCP] Failed to parse JSON-RPC request: %v", err)
 		m.renderMCPError(w, -32700, "Parse error", "Invalid JSON")
 		return
 	}
+
+	log.Printf("[MCP] Received JSON-RPC request: %+v", jsonRPCReq)
 
 	// Handle the request statelessly
 	m.handleStatelessJSONRPC(r.Context(), w, jsonRPCReq)
@@ -232,12 +235,41 @@ func (m *MCPServer) handleStatelessToolsList(w http.ResponseWriter, id any) {
 
 // handleStatelessToolsCall handles tools/call requests without session state
 func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.ResponseWriter, id any, params JSONRPCParams) {
-	toolName, _ := params["name"].(string)
-	arguments, _ := params["arguments"].(ToolArguments)
-
-	if toolName == "" {
-		m.renderJSONRPCError(w, id, -32602, "Invalid params", "Tool name is required")
+	toolName, ok := params["name"].(string)
+	if !ok || toolName == "" {
+		log.Printf("[MCP] Tool call failed: missing or invalid tool name in params: %+v", params)
+		m.renderJSONRPCError(w, id, -32602, "Invalid params", "Tool name is required and must be a string")
 		return
+	}
+
+	// Handle arguments - they might be provided in different formats
+	var arguments ToolArguments
+	if argsValue, exists := params["arguments"]; exists && argsValue != nil {
+		log.Printf("[MCP] Processing arguments for tool '%s', type: %T, value: %+v", toolName, argsValue, argsValue)
+		// Try to convert arguments to map[string]any
+		switch v := argsValue.(type) {
+		case map[string]any:
+			arguments = v
+		case ToolArguments:
+			arguments = v
+		default:
+			// Try to marshal and unmarshal to convert to proper type
+			argBytes, err := json.Marshal(argsValue)
+			if err != nil {
+				log.Printf("[MCP] Failed to marshal arguments for tool '%s': %v", toolName, err)
+				m.renderJSONRPCError(w, id, -32602, "Invalid params", fmt.Sprintf("Failed to process arguments: %v", err))
+				return
+			}
+			if err := json.Unmarshal(argBytes, &arguments); err != nil {
+				log.Printf("[MCP] Failed to unmarshal arguments for tool '%s': %v", toolName, err)
+				m.renderJSONRPCError(w, id, -32602, "Invalid params", fmt.Sprintf("Arguments must be a valid object: %v", err))
+				return
+			}
+		}
+	} else {
+		// No arguments provided, use empty map
+		log.Printf("[MCP] No arguments provided for tool '%s', using empty map", toolName)
+		arguments = make(ToolArguments)
 	}
 
 	// Find the handler for this tool
@@ -250,7 +282,7 @@ func (m *MCPServer) handleStatelessToolsCall(ctx context.Context, w http.Respons
 	// Create a mock MCP request for the tool call
 	argumentsJSON, err := json.Marshal(arguments)
 	if err != nil {
-		m.renderJSONRPCError(w, id, -32602, "Invalid params", "Failed to marshal arguments")
+		m.renderJSONRPCError(w, id, -32602, "Invalid params", fmt.Sprintf("Failed to marshal arguments: %v", err))
 		return
 	}
 
