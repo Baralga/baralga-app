@@ -240,54 +240,31 @@ func TestTagService_ValidateTags(t *testing.T) {
 	}
 }
 
-// Mock TagRepository for testing GetTagsForAutocomplete
-type mockTagRepository struct {
-	tags []*Tag
-}
-
-func (m *mockTagRepository) FindTagsByOrganization(ctx context.Context, organizationID uuid.UUID, query string) ([]*Tag, error) {
-	var result []*Tag
-	for _, tag := range m.tags {
-		if tag.OrganizationID == organizationID && strings.Contains(tag.Name, query) {
-			result = append(result, tag)
-		}
-	}
-	return result, nil
-}
-
-func (m *mockTagRepository) FindOrCreateTag(ctx context.Context, name string, organizationID uuid.UUID) (*Tag, error) {
-	return nil, nil
-}
-
-func (m *mockTagRepository) SyncTagsForActivity(ctx context.Context, activityID uuid.UUID, organizationID uuid.UUID, tags []*Tag) error {
-	return nil
-}
-
-func (m *mockTagRepository) DeleteUnusedTags(ctx context.Context, organizationID uuid.UUID) error {
-	return nil
-}
-
-func (m *mockTagRepository) GetTagReportData(ctx context.Context, filter *ActivitiesFilter, aggregateBy string) ([]*TagReportItem, error) {
-	return []*TagReportItem{}, nil
-}
-
 func TestTagService_GetTagsForAutocomplete(t *testing.T) {
 	is := is.New(t)
 
 	orgID := uuid.New()
 	otherOrgID := uuid.New()
 
-	mockRepo := &mockTagRepository{
-		tags: []*Tag{
-			{ID: uuid.New(), Name: "meeting", OrganizationID: orgID},
-			{ID: uuid.New(), Name: "development", OrganizationID: orgID},
-			{ID: uuid.New(), Name: "bug-fix", OrganizationID: orgID},
-			{ID: uuid.New(), Name: "team-meeting", OrganizationID: orgID},
-			{ID: uuid.New(), Name: "other-org-tag", OrganizationID: otherOrgID},
-		},
+	// Use InMemTagRepository instead of mock
+	repo := NewInMemTagRepository()
+
+	// Add test tags to the repository
+	testTags := []*Tag{
+		{ID: uuid.New(), Name: "meeting", OrganizationID: orgID},
+		{ID: uuid.New(), Name: "development", OrganizationID: orgID},
+		{ID: uuid.New(), Name: "bug-fix", OrganizationID: orgID},
+		{ID: uuid.New(), Name: "team-meeting", OrganizationID: orgID},
+		{ID: uuid.New(), Name: "other-org-tag", OrganizationID: otherOrgID},
 	}
 
-	service := NewTagService(mockRepo)
+	// Add tags to repository by using FindOrCreateTag
+	for _, tag := range testTags {
+		_, err := repo.FindOrCreateTag(context.Background(), tag.Name, tag.OrganizationID)
+		is.NoErr(err)
+	}
+
+	service := NewTagService(repo)
 	ctx := context.Background()
 
 	tests := []struct {
@@ -424,15 +401,9 @@ func TestTagService_GetTagColor_ValidLength(t *testing.T) {
 func TestTagService_GenerateTagReports(t *testing.T) {
 	is := is.New(t)
 
-	// Create mock repository with sample data
-	mockRepo := &mockTagRepository{
-		tags: []*Tag{
-			{ID: uuid.New(), Name: "development", Color: "#28a745", OrganizationID: uuid.New()},
-			{ID: uuid.New(), Name: "meeting", Color: "#007bff", OrganizationID: uuid.New()},
-		},
-	}
-
-	service := NewTagService(mockRepo)
+	// Use InMemTagRepository instead of mock
+	repo := NewInMemTagRepository()
+	service := NewTagService(repo)
 	ctx := context.Background()
 
 	orgID := uuid.New()
@@ -454,9 +425,9 @@ func TestTagService_GenerateTagReports(t *testing.T) {
 func TestTagService_GetTagReportData(t *testing.T) {
 	is := is.New(t)
 
-	// Create mock repository
-	mockRepo := &mockTagRepository{}
-	service := NewTagService(mockRepo)
+	// Use InMemTagRepository instead of mock
+	repo := NewInMemTagRepository()
+	service := NewTagService(repo)
 	ctx := context.Background()
 
 	filter := &ActivitiesFilter{

@@ -101,16 +101,19 @@ func (s *SmtpMailResource) SendMail(to, subject, body string) error {
 	}()
 
 	// Auth
-	if err := client.Auth(auth); err != nil {
+	err := client.Auth(auth)
+	if err != nil {
 		return err
 	}
 
 	// To && From
-	if err := client.Mail(fromAddress.Address); err != nil {
+	err = client.Mail(fromAddress.Address)
+	if err != nil {
 		return err
 	}
 
-	if err := client.Rcpt(toAddress.Address); err != nil {
+	err = client.Rcpt(toAddress.Address)
+	if err != nil {
 		return err
 	}
 
