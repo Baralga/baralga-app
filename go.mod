@@ -23,7 +23,7 @@ require (
 	github.com/unrolled/secure v1.17.0
 	github.com/xuri/excelize/v2 v2.10.0
 	golang.org/x/crypto v0.43.0
-	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b
+	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/oauth2 v0.32.0
 	maragu.dev/gomponents v1.2.0
 	maragu.dev/gomponents-htmx v0.6.1
