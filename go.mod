@@ -15,14 +15,15 @@ require (
 	github.com/hellofresh/health-go/v5 v5.5.5
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/lestrrat-go/jwx/v2 v2.1.6
+	github.com/lestrrat-go/jwx/v2 v2.1.3
+	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/matryer/is v1.4.1
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/snabb/isoweek v1.0.3
 	github.com/unrolled/secure v1.17.0
 	github.com/xuri/excelize/v2 v2.10.0
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.46.0
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/oauth2 v0.33.0
 	maragu.dev/gomponents v1.2.0
@@ -97,10 +98,10 @@ require (
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
-	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	google.golang.org/api v0.252.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251014184007-4626949a642f // indirect
 	google.golang.org/grpc v1.76.0 // indirect
