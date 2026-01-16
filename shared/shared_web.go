@@ -76,7 +76,24 @@ func ModalView() g.Node {
 	})
 }
 
+func ShutdownBanner() g.Node {
+	return Div(
+		Class("alert alert-warning alert-dismissible fade show mx-2 my-2"),
+		Role("alert"),
+		I(Class("bi-exclamation-triangle-fill me-2")),
+		Strong(g.Text("Notice: ")),
+		g.Text("This application will be shut down on January 31st, 2026."),
+		Button(
+			Type("button"),
+			Class("btn-close"),
+			g.Attr("data-bs-dismiss", "alert"),
+			TitleAttr("Close"),
+		),
+	)
+}
+
 func Page(title, currentPath string, body []g.Node) g.Node {
+	bodyWithBanner := append([]g.Node{ShutdownBanner()}, body...)
 	return HTML5Page(c.HTML5Props{
 		Title:    fmt.Sprintf("%s # Baralga", title),
 		Language: "en",
@@ -125,7 +142,7 @@ func Page(title, currentPath string, body []g.Node) g.Node {
 				g.Attr("defer", "defer"),
 			),
 		},
-		Body: body,
+		Body: bodyWithBanner,
 	})
 }
 
