@@ -23,7 +23,7 @@ require (
 	github.com/unrolled/secure v1.17.0
 	github.com/xuri/excelize/v2 v2.10.0
 	golang.org/x/crypto v0.44.0
-	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
+	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/oauth2 v0.33.0
 	maragu.dev/gomponents v1.2.0
 	maragu.dev/gomponents-htmx v0.6.1
@@ -98,7 +98,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/api v0.252.0 // indirect
